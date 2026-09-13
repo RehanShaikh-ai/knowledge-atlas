@@ -8,7 +8,11 @@ Contract references:
 
 import pytest
 from sqlalchemy import create_engine, text
-from testcontainers.postgres import PostgresContainer
+
+try:
+    from testcontainers.community.postgres import PostgresContainer
+except ImportError:
+    from testcontainers.postgres import PostgresContainer
 
 
 @pytest.fixture(scope="module")
