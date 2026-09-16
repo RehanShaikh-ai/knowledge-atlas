@@ -21,6 +21,7 @@ pnpm-debug.log*
 dist/
 build/
 .next/
+.ruff_cache
 
 # IDE
 .vscode/

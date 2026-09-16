@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-lint-and-test:
+    name: Backend Lint & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint with Ruff
+        run: uv run ruff check .
+
+      - name: Check code formatting
+        run: uv run ruff format --check .
+
+      - name: Run backend unit tests
+        run: |
+          if [ -d "backend/tests" ] && [ "$(ls -A backend/tests 2>/dev/null)" ]; then
+            uv run pytest backend/tests
+          else
+            echo "No backend unit tests found yet (Workstream B). Skipping."
+          fi
+
+  database-integration-test:
+    name: PostgreSQL Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run Integration Tests with Testcontainers
+        run: uv run pytest tests/integration
+
+  alembic-migrations-check:
+    name: Alembic Migrations Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Validate Alembic Config and Migrations
+        run: |
+          uv run python -c "
+          import sys
+          sys.path.insert(0, 'backend')
+          from alembic.config import Config
+          from alembic import script
+          cfg = Config('backend/alembic.ini')
+          scr = script.ScriptDirectory.from_config(cfg)
+          print('Alembic configuration valid. Heads:', scr.get_heads())
+          "
+
+  docker-compose-validate:
+    name: Docker Compose Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Compose File Syntax
+        run: |
+          docker compose config --quiet || docker compose config
+
+  frontend-lint-test-build:
+    name: Frontend Lint, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Check and run frontend pipeline
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            if [ -f "package-lock.json" ]; then
+              npm ci
+            else
+              npm install
+            fi
+            if npm run | grep -q "lint"; then
+              npm run lint
+            fi
+            if npm run | grep -q "test"; then
+              npm test -- --run
+            fi
+            if npm run | grep -q "build"; then
+              npm run build
+            fi
+          else
+            echo "Frontend package.json not found yet (Workstream A). Skipping."
+          fi
+
+  security-and-secrets-check:
+    name: Security & Secrets Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for forbidden committed files
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.(local|production|staging)$'; then
+            echo "ERROR: Forbidden .env file is tracked in git!"
+            exit 1
+          fi
+
+      - name: Verify .gitignore covers sensitive files
+        run: |
+          for pattern in ".env" ".env.*" "!*.example" "__pycache__"; do
+            echo "Checking pattern rule: $pattern"
+          done

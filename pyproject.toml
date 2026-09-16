@@ -3,7 +3,7 @@ name = "collaborative-second-brain-backend"
 version = "0.1.1"
 description = "Backend for Collaborative Second Brain"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [
     { name = "Collaborative Second Brain Contributors" }
@@ -24,6 +24,7 @@ dev = [
     "pytest-asyncio>=0.25,<1.0",
     "httpx>=0.28,<1.0",
     "ruff>=0.9,<1.0",
+    "testcontainers[postgres]>=4.0.0",
 ]
 
 [build-system]
@@ -35,12 +36,13 @@ packages = ["app"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py313"
+target-version = "py312"
+extend-exclude = ["docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["."]
+testpaths = ["tests", "backend/tests"]
+pythonpath = [".", "backend"]
 asyncio_mode = "auto"
