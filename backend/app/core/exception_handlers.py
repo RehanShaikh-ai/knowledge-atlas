@@ -59,7 +59,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        logger.warning("Validation error on %s %s", request.method, request.url.path)
+        path = request.url.path.replace("\n", "\\n").replace("\r", "\\r")
+        logger.warning("Validation error on %s %s", request.method, path)
         return _error_response(
             status_code=422,
             code="VALIDATION_ERROR",
@@ -68,7 +69,8 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-        logger.warning("HTTP %d on %s %s", exc.status_code, request.method, request.url.path)
+        path = request.url.path.replace("\n", "\\n").replace("\r", "\\r")
+        logger.warning("HTTP %d on %s %s", exc.status_code, request.method, path)
         code = _http_status_to_code(exc.status_code)
         # Use the HTTPException detail as the message if it's a string,
         # but never expose internal exception messages for 500s.
@@ -84,7 +86,8 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+        path = request.url.path.replace("\n", "\\n").replace("\r", "\\r")
+        logger.exception("Unhandled exception on %s %s", request.method, path)
         return _error_response(
             status_code=500,
             code="INTERNAL_SERVER_ERROR",

@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = "knowledge_atlas"
     DATABASE_USER: str = "knowledge_atlas"
     DATABASE_PASSWORD: str = "change_me"
+    DATABASE_URL: str | None = None
 
     # Frontend
     FRONTEND_URL: str = "http://localhost:5173"
@@ -44,10 +45,19 @@ class Settings(BaseSettings):
 
         Format: postgresql+psycopg://<user>:<password>@<host>:<port>/<database>
         """
-        return (
-            f"postgresql+psycopg://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}"
-            f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+
+        from sqlalchemy import URL
+        url = URL.create(
+            drivername="postgresql+psycopg",
+            username=self.DATABASE_USER,
+            password=self.DATABASE_PASSWORD,
+            host=self.DATABASE_HOST,
+            port=self.DATABASE_PORT,
+            database=self.DATABASE_NAME,
         )
+        return url.render_as_string(hide_password=False)
 
 
 settings = Settings()

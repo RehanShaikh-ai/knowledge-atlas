@@ -66,10 +66,10 @@ def test_settings_default_values():
         "DATABASE_USER": "knowledge_atlas",
         "DATABASE_PASSWORD": "change_me",
     }
-    with patch.dict(os.environ, env_clear, clear=False):
+    with patch.dict(os.environ, env_clear, clear=True):
         from app.core.config import Settings
 
-        s = Settings()
+        s = Settings(_env_file=None)
         assert s.APP_ENV == "development"
         assert s.APP_PORT == 8080
         assert s.DATABASE_HOST == "postgres"
