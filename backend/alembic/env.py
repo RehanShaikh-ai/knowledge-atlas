@@ -2,8 +2,9 @@ import os
 import sys
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 
 # Ensure backend root is on Python path so app imports resolve
 backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

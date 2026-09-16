@@ -49,6 +49,7 @@ class Settings(BaseSettings):
             return self.DATABASE_URL
 
         from sqlalchemy import URL
+
         url = URL.create(
             drivername="postgresql+psycopg",
             username=self.DATABASE_USER,
