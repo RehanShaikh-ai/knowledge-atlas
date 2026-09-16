@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${DATABASE_USER:-knowledge_atlas}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change_me}
     ports:
-      - "${DATABASE_PORT:-5432}:5432"
+      - "${DATABASE_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -31,7 +31,7 @@ services:
       APP_HOST: ${APP_HOST:-0.0.0.0}
       APP_PORT: ${APP_PORT:-8080}
       DATABASE_HOST: ${DATABASE_HOST:-postgres}
-      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_PORT: 5432
       DATABASE_NAME: ${DATABASE_NAME:-knowledge_atlas}
       DATABASE_USER: ${DATABASE_USER:-knowledge_atlas}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-change_me}

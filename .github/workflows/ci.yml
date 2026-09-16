@@ -30,7 +30,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync --frozen || uv sync
+        run: uv sync --locked
 
       - name: Lint with Ruff
         run: uv run ruff check .
@@ -63,7 +63,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync --frozen || uv sync
+        run: uv sync --locked
 
       - name: Run Integration Tests with Testcontainers
         run: uv run pytest tests/integration
@@ -85,7 +85,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync --frozen || uv sync
+        run: uv sync --locked
 
       - name: Validate Alembic Config and Migrations
         run: |
@@ -136,7 +136,7 @@ jobs:
               npm run lint
             fi
             if npm run | grep -q "test"; then
-              npm test -- --run || npm test
+              npm test -- --run
             fi
             if npm run | grep -q "build"; then
               npm run build
