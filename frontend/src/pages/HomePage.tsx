@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HealthStatus, HEALTH_DISPLAY_TEXT } from '@/hooks/useHealth';
 import { getUsers } from '@/api/users';
 import { getWorkspaces } from '@/api/workspaces';
@@ -9,6 +9,15 @@ import { UserCreateForm } from '@/components/UserCreateForm';
 import { UserList } from '@/components/UserList';
 import { WorkspaceCreateForm } from '@/components/WorkspaceCreateForm';
 import { WorkspaceList } from '@/components/WorkspaceList';
+
+const blobsData = [
+  { size: 312, left: 18, top: 24, animationDelay: -16, animationDuration: 22 },
+  { size: 248, left: 67, top: 16, animationDelay: -9, animationDuration: 27 },
+  { size: 336, left: 43, top: 62, animationDelay: -19, animationDuration: 18 },
+  { size: 201, left: 79, top: 48, animationDelay: -4, animationDuration: 25 },
+  { size: 287, left: 29, top: 74, animationDelay: -13, animationDuration: 30 },
+  { size: 359, left: 58, top: 37, animationDelay: -7, animationDuration: 20 },
+];
 
 interface HomePageProps {
   healthStatus: HealthStatus;
@@ -67,16 +76,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   const handleWorkspaceCreated = (newWorkspace: Workspace) => {
     setWorkspaces((prev) => [...prev, newWorkspace]);
   };
-
-  const blobsData = useMemo(() => {
-      return Array.from({ length: 6 }).map(() => ({
-          size: Math.random() * 200 + 150,
-          left: Math.random() * 80 + 10,
-          top: Math.random() * 80 + 10,
-          animationDelay: Math.random() * -20,
-          animationDuration: Math.random() * 15 + 15,
-      }));
-  }, []);
 
   const blobRefs = useRef<(HTMLDivElement | null)[]>([]);
 
