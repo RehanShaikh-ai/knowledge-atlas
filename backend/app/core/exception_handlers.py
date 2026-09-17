@@ -1,6 +1,6 @@
 """Global exception handlers for the FastAPI application.
 
-Implements the error contract defined in §12 and §4.4.
+Implements the error contract defined in §13 and §4.4.
 All error responses use the canonical ErrorResponse/ErrorDetail schema.
 No unhandled exception may reach the client as a raw stack trace.
 """
@@ -11,6 +11,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse
+
+from app.core.exceptions import AppException
 
 logger = logging.getLogger("app.core.exception_handlers")
 
@@ -49,9 +51,10 @@ def _http_status_to_code(status_code: int) -> str:
 def register_exception_handlers(app: FastAPI) -> None:
     """Register global exception handlers on the FastAPI app.
 
-    Canonical function per contract §4.4. Covers:
+    Canonical function per contract §4.4 and §13. Covers:
     - RequestValidationError → 422, code="VALIDATION_ERROR"
-    - HTTPException → matching status, code derived from status
+    - AppException → status_code, domain code & message
+    - HTTPException → matching status, code derived from status or detail
     - Exception (catch-all) → 500, code="INTERNAL_SERVER_ERROR"
     """
 
@@ -67,17 +70,29 @@ def register_exception_handlers(app: FastAPI) -> None:
             message="Request validation failed.",
         )
 
+    @app.exception_handler(AppException)
+    async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
+        path = request.url.path.replace("\n", "\\n").replace("\r", "\\r")
+        logger.warning("Domain exception %s on %s %s", exc.code, request.method, path)
+        return _error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+        )
+
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         path = request.url.path.replace("\n", "\\n").replace("\r", "\\r")
         logger.warning("HTTP %d on %s %s", exc.status_code, request.method, path)
-        code = _http_status_to_code(exc.status_code)
-        # Use the HTTPException detail as the message if it's a string,
-        # but never expose internal exception messages for 500s.
-        if exc.status_code >= 500:
-            message = "An unexpected error occurred."
+        if isinstance(exc.detail, dict) and "code" in exc.detail:
+            code = exc.detail["code"]
+            message = exc.detail.get("message", "An error occurred.")
         else:
-            message = str(exc.detail) if exc.detail else "An error occurred."
+            code = _http_status_to_code(exc.status_code)
+            if exc.status_code >= 500:
+                message = "An unexpected error occurred."
+            else:
+                message = str(exc.detail) if exc.detail else "An error occurred."
         return _error_response(
             status_code=exc.status_code,
             code=code,
