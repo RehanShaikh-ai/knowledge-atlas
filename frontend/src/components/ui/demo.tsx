@@ -1,17 +1,15 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+
+const blobsData = [
+    { size: 312, left: 18, top: 24, animationDelay: -16, animationDuration: 22 },
+    { size: 248, left: 67, top: 16, animationDelay: -9, animationDuration: 27 },
+    { size: 336, left: 43, top: 62, animationDelay: -19, animationDuration: 18 },
+    { size: 201, left: 79, top: 48, animationDelay: -4, animationDuration: 25 },
+    { size: 287, left: 29, top: 74, animationDelay: -13, animationDuration: 30 },
+    { size: 359, left: 58, top: 37, animationDelay: -7, animationDuration: 20 },
+];
 
 const MercuryLogin: React.FC = () => {
-    // Generate static random values once per mount to prevent hydration errors
-    const blobsData = useMemo(() => {
-        return Array.from({ length: 6 }).map(() => ({
-            size: Math.random() * 200 + 150,
-            left: Math.random() * 80 + 10,
-            top: Math.random() * 80 + 10,
-            animationDelay: Math.random() * -20,
-            animationDuration: Math.random() * 15 + 15,
-        }));
-    }, []);
-
     // Keep track of the blob DOM elements for high-performance updates
     const blobRefs = useRef<(HTMLDivElement | null)[]>([]);
 
