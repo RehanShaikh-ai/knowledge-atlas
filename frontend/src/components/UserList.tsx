@@ -10,6 +10,8 @@ interface UserListProps {
   loading: boolean;
   error: ApiError | string | null;
   onRefresh?: () => void;
+  selectedUserId?: string;
+  onUserSelect?: (user: User) => void;
 }
 
 export const UserList: React.FC<UserListProps> = ({
@@ -17,6 +19,8 @@ export const UserList: React.FC<UserListProps> = ({
   loading,
   error,
   onRefresh,
+  selectedUserId,
+  onUserSelect,
 }) => {
   return (
     <div style={styles.card}>
@@ -44,14 +48,34 @@ export const UserList: React.FC<UserListProps> = ({
       {!loading && !error && users.length > 0 && (
         <ul data-testid="user-list" style={styles.list}>
           {users.map((user) => (
-            <li key={user.id} data-testid="user-item" style={styles.item}>
+            <li
+              key={user.id}
+              data-testid="user-item"
+              style={{
+                ...styles.item,
+                ...(selectedUserId === user.id ? styles.selectedItem : {}),
+              }}
+            >
               <div style={styles.userMain}>
                 <span style={styles.userName}>{user.display_name}</span>
                 <span style={styles.userId}>{user.id}</span>
               </div>
-              <span style={styles.timestamp}>
-                {new Date(user.created_at).toLocaleDateString()}
-              </span>
+              <div style={styles.itemActions}>
+                <span style={styles.timestamp}>
+                  {new Date(user.created_at).toLocaleDateString()}
+                </span>
+                {onUserSelect && (
+                  <button
+                    type="button"
+                    onClick={() => onUserSelect(user)}
+                    style={styles.selectBtn}
+                    aria-pressed={selectedUserId === user.id}
+                    data-testid={`select-user-${user.id}`}
+                  >
+                    {selectedUserId === user.id ? 'Selected' : 'Select'}
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -109,6 +133,10 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(255,255,255,0.1)',
     backdropFilter: 'blur(10px)',
   },
+  selectedItem: {
+    border: '1px solid rgba(34, 197, 94, 0.8)',
+    background: 'rgba(6, 78, 59, 0.25)',
+  },
   userMain: {
     display: 'flex',
     flexDirection: 'column',
@@ -128,5 +156,20 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '11px',
     color: 'var(--text-dim)',
     fontFamily: 'Space Mono, monospace',
+  },
+  itemActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  selectBtn: {
+    background: 'rgba(255,255,255,0.1)',
+    color: 'var(--accent)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: '4px',
+    padding: '4px 8px',
+    fontSize: '10px',
+    fontFamily: 'Space Mono, monospace',
+    cursor: 'pointer',
   },
 };
