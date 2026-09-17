@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;800&family=Space+Mono&display=swap');
+
+:root {
+  --bg: #050505;
+  --mercury: #e0e0e0;
+  --accent: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.5);
+  --filter-goo: url('#gooey');
+  font-family: 'Inter', sans-serif;
+  color: var(--accent);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+button,
+input,
+select { font: inherit; }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.mercury-wrapper {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  filter: var(--filter-goo);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mercury), #888);
+  filter: blur(20px);
+  animation: float 20s infinite alternate ease-in-out;
+  box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.5), 10px 10px 30px rgba(255, 255, 255, 0.2);
+  transition: margin 0.1s ease-out;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(10vw, 20vh) scale(1.2); }
+  66% { transform: translate(-5vw, 10vh) scale(0.8); }
+  100% { transform: translate(5vw, -10vh) scale(1.1); }
+}
+
+.svg-filter-hidden { position: absolute; width: 0; height: 0; }
+
+.dashboard-shell {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 960px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.dashboard-header,
+.workflow-panel-heading,
+.health-status,
+.workflow-steps,
+.workflow-step { display: flex; align-items: center; }
+
+.dashboard-header,
+.workflow-panel-heading { justify-content: space-between; gap: 24px; }
+
+.dashboard-header { align-items: flex-start; margin-bottom: 38px; }
+
+.brand-id,
+.panel-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-dim);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 7vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 0.9;
+}
+
+.health-status {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--text-dim);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+}
+
+.health-indicator,
+.workflow-marker {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.health-indicator { width: 10px; height: 10px; }
+
+.workflow-steps {
+  gap: 12px;
+  margin-bottom: 28px;
+  color: var(--text-dim);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+}
+
+.workflow-step { gap: 8px; white-space: nowrap; }
+
+.workflow-marker {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+}
+
+.workflow-step.is-current,
+.workflow-step.is-complete { color: var(--accent); }
+
+.workflow-step.is-current .workflow-marker {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #050505;
+}
+
+.workflow-step.is-complete .workflow-marker { border-color: #22c55e; color: #22c55e; }
+
+.workflow-connector { width: min(10vw, 80px); height: 1px; background: rgba(255, 255, 255, 0.25); }
+
+.workflow-panel {
+  padding: clamp(22px, 5vw, 36px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(5, 5, 5, 0.55);
+  backdrop-filter: blur(16px);
+}
+
+.workflow-panel h2 { margin: 0; font-size: 22px; }
+
+.workflow-panel p { margin: 8px 0 0; color: var(--text-dim); font-size: 14px; }
+
+.selection-notice {
+  margin: 24px 0 !important;
+  padding: 10px 12px;
+  border: 1px solid rgba(34, 197, 94, 0.65);
+  background: rgba(6, 78, 59, 0.35);
+  color: #a7f3d0 !important;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px !important;
+}
+
+.primary-button,
+.secondary-button {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 9px 12px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.primary-button { border-color: var(--accent); background: var(--accent); color: #050505; }
+.primary-button:disabled { cursor: not-allowed; opacity: 0.4; }
+.secondary-button { background: rgba(255, 255, 255, 0.08); color: var(--accent); }
+.primary-button:not(:disabled):hover,
+.secondary-button:hover { background: #fff; color: #050505; }
+
+.form-group {
+  position: relative;
+  margin-bottom: 20px;
+  transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.form-group:focus-within { transform: translateX(8px); }
+
+.form-group label {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--text-dim);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 17px;
+  padding: 12px 0;
+}
+
+.input-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--mercury);
+  box-shadow: 0 0 15px var(--mercury);
+  transition: width 0.4s ease;
+}
+
+.form-group:focus-within .input-glow { width: 100%; }
+
+.submit-wrap { position: relative; margin-top: 20px; filter: var(--filter-goo); }
+
+.btn-base {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  border: 0;
+  background: var(--accent);
+  color: #050505;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 16px 24px;
+  text-transform: uppercase;
+}
+
+.btn-base:disabled { cursor: wait; opacity: 0.65; }
+
+.mercury-drop {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50px;
+  background: var(--mercury);
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.submit-wrap:hover .mercury-drop { transform: scale(1.04, 1.15); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .dashboard-shell { padding: 24px 18px; }
+  .dashboard-header,
+  .workflow-panel-heading { align-items: flex-start; flex-direction: column; }
+  .health-status { justify-content: flex-start; }
+  .workflow-steps { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .workflow-connector { width: 1px; height: 18px; margin-left: 12px; }
+}

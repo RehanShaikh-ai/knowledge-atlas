@@ -7,11 +7,13 @@ import { ErrorState } from './ErrorState';
 
 interface WorkspaceCreateFormProps {
   users: User[];
+  selectedUser?: User;
   onWorkspaceCreated?: (workspace: Workspace) => void;
 }
 
 export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
   users,
+  selectedUser,
   onWorkspaceCreated,
 }) => {
   const [name, setName] = useState('');
@@ -23,7 +25,7 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
   const [error, setError] = useState<ApiError | string | null>(null);
   const [successWorkspace, setSuccessWorkspace] = useState<Workspace | null>(null);
 
-  const selectedOwnerId = isManualOwner ? customOwnerId.trim() : (ownerId || (users[0]?.id ?? ''));
+  const selectedOwnerId = selectedUser?.id ?? (isManualOwner ? customOwnerId.trim() : (ownerId || (users[0]?.id ?? '')));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +97,11 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
 
         <div className="form-group" style={{ marginBottom: '20px' }}>
           <label htmlFor="workspace-owner-select">Owner</label>
-          {!isManualOwner && users.length > 0 ? (
+          {selectedUser ? (
+            <div data-testid="selected-workspace-owner" style={styles.selectedOwner}>
+              {selectedUser.display_name} ({selectedUser.id})
+            </div>
+          ) : !isManualOwner && users.length > 0 ? (
             <div style={{ display: 'flex', gap: '8px' }}>
               <select
                 id="workspace-owner-select"
@@ -198,6 +204,13 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
     fontFamily: 'Space Mono, monospace',
     textTransform: 'uppercase',
+  },
+  selectedOwner: {
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    color: 'var(--accent)',
+    fontFamily: 'Space Mono, monospace',
+    fontSize: '13px',
+    padding: '12px 0',
   },
   success: {
     padding: '8px 12px',
