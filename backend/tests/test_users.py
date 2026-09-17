@@ -30,6 +30,24 @@ def test_create_user_trims_whitespace(client: TestClient):
     assert data["display_name"] == "Bob Tester"
 
 
+def test_create_user_exact_max_length(client: TestClient):
+    """User creation succeeds with exactly 100 characters."""
+    exact_name = "u" * 100
+    response = client.post("/api/v1/users", json={"display_name": exact_name})
+    assert response.status_code == 201
+    data = response.json()
+    assert data["display_name"] == exact_name
+
+
+def test_create_user_unicode_and_emojis(client: TestClient):
+    """User creation supports unicode characters and emojis."""
+    emoji_name = "Alice 🚀✨ (Research Lead)"
+    response = client.post("/api/v1/users", json={"display_name": emoji_name})
+    assert response.status_code == 201
+    data = response.json()
+    assert data["display_name"] == emoji_name
+
+
 def test_create_user_rejects_empty_name(client: TestClient):
     """User creation rejects empty display_name with 422 VALIDATION_ERROR."""
     response = client.post("/api/v1/users", json={"display_name": ""})
@@ -50,6 +68,22 @@ def test_create_user_rejects_too_long_name(client: TestClient):
     """User creation rejects display_name exceeding 100 characters with 422 VALIDATION_ERROR."""
     long_name = "a" * 101
     response = client.post("/api/v1/users", json={"display_name": long_name})
+    assert response.status_code == 422
+    data = response.json()
+    assert data["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_create_user_rejects_null_field(client: TestClient):
+    """User creation rejects request with null display_name with 422 VALIDATION_ERROR."""
+    response = client.post("/api/v1/users", json={"display_name": None})
+    assert response.status_code == 422
+    data = response.json()
+    assert data["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_create_user_rejects_non_string_type(client: TestClient):
+    """User creation rejects numeric/boolean display_name with 422 VALIDATION_ERROR."""
+    response = client.post("/api/v1/users", json={"display_name": 12345})
     assert response.status_code == 422
     data = response.json()
     assert data["error"]["code"] == "VALIDATION_ERROR"

@@ -63,6 +63,42 @@ def test_create_workspace_trims_name(client: TestClient):
     assert data["name"] == "Trimmed Workspace"
 
 
+def test_create_workspace_exact_max_lengths(client: TestClient):
+    """Workspace creation succeeds with exact max limits (150 chars name, 1000 chars desc)."""
+    user_res = client.post("/api/v1/users", json={"display_name": "Owner Boundary"})
+    owner_id = user_res.json()["id"]
+
+    exact_name = "w" * 150
+    exact_desc = "d" * 1000
+    payload = {
+        "name": exact_name,
+        "description": exact_desc,
+        "owner_id": owner_id,
+    }
+    response = client.post("/api/v1/workspaces", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == exact_name
+    assert data["description"] == exact_desc
+
+
+def test_create_workspace_unicode_and_emojis(client: TestClient):
+    """Workspace creation supports unicode and emoji characters."""
+    user_res = client.post("/api/v1/users", json={"display_name": "Owner Unicode"})
+    owner_id = user_res.json()["id"]
+
+    payload = {
+        "name": "Atlas Project 🌐 🚀",
+        "description": "Collaborative Second Brain 🧠 — Knowledge Atlas 📚",
+        "owner_id": owner_id,
+    }
+    response = client.post("/api/v1/workspaces", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == "Atlas Project 🌐 🚀"
+    assert data["description"] == "Collaborative Second Brain 🧠 — Knowledge Atlas 📚"
+
+
 def test_create_workspace_rejects_missing_owner(client: TestClient):
     """Workspace creation returns 404 USER_NOT_FOUND when owner does not exist."""
     random_owner_id = str(uuid.uuid4())
@@ -130,6 +166,20 @@ def test_create_workspace_rejects_too_long_description(client: TestClient):
             "description": "d" * 1001,
             "owner_id": owner_id,
         },
+    )
+    assert response.status_code == 422
+    data = response.json()
+    assert data["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_create_workspace_rejects_null_name(client: TestClient):
+    """Workspace creation rejects null name with 422 VALIDATION_ERROR."""
+    user_res = client.post("/api/v1/users", json={"display_name": "Owner Null"})
+    owner_id = user_res.json()["id"]
+
+    response = client.post(
+        "/api/v1/workspaces",
+        json={"name": None, "owner_id": owner_id},
     )
     assert response.status_code == 422
     data = response.json()

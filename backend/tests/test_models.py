@@ -55,6 +55,27 @@ def test_workspace_model_uuid_default(db_session: Session):
     assert workspace.updated_at is not None
 
 
+def test_user_workspaces_relationship(db_session: Session):
+    """Verify 1-to-N relationship between User and Workspaces per contract §9."""
+    user = User(display_name="Multi WS Owner")
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    ws1 = Workspace(name="Workspace 1", owner_id=user.id)
+    ws2 = Workspace(name="Workspace 2", owner_id=user.id)
+    db_session.add_all([ws1, ws2])
+    db_session.commit()
+    db_session.refresh(user)
+
+    assert len(user.workspaces) == 2
+    ws_names = [w.name for w in user.workspaces]
+    assert "Workspace 1" in ws_names
+    assert "Workspace 2" in ws_names
+    assert ws1.owner.id == user.id
+    assert ws2.owner.id == user.id
+
+
 def test_foreign_key_on_delete_restrict(db_session: Session):
     """Deleting a user with an existing workspace is rejected by ON DELETE RESTRICT constraint.
 
