@@ -18,6 +18,27 @@ services:
       retries: 5
       start_period: 5s
 
+  # One-shot migration runner — runs alembic upgrade head then exits.
+  # Contract §21: postgres → migrate → backend → frontend dependency chain.
+  # Migrations must not run inside the backend container's own entrypoint.
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: knowledge_atlas_migrate
+    command: uv run alembic -c /app/alembic.ini upgrade head
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-knowledge_atlas}
+      DATABASE_USER: ${DATABASE_USER:-knowledge_atlas}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   backend:
     build:
       context: ./backend
@@ -37,8 +58,8 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-change_me}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   frontend:
     build:

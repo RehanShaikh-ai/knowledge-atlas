@@ -13,8 +13,10 @@ COPY pyproject.toml uv.lock ./
 # Install dependencies
 RUN uv sync --frozen --no-dev
 
-# Copy application code
+# Copy application and migration code
 COPY app/ ./app/
+COPY alembic.ini ./alembic.ini
+COPY alembic/ ./alembic/
 
 # Create and switch to a dedicated non-root application user
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app

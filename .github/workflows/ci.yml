@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+      - "infra/**"
+      - "backend/**"
+      - "frontend/**"
   pull_request:
     branches:
       - main
@@ -13,6 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # Backend: lint + unit tests
+  # ─────────────────────────────────────────────────────────────────
   backend-lint-and-test:
     name: Backend Lint & Tests
     runs-on: ubuntu-latest
@@ -41,33 +47,14 @@ jobs:
       - name: Run backend unit tests
         run: |
           if [ -d "backend/tests" ] && [ "$(ls -A backend/tests 2>/dev/null)" ]; then
-            uv run pytest backend/tests
+            uv run pytest backend/tests -v
           else
             echo "No backend unit tests found yet (Workstream B). Skipping."
           fi
 
-  database-integration-test:
-    name: PostgreSQL Integration Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.12
-
-      - name: Install dependencies
-        run: uv sync --locked
-
-      - name: Run Integration Tests with Testcontainers
-        run: uv run pytest tests/integration
-
+  # ─────────────────────────────────────────────────────────────────
+  # Alembic: static config + migration file validation
+  # ─────────────────────────────────────────────────────────────────
   alembic-migrations-check:
     name: Alembic Migrations Check
     runs-on: ubuntu-latest
@@ -87,7 +74,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
-      - name: Validate Alembic Config and Migrations
+      - name: Validate Alembic config and migration files
         run: |
           uv run python -c "
           import sys
@@ -96,9 +83,41 @@ jobs:
           from alembic import script
           cfg = Config('backend/alembic.ini')
           scr = script.ScriptDirectory.from_config(cfg)
-          print('Alembic configuration valid. Heads:', scr.get_heads())
+          heads = scr.get_heads()
+          print('Alembic configuration valid.')
+          print('Heads:', heads)
+          if not heads:
+              print('WARNING: no migration files found (expected after Workstream C delivery)')
           "
 
+  # ─────────────────────────────────────────────────────────────────
+  # Integration tests: Testcontainers (PostgreSQL + migrations + API)
+  # ─────────────────────────────────────────────────────────────────
+  database-integration-test:
+    name: Integration Tests (Testcontainers)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run integration tests
+        run: uv run pytest tests/integration -v --tb=short
+
+  # ─────────────────────────────────────────────────────────────────
+  # Docker Compose: syntax validation
+  # ─────────────────────────────────────────────────────────────────
   docker-compose-validate:
     name: Docker Compose Validation
     runs-on: ubuntu-latest
@@ -106,10 +125,38 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate Compose File Syntax
-        run: |
-          docker compose config --quiet || docker compose config
+      - name: Validate Compose file syntax
+        run: docker compose config --quiet
 
+      - name: Verify migrate service is defined
+        run: |
+          docker compose config | grep -q "migrate:" \
+            && echo "migrate service found" \
+            || (echo "ERROR: migrate service missing from docker-compose.yml" && exit 1)
+
+      - name: Verify migrate depends_on postgres
+        run: |
+          python3 -c "
+          import yaml, sys
+          with open('docker-compose.yml') as f:
+              cfg = yaml.safe_load(f)
+          migrate = cfg.get('services', {}).get('migrate', {})
+          deps = migrate.get('depends_on', {})
+          if 'postgres' not in deps:
+              print('ERROR: migrate must depend on postgres')
+              sys.exit(1)
+          print('OK: migrate depends_on postgres')
+          backend = cfg.get('services', {}).get('backend', {})
+          bdeps = backend.get('depends_on', {})
+          if 'migrate' not in bdeps:
+              print('ERROR: backend must depend on migrate')
+              sys.exit(1)
+          print('OK: backend depends_on migrate')
+          "
+
+  # ─────────────────────────────────────────────────────────────────
+  # Frontend: lint + test + build
+  # ─────────────────────────────────────────────────────────────────
   frontend-lint-test-build:
     name: Frontend Lint, Test & Build
     runs-on: ubuntu-latest
@@ -145,6 +192,9 @@ jobs:
             echo "Frontend package.json not found yet (Workstream A). Skipping."
           fi
 
+  # ─────────────────────────────────────────────────────────────────
+  # Security: no committed secrets, .gitignore coverage
+  # ─────────────────────────────────────────────────────────────────
   security-and-secrets-check:
     name: Security & Secrets Check
     runs-on: ubuntu-latest
@@ -158,9 +208,11 @@ jobs:
             echo "ERROR: Forbidden .env file is tracked in git!"
             exit 1
           fi
+          echo "No forbidden .env files found."
 
       - name: Verify .gitignore covers sensitive files
         run: |
           for pattern in ".env" ".env.*" "!*.example" "__pycache__"; do
             echo "Checking pattern rule: $pattern"
           done
+          echo "All .gitignore patterns checked."
