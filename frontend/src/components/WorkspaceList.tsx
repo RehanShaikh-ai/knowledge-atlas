@@ -45,16 +45,18 @@ export const WorkspaceList: React.FC<WorkspaceListProps> = ({
         <ul data-testid="workspace-list" style={styles.list}>
           {workspaces.map((workspace) => (
             <li key={workspace.id} data-testid="workspace-item" style={styles.item}>
-              <div style={styles.mainInfo}>
-                <span style={styles.name}>{workspace.name}</span>
-                {workspace.description && (
-                  <p style={styles.description}>{workspace.description}</p>
-                )}
-                <span style={styles.owner}>Owner ID: {workspace.owner_id}</span>
+              <div style={styles.topRow}>
+                <div style={styles.mainInfo}>
+                  <span style={styles.name}>{workspace.name}</span>
+                  {workspace.description && (
+                    <p style={styles.description}>{workspace.description}</p>
+                  )}
+                </div>
+                <span style={styles.timestamp}>
+                  {new Date(workspace.created_at).toLocaleDateString()}
+                </span>
               </div>
-              <span style={styles.timestamp}>
-                {new Date(workspace.created_at).toLocaleDateString()}
-              </span>
+              <span style={styles.owner}>Owner: {workspace.owner_id}</span>
             </li>
           ))}
         </ul>
@@ -65,10 +67,8 @@ export const WorkspaceList: React.FC<WorkspaceListProps> = ({
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: '8px',
-    padding: '20px',
+    background: 'transparent',
+    padding: '0',
     marginBottom: '20px',
   },
   header: {
@@ -79,17 +79,21 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     margin: 0,
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#e2e8f0',
+    fontSize: '11px',
+    fontFamily: 'Space Mono, monospace',
+    textTransform: 'uppercase',
+    color: 'var(--text-dim)',
+    letterSpacing: '2px',
   },
   refreshBtn: {
-    background: '#334155',
-    color: '#e2e8f0',
+    background: 'rgba(255,255,255,0.1)',
+    color: 'var(--accent)',
     border: 'none',
     borderRadius: '4px',
     padding: '4px 10px',
-    fontSize: '12px',
+    fontSize: '10px',
+    fontFamily: 'Space Mono, monospace',
+    textTransform: 'uppercase',
     cursor: 'pointer',
   },
   list: {
@@ -102,12 +106,49 @@ const styles: Record<string, React.CSSProperties> = {
   },
   item: {
     display: 'flex',
+    flexDirection: 'column',
+    padding: '12px 14px',
+    background: 'rgba(255,255,255,0.03)',
+    borderRadius: '6px',
+    border: '1px solid rgba(255,255,255,0.1)',
+    backdropFilter: 'blur(10px)',
+    gap: '8px',
+  },
+  topRow: {
+    display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: '12px 14px',
-    background: '#0f172a',
-    borderRadius: '6px',
-    border: '1px solid #334155',
+  },
+  workspaceMain: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  workspaceName: {
+    fontWeight: 600,
+    color: 'var(--accent)',
+    fontSize: '14px',
+  },
+  workspaceId: {
+    fontSize: '11px',
+    color: 'var(--text-dim)',
+    fontFamily: 'Space Mono, monospace',
+  },
+  timestamp: {
+    fontSize: '11px',
+    color: 'var(--text-dim)',
+    fontFamily: 'Space Mono, monospace',
+  },
+  description: {
+    fontSize: '13px',
+    color: 'var(--text-dim)',
+    margin: 0,
+  },
+  owner: {
+    fontSize: '11px',
+    color: 'var(--text-dim)',
+    marginTop: '4px',
+    fontFamily: 'Space Mono, monospace',
   },
   mainInfo: {
     display: 'flex',
@@ -116,21 +157,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   name: {
     fontWeight: 600,
-    color: '#f8fafc',
+    color: 'var(--accent)',
     fontSize: '14px',
-  },
-  description: {
-    margin: 0,
-    color: '#94a3b8',
-    fontSize: '13px',
-  },
-  owner: {
-    fontSize: '11px',
-    color: '#64748b',
-    fontFamily: 'monospace',
-  },
-  timestamp: {
-    fontSize: '12px',
-    color: '#94a3b8',
   },
 };

@@ -63,12 +63,10 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
 
   return (
     <div style={styles.card}>
-      <h3 style={styles.title}>Create Workspace</h3>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.field}>
-          <label htmlFor="workspace-name" style={styles.label}>
-            Workspace Name
-          </label>
+      <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600 }}>Create Workspace</h3>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="form-group" style={{ marginBottom: '20px' }}>
+          <label htmlFor="workspace-name">Workspace Name</label>
           <input
             id="workspace-name"
             data-testid="workspace-name-input"
@@ -77,14 +75,12 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Research Hub"
             disabled={loading}
-            style={styles.input}
           />
+          <div className="input-glow"></div>
         </div>
 
-        <div style={styles.field}>
-          <label htmlFor="workspace-description" style={styles.label}>
-            Description (optional)
-          </label>
+        <div className="form-group" style={{ marginBottom: '20px' }}>
+          <label htmlFor="workspace-description">Description (optional)</label>
           <input
             id="workspace-description"
             data-testid="workspace-description-input"
@@ -93,16 +89,14 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g. Shared workspace for team notes"
             disabled={loading}
-            style={styles.input}
           />
+          <div className="input-glow"></div>
         </div>
 
-        <div style={styles.field}>
-          <label htmlFor="workspace-owner-select" style={styles.label}>
-            Owner
-          </label>
+        <div className="form-group" style={{ marginBottom: '20px' }}>
+          <label htmlFor="workspace-owner-select">Owner</label>
           {!isManualOwner && users.length > 0 ? (
-            <div style={styles.ownerRow}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <select
                 id="workspace-owner-select"
                 data-testid="workspace-owner-select"
@@ -112,7 +106,7 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
                 style={styles.select}
               >
                 {users.map((u) => (
-                  <option key={u.id} value={u.id}>
+                  <option key={u.id} value={u.id} style={{ background: '#050505', color: '#fff' }}>
                     {u.display_name} ({u.id})
                   </option>
                 ))}
@@ -126,17 +120,20 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
               </button>
             </div>
           ) : (
-            <div style={styles.ownerRow}>
-              <input
-                id="workspace-owner-input"
-                data-testid="workspace-owner-input"
-                type="text"
-                value={customOwnerId}
-                onChange={(e) => setCustomOwnerId(e.target.value)}
-                placeholder="Enter owner UUID (e.g. 123e4567-e89b...)"
-                disabled={loading}
-                style={styles.input}
-              />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input
+                  id="workspace-owner-input"
+                  data-testid="workspace-owner-input"
+                  type="text"
+                  value={customOwnerId}
+                  onChange={(e) => setCustomOwnerId(e.target.value)}
+                  placeholder="Enter owner UUID (e.g. 123e4567-e89b...)"
+                  disabled={loading}
+                  style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: 'var(--accent)', padding: '12px 0', fontSize: '18px', outline: 'none' }}
+                />
+                <div className="input-glow"></div>
+              </div>
               {users.length > 0 && (
                 <button
                   type="button"
@@ -158,14 +155,17 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
           </div>
         )}
 
-        <button
-          type="submit"
-          data-testid="workspace-create-submit"
-          disabled={loading}
-          style={styles.button}
-        >
-          {loading ? 'Creating...' : 'Create Workspace'}
-        </button>
+        <div className="submit-wrap" style={{ marginTop: '20px' }}>
+          <div className="mercury-drop"></div>
+          <button
+            type="submit"
+            data-testid="workspace-create-submit"
+            disabled={loading}
+            className="btn-base"
+          >
+            {loading ? 'Creating...' : 'Create Workspace'}
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -173,55 +173,22 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: '8px',
-    padding: '20px',
+    background: 'transparent',
+    padding: '0',
     marginBottom: '20px',
-  },
-  title: {
-    margin: '0 0 16px 0',
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#e2e8f0',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  field: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-  label: {
-    fontSize: '13px',
-    color: '#94a3b8',
-  },
-  input: {
-    background: '#0f172a',
-    border: '1px solid #334155',
-    borderRadius: '4px',
-    padding: '8px 12px',
-    color: '#f8fafc',
-    fontSize: '14px',
-  },
-  ownerRow: {
-    display: 'flex',
-    gap: '8px',
   },
   select: {
     flex: 1,
-    background: '#0f172a',
-    border: '1px solid #334155',
-    borderRadius: '4px',
-    padding: '8px 12px',
-    color: '#f8fafc',
-    fontSize: '14px',
+    background: 'transparent',
+    border: 'none',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    color: '#ffffff',
+    fontSize: '18px',
+    outline: 'none',
+    padding: '12px 0',
   },
   toggleBtn: {
-    background: '#334155',
+    background: 'rgba(255,255,255,0.1)',
     color: '#e2e8f0',
     border: 'none',
     borderRadius: '4px',
@@ -229,24 +196,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
-  },
-  button: {
-    background: '#2563eb',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '4px',
-    padding: '8px 16px',
-    fontSize: '14px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    alignSelf: 'flex-start',
+    fontFamily: 'Space Mono, monospace',
+    textTransform: 'uppercase',
   },
   success: {
     padding: '8px 12px',
-    background: '#064e3b',
+    background: 'rgba(6, 78, 59, 0.5)',
     border: '1px solid #047857',
     borderRadius: '4px',
     color: '#a7f3d0',
     fontSize: '13px',
+    fontFamily: 'Space Mono, monospace',
   },
 };
