@@ -5,12 +5,16 @@ Canonical model per contract §8.1.
 
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Workspace(Base):
@@ -59,7 +63,7 @@ class Workspace(Base):
         nullable=False,
     )
 
-    owner: Mapped["User"] = relationship(  # noqa: F821
+    owner: Mapped["User"] = relationship(
         "User",
         back_populates="workspaces",
     )
