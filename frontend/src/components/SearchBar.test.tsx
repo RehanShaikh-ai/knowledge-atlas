@@ -1,6 +1,5 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SearchBar } from './SearchBar';
 import * as notesApi from '@/api/notes';
 
@@ -10,12 +9,7 @@ vi.mock('@/api/notes', () => ({
 
 describe('SearchBar', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('calls search API and displays results after typing', async () => {
@@ -29,16 +23,12 @@ describe('SearchBar', () => {
     render(<SearchBar workspaceId="ws-1" />);
     
     const input = screen.getByPlaceholderText(/Search notes/i);
-    await userEvent.type(input, 'Found');
-    
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
+    fireEvent.change(input, { target: { value: 'Found' } });
     
     await waitFor(() => {
       expect(notesApi.searchNotes).toHaveBeenCalledWith('ws-1', 'Found', { page_size: 10 });
       expect(screen.getByText('Found Note')).toBeInTheDocument();
-    });
+    }, { timeout: 1500 });
   });
 
   it('shows empty state when no results', async () => {
@@ -50,15 +40,11 @@ describe('SearchBar', () => {
     render(<SearchBar workspaceId="ws-1" />);
     
     const input = screen.getByPlaceholderText(/Search notes/i);
-    await userEvent.type(input, 'Nope');
-    
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
+    fireEvent.change(input, { target: { value: 'Nope' } });
     
     await waitFor(() => {
       expect(screen.getByText('No results found')).toBeInTheDocument();
-    });
+    }, { timeout: 1500 });
   });
 
   it('shows error state on failure', async () => {
@@ -67,15 +53,11 @@ describe('SearchBar', () => {
     render(<SearchBar workspaceId="ws-1" />);
     
     const input = screen.getByPlaceholderText(/Search notes/i);
-    await userEvent.type(input, 'Fail');
-    
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
+    fireEvent.change(input, { target: { value: 'Fail' } });
     
     await waitFor(() => {
       expect(screen.getByText('API failure')).toBeInTheDocument();
-    });
+    }, { timeout: 1500 });
   });
 
   it('handles note selection', async () => {
@@ -90,19 +72,16 @@ describe('SearchBar', () => {
     render(<SearchBar workspaceId="ws-1" onNoteSelect={handleSelect} />);
     
     const input = screen.getByPlaceholderText(/Search notes/i);
-    await userEvent.type(input, 'Click');
-    
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
+    fireEvent.change(input, { target: { value: 'Click' } });
     
     await waitFor(() => {
       expect(screen.getByText('Click Me')).toBeInTheDocument();
-    });
+    }, { timeout: 1500 });
     
-    await userEvent.click(screen.getByText('Click Me'));
+    fireEvent.click(screen.getByText('Click Me'));
     
     expect(handleSelect).toHaveBeenCalledWith(expect.objectContaining({ title: 'Click Me' }));
     expect(screen.queryByText('Click Me')).not.toBeInTheDocument();
   });
 });
+
