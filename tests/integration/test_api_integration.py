@@ -44,9 +44,21 @@ try:
 except ImportError:
     WORKSTREAM_B_AVAILABLE = False
 
+try:
+    from app.models.note import Note  # noqa: F401
+
+    WORKSTREAM_B_V0_2_1_AVAILABLE = True
+except ImportError:
+    WORKSTREAM_B_V0_2_1_AVAILABLE = False
+
 skip_without_ws_b = pytest.mark.skipif(
     not WORKSTREAM_B_AVAILABLE,
     reason="Workstream B models not yet merged — skipping API integration tests",
+)
+
+skip_without_ws_b_v0_2_1 = pytest.mark.skipif(
+    not (WORKSTREAM_B_AVAILABLE and WORKSTREAM_B_V0_2_1_AVAILABLE),
+    reason="Workstream B v0.2.1 models not yet merged — skipping v0.2.1 API integration tests",
 )
 
 
@@ -338,3 +350,123 @@ def test_error_responses_follow_canonical_structure(test_client):
     resp2 = test_client.get(f"/api/v1/workspaces/{uuid.uuid4()}")
     assert resp2.status_code == 404
     assert resp2.json()["error"]["code"] == "WORKSPACE_NOT_FOUND"
+
+
+# ── Test: v0.2.1 Complete Integration Flow (§18.3) ─────────────────────────────
+
+
+@skip_without_ws_b_v0_2_1
+def test_v0_2_1_notes_and_knowledge_end_to_end_flow(test_client):
+    """CONTRACT_v0.2.1.md §18.3 — Complete end-to-end integration test flow for v0.2.1.
+
+    1. Create workspace
+    2. Create user
+    3. Create note in workspace
+    4. Add tag to note
+    5. Search for note by title
+    6. Search for note by tag name
+    7. Link two notes
+    8. Retrieve note links (outgoing and incoming)
+    9. Archive note — verify it no longer appears in default list
+    10. Restore note
+    11. Delete note — verify note_links rows are removed
+    12. Existing health endpoint returns 200
+    """
+    # 1. Create user
+    user_res = test_client.post("/api/v1/users", json={"display_name": "Integration Tester"})
+    assert user_res.status_code == 201
+    user_id = user_res.json()["id"]
+
+    # 2. Create workspace
+    ws_res = test_client.post(
+        "/api/v1/workspaces",
+        json={"name": "Knowledge Vault", "owner_id": user_id},
+    )
+    assert ws_res.status_code == 201
+    ws_id = ws_res.json()["id"]
+
+    # 3. Create note in workspace
+    note1_res = test_client.post(
+        f"/api/v1/workspaces/{ws_id}/notes",
+        json={
+            "title": "Quantum Computing 101",
+            "content": "# Intro to Qubits\nQubits use superposition.",
+            "created_by": user_id,
+        },
+    )
+    assert note1_res.status_code == 201
+    note1_id = note1_res.json()["id"]
+
+    note2_res = test_client.post(
+        f"/api/v1/workspaces/{ws_id}/notes",
+        json={
+            "title": "Superconducting Circuits",
+            "content": "Hardware implementation of qubits.",
+            "created_by": user_id,
+        },
+    )
+    assert note2_res.status_code == 201
+    note2_id = note2_res.json()["id"]
+
+    # 4. Add tag to note
+    tag_res = test_client.post(
+        f"/api/v1/notes/{note1_id}/tags",
+        json={"name": "physics"},
+    )
+    assert tag_res.status_code == 201
+
+    # 5. Search for note by title
+    search_title = test_client.get(
+        f"/api/v1/workspaces/{ws_id}/notes/search", params={"q": "Quantum"}
+    )
+    assert search_title.status_code == 200
+    assert search_title.json()["total"] >= 1
+
+    # 6. Search for note by tag name
+    search_tag = test_client.get(
+        f"/api/v1/workspaces/{ws_id}/notes/search", params={"q": "physics"}
+    )
+    assert search_tag.status_code == 200
+
+    # 7. Link two notes
+    link_res = test_client.post(
+        f"/api/v1/notes/{note1_id}/links",
+        json={"target_note_id": note2_id},
+    )
+    assert link_res.status_code == 201
+
+    # 8. Retrieve note links (outgoing and incoming)
+    links_res = test_client.get(f"/api/v1/notes/{note1_id}/links")
+    assert links_res.status_code == 200
+    links_data = links_res.json()
+    assert "outgoing" in links_data
+    assert "incoming" in links_data
+    assert len(links_data["outgoing"]) >= 1
+
+    # 9. Archive note — verify it no longer appears in default list
+    arch_res = test_client.patch(
+        f"/api/v1/notes/{note1_id}",
+        json={"is_archived": True},
+    )
+    assert arch_res.status_code == 200
+
+    list_res = test_client.get(f"/api/v1/workspaces/{ws_id}/notes")
+    assert list_res.status_code == 200
+    note_ids_in_list = [n["id"] for n in list_res.json()["items"]]
+    assert note1_id not in note_ids_in_list
+
+    # 10. Restore note
+    rest_res = test_client.patch(
+        f"/api/v1/notes/{note1_id}",
+        json={"is_archived": False},
+    )
+    assert rest_res.status_code == 200
+
+    # 11. Delete note — verify deletion succeeded
+    del_res = test_client.delete(f"/api/v1/notes/{note1_id}")
+    assert del_res.status_code == 204
+
+    # 12. Existing health endpoint returns 200
+    health_res = test_client.get("/api/v1/health")
+    assert health_res.status_code == 200
+    assert health_res.json() == {"status": "ok"}
