@@ -100,11 +100,11 @@ class Note(Base):
         "NoteLink",
         foreign_keys="NoteLink.source_note_id",
         back_populates="source_note",
-        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     incoming_links: Mapped[list["NoteLink"]] = relationship(
         "NoteLink",
         foreign_keys="NoteLink.target_note_id",
         back_populates="target_note",
-        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
