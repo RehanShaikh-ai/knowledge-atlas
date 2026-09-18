@@ -75,4 +75,4 @@ class ValidationError(AppException):
     """Raised for domain validation failures (422, VALIDATION_ERROR)."""
 
     def __init__(self, message: str) -> None:
-        super().__init__(status.HTTP_422_UNPROCESSABLE_ENTITY, "VALIDATION_ERROR", message)
+        super().__init__(status.HTTP_422_UNPROCESSABLE_CONTENT, "VALIDATION_ERROR", message)
