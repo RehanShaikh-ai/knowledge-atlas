@@ -28,9 +28,7 @@ class Tag(Base):
     """
 
     __tablename__ = "tags"
-    __table_args__ = (
-        UniqueConstraint("workspace_id", "name", name="uq_tags_workspace_name"),
-    )
+    __table_args__ = (UniqueConstraint("workspace_id", "name", name="uq_tags_workspace_name"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

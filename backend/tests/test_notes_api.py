@@ -128,9 +128,7 @@ def test_note_links_validate_workspace_and_cascade(client: TestClient):
     )
     assert cross_workspace.status_code == 422
 
-    link = client.post(
-        f"/api/v1/notes/{source['id']}/links", json={"target_note_id": target["id"]}
-    )
+    link = client.post(f"/api/v1/notes/{source['id']}/links", json={"target_note_id": target["id"]})
     assert link.status_code == 201
     duplicate = client.post(
         f"/api/v1/notes/{source['id']}/links", json={"target_note_id": target["id"]}

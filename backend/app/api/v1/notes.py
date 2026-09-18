@@ -59,9 +59,7 @@ def list_notes(
 
 
 @router.get("/notes/{note_id}", response_model=NoteResponse)
-def get_note(
-    note_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]
-) -> NoteResponse:
+def get_note(note_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]) -> NoteResponse:
     return NoteResponse.model_validate(note_service.get_note_or_raise(db, note_id))
 
 
