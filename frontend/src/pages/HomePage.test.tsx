@@ -4,13 +4,30 @@ import { HomePage } from './HomePage';
 import { getUsers } from '@/api/users';
 import { getWorkspaces } from '@/api/workspaces';
 import { User } from '@/types/users';
+import { Workspace } from '@/types/workspaces';
 
 vi.mock('@/api/users', () => ({ getUsers: vi.fn() }));
 vi.mock('@/api/workspaces', () => ({ getWorkspaces: vi.fn() }));
+vi.mock('@/api/notes', () => ({
+  listNotes: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+  searchNotes: vi.fn().mockResolvedValue({ items: [], total: 0, query: '' }),
+}));
+vi.mock('@/api/tags', () => ({
+  getTags: vi.fn().mockResolvedValue([]),
+}));
 
 const mockUser: User = {
   id: '11111111-1111-1111-1111-111111111111',
   display_name: 'Ada Lovelace',
+  created_at: '2026-09-17T12:00:00Z',
+  updated_at: '2026-09-17T12:00:00Z',
+};
+
+const mockWorkspace: Workspace = {
+  id: '22222222-2222-2222-2222-222222222222',
+  name: 'Quantum Notes',
+  description: 'Research workspace',
+  owner_id: mockUser.id,
   created_at: '2026-09-17T12:00:00Z',
   updated_at: '2026-09-17T12:00:00Z',
 };
@@ -76,5 +93,35 @@ describe('HomePage Health State UI (§16, §25, §27)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /back to users/i }));
     expect(screen.getByRole('status')).toHaveTextContent('Selected owner: Ada Lovelace');
+  });
+
+  it('smoothly navigates to Knowledge Base (Phase 03) when selecting a workspace and returns back', async () => {
+    vi.mocked(getWorkspaces).mockResolvedValue({ items: [mockWorkspace], total: 1 });
+
+    render(<HomePage healthStatus="connected" onRefreshHealth={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId(`select-user-${mockUser.id}`)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId(`select-user-${mockUser.id}`));
+    fireEvent.click(screen.getByTestId('continue-to-workspaces'));
+    await screen.findByRole('heading', { name: 'Workspace Management' });
+
+    // Find and click Open Knowledge Base button on the workspace item
+    const openBtn = await screen.findByTestId(`open-workspace-${mockWorkspace.id}`);
+    expect(openBtn).toBeInTheDocument();
+    fireEvent.click(openBtn);
+
+    // Knowledge Base view should be rendered
+    expect(await screen.findByRole('heading', { name: 'Knowledge Base' })).toBeInTheDocument();
+    expect(screen.getByTestId('active-workspace-badge')).toHaveTextContent('Quantum Notes');
+
+    // Click back to workspaces
+    const backBtn = screen.getByTestId('back-to-workspaces');
+    fireEvent.click(backBtn);
+
+    // Should return to Workspace Management with selected workspace remembered
+    expect(await screen.findByRole('heading', { name: 'Workspace Management' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Selected workspace: Quantum Notes');
   });
 });

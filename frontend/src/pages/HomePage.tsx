@@ -9,6 +9,7 @@ import { UserCreateForm } from '@/components/UserCreateForm';
 import { UserList } from '@/components/UserList';
 import { WorkspaceCreateForm } from '@/components/WorkspaceCreateForm';
 import { WorkspaceList } from '@/components/WorkspaceList';
+import { NotesDashboard } from '@/pages/NotesDashboard';
 
 const blobsData = [
   { size: 312, left: 18, top: 24, animationDelay: -16, animationDuration: 22 },
@@ -19,7 +20,7 @@ const blobsData = [
   { size: 359, left: 58, top: 37, animationDelay: -7, animationDuration: 20 },
 ];
 
-type WorkflowPhase = 'users' | 'workspaces';
+type WorkflowPhase = 'users' | 'workspaces' | 'notes';
 
 interface HomePageProps {
   healthStatus: HealthStatus;
@@ -33,6 +34,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const displayText = HEALTH_DISPLAY_TEXT[healthStatus];
   const [phase, setPhase] = useState<WorkflowPhase>('users');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userError, setUserError] = useState<ApiError | null>(null);
@@ -103,7 +105,18 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const handleWorkspaceCreated = (workspace: Workspace) => {
     setWorkspaces((currentWorkspaces) => [...currentWorkspaces, workspace]);
+    setSelectedWorkspace(workspace);
   };
+
+  if (phase === 'notes' && selectedWorkspace) {
+    return (
+      <NotesDashboard
+        workspaceId={selectedWorkspace.id}
+        workspaceName={selectedWorkspace.name}
+        onBack={() => setPhase('workspaces')}
+      />
+    );
+  }
 
   return (
     <div className="mercury-wrapper">
@@ -156,16 +169,37 @@ export const HomePage: React.FC<HomePageProps> = ({
         </header>
 
         <nav className="workflow-steps" aria-label="Workspace setup progress">
-          <div className={'workflow-step ' + (phase === 'users' ? 'is-current' : 'is-complete')} aria-current={phase === 'users' ? 'step' : undefined}>
+          <div
+            className={'workflow-step ' + (phase === 'users' ? 'is-current' : 'is-complete')}
+            aria-current={phase === 'users' ? 'step' : undefined}
+            onClick={() => setPhase('users')}
+            style={{ cursor: 'pointer' }}
+          >
             <span className="workflow-marker" aria-hidden="true">{phase === 'users' ? '1' : '✓'}</span>
             <span>User Management</span>
             <span className="sr-only">{phase === 'users' ? 'Current phase' : 'Completed phase'}</span>
           </div>
           <span className="workflow-connector" aria-hidden="true" />
-          <div className={'workflow-step ' + (phase === 'workspaces' ? 'is-current' : 'is-upcoming')} aria-current={phase === 'workspaces' ? 'step' : undefined}>
-            <span className="workflow-marker" aria-hidden="true">2</span>
+          <div
+            className={'workflow-step ' + (phase === 'workspaces' ? 'is-current' : phase === 'notes' ? 'is-complete' : 'is-upcoming')}
+            aria-current={phase === 'workspaces' ? 'step' : undefined}
+            onClick={() => selectedUser && setPhase('workspaces')}
+            style={{ cursor: selectedUser ? 'pointer' : 'default' }}
+          >
+            <span className="workflow-marker" aria-hidden="true">{phase === 'notes' ? '✓' : '2'}</span>
             <span>Workspace Management</span>
-            <span className="sr-only">{phase === 'workspaces' ? 'Current phase' : 'Upcoming phase'}</span>
+            <span className="sr-only">{phase === 'workspaces' ? 'Current phase' : phase === 'notes' ? 'Completed phase' : 'Upcoming phase'}</span>
+          </div>
+          <span className="workflow-connector" aria-hidden="true" />
+          <div
+            className={'workflow-step ' + (phase === 'notes' ? 'is-current' : 'is-upcoming')}
+            aria-current={phase === 'notes' ? 'step' : undefined}
+            onClick={() => selectedWorkspace && setPhase('notes')}
+            style={{ cursor: selectedWorkspace ? 'pointer' : 'default' }}
+          >
+            <span className="workflow-marker" aria-hidden="true">3</span>
+            <span>Knowledge Base</span>
+            <span className="sr-only">{phase === 'notes' ? 'Current phase' : 'Upcoming phase'}</span>
           </div>
         </nav>
 
@@ -206,14 +240,34 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <h2 id="workspace-management-title">Workspace Management</h2>
                 <p>Creating a workspace for <strong>{selectedUser?.display_name}</strong>.</p>
               </div>
-              <button type="button" className="secondary-button" onClick={() => setPhase('users')}>← Back to Users</button>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button type="button" className="secondary-button" onClick={() => setPhase('users')}>← Back to Users</button>
+                {selectedWorkspace && (
+                  <button
+                    type="button"
+                    className="primary-button"
+                    data-testid="continue-to-notes"
+                    onClick={() => setPhase('notes')}
+                  >
+                    Open Knowledge Base →
+                  </button>
+                )}
+              </div>
             </div>
+            {selectedWorkspace && (
+              <p className="selection-notice" role="status">Selected workspace: <strong>{selectedWorkspace.name}</strong></p>
+            )}
             {selectedUser && <WorkspaceCreateForm users={users} selectedUser={selectedUser} onWorkspaceCreated={handleWorkspaceCreated} />}
             <WorkspaceList
               workspaces={workspaces}
               loading={loadingWorkspaces}
               error={workspaceError}
               onRefresh={fetchWorkspaces}
+              selectedWorkspaceId={selectedWorkspace?.id}
+              onSelectWorkspace={(workspace) => {
+                setSelectedWorkspace(workspace);
+                setPhase('notes');
+              }}
             />
           </section>
         )}

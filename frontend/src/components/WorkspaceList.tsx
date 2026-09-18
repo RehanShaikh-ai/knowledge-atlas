@@ -10,6 +10,8 @@ interface WorkspaceListProps {
   loading: boolean;
   error: ApiError | string | null;
   onRefresh?: () => void;
+  onSelectWorkspace?: (workspace: Workspace) => void;
+  selectedWorkspaceId?: string;
 }
 
 export const WorkspaceList: React.FC<WorkspaceListProps> = ({
@@ -17,6 +19,8 @@ export const WorkspaceList: React.FC<WorkspaceListProps> = ({
   loading,
   error,
   onRefresh,
+  onSelectWorkspace,
+  selectedWorkspaceId,
 }) => {
   return (
     <div style={styles.card}>
@@ -43,22 +47,44 @@ export const WorkspaceList: React.FC<WorkspaceListProps> = ({
 
       {!loading && !error && workspaces.length > 0 && (
         <ul data-testid="workspace-list" style={styles.list}>
-          {workspaces.map((workspace) => (
-            <li key={workspace.id} data-testid="workspace-item" style={styles.item}>
-              <div style={styles.topRow}>
-                <div style={styles.mainInfo}>
-                  <span style={styles.name}>{workspace.name}</span>
-                  {workspace.description && (
-                    <p style={styles.description}>{workspace.description}</p>
+          {workspaces.map((workspace) => {
+            const isSelected = selectedWorkspaceId === workspace.id;
+            return (
+              <li
+                key={workspace.id}
+                data-testid="workspace-item"
+                style={{
+                  ...styles.item,
+                  ...(isSelected ? styles.itemSelected : {}),
+                }}
+              >
+                <div style={styles.topRow}>
+                  <div style={styles.mainInfo}>
+                    <span style={styles.name}>{workspace.name}</span>
+                    {workspace.description && (
+                      <p style={styles.description}>{workspace.description}</p>
+                    )}
+                  </div>
+                  <span style={styles.timestamp}>
+                    {new Date(workspace.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <div style={styles.actionsRow}>
+                  <span style={styles.owner}>Owner: {workspace.owner_id}</span>
+                  {onSelectWorkspace && (
+                    <button
+                      type="button"
+                      data-testid={`open-workspace-${workspace.id}`}
+                      onClick={() => onSelectWorkspace(workspace)}
+                      style={styles.openBtn}
+                    >
+                      Open Knowledge Base →
+                    </button>
                   )}
                 </div>
-                <span style={styles.timestamp}>
-                  {new Date(workspace.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              <span style={styles.owner}>Owner: {workspace.owner_id}</span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -159,5 +185,33 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: 'var(--accent)',
     fontSize: '14px',
+  },
+  itemSelected: {
+    borderColor: '#38bdf8',
+    background: 'rgba(56, 189, 248, 0.08)',
+  },
+  actionsRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '6px',
+    paddingTop: '8px',
+    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+  },
+  openBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    background: 'rgba(255, 255, 255, 0.12)',
+    color: '#ffffff',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    borderRadius: '4px',
+    padding: '5px 12px',
+    fontSize: '11px',
+    fontFamily: 'Space Mono, monospace',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
   },
 };

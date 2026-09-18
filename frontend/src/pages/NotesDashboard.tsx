@@ -16,9 +16,15 @@ function cn(...inputs: ClassValue[]) {
 
 interface NotesDashboardProps {
   workspaceId: string;
+  workspaceName?: string;
+  onBack?: () => void;
 }
 
-export const NotesDashboard: React.FC<NotesDashboardProps> = ({ workspaceId }) => {
+export const NotesDashboard: React.FC<NotesDashboardProps> = ({
+  workspaceId,
+  workspaceName,
+  onBack,
+}) => {
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
   const [recentNotes, setRecentNotes] = useState<Note[]>([]);
   const [isArchivedView, setIsArchivedView] = useState(false);
@@ -55,7 +61,9 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({ workspaceId }) =
       
       setTotalNotes(recentRes.total);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load dashboard data'));
+      const apiErr = err as { error?: { message?: string } };
+      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Failed to load dashboard data');
+      setError(new Error(msg));
     } finally {
       setIsLoadingPinned(false);
       setIsLoadingRecent(false);
@@ -68,7 +76,9 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({ workspaceId }) =
       const res = await listNotes(workspaceId, { is_archived: true, tag: selectedTag, sort: 'updated_at_desc', page_size: 100 });
       setArchivedNotes(res.items);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load archived notes'));
+      const apiErr = err as { error?: { message?: string } };
+      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Failed to load archived notes');
+      setError(new Error(msg));
     } finally {
       setIsLoadingArchived(false);
     }
@@ -126,11 +136,35 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({ workspaceId }) =
         isEditorOpen ? "w-0 lg:w-1/3 opacity-0 lg:opacity-100 hidden lg:flex" : "w-full"
       )}>
         <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Knowledge Base</h1>
-            <p className="text-sm text-slate-500 mt-1 font-medium">
-              {totalNotes} {totalNotes === 1 ? 'note' : 'notes'} in workspace
-            </p>
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                type="button"
+                data-testid="back-to-workspaces"
+                onClick={onBack}
+                className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 text-sm font-medium"
+                title="Back to Workspaces"
+              >
+                <ChevronLeft size={18} />
+                <span className="hidden sm:inline">Workspaces</span>
+              </button>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Knowledge Base</h1>
+                {workspaceName && (
+                  <span
+                    data-testid="active-workspace-badge"
+                    className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/70 font-semibold font-mono"
+                  >
+                    {workspaceName}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 mt-0.5 font-medium">
+                {totalNotes} {totalNotes === 1 ? 'note' : 'notes'} in workspace
+              </p>
+            </div>
           </div>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 overflow-visible w-full sm:w-auto">
@@ -167,7 +201,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({ workspaceId }) =
 
         <div className="bg-white border-b border-slate-200/50 px-6 py-3">
             <TagFilter 
-              workspaceId={workspaceId}
+              workspaceId={workspaceId} 
               selectedTag={selectedTag}
               onSelectTag={setSelectedTag}
             />
@@ -175,14 +209,31 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({ workspaceId }) =
 
         <main className="flex-1 p-6 lg:p-8 w-full max-w-[1600px] mx-auto">
           {error && (
-            <div className="mb-8 p-4 bg-red-50/80 border border-red-200/80 text-red-700 rounded-2xl flex items-start gap-3">
-              <div className="p-2 bg-red-100 rounded-lg shrink-0">
-                <Archive className="text-red-600" size={16} />
+            <div className="mb-8 p-4 bg-amber-50/90 border border-amber-200 text-amber-800 rounded-2xl flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg shrink-0 text-amber-700">
+                  <Archive size={16} />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">
+                    {error.message.includes('404') || error.message.toLowerCase().includes('not found')
+                      ? 'Backend Notes API Pending (Workstream B)'
+                      : 'Notice loading workspace notes'}
+                  </p>
+                  <p className="text-xs mt-1 text-amber-700/90 leading-relaxed">
+                    {error.message.includes('404') || error.message.toLowerCase().includes('not found')
+                      ? 'Backend notes endpoints (/api/v1/workspaces/.../notes) are not yet implemented by Workstream B. You can still test the Note Editor and Markdown preview!'
+                      : error.message}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-sm">Error loading dashboard</p>
-                <p className="text-sm mt-1 text-red-600/80 leading-relaxed">{error.message}</p>
-              </div>
+              <button
+                type="button"
+                onClick={handleNewNote}
+                className="shrink-0 bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Test Editor
+              </button>
             </div>
           )}
 

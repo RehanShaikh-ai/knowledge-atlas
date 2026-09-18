@@ -10,6 +10,9 @@ __pycache__/
 venv/
 .pytest_cache/
 .mypy_cache/
+*.db
+*.sqlite
+*.sqlite3
 
 # Node
 node_modules/
