@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { NoteLinks } from './NoteLinks';
 import * as noteLinksApi from '@/api/note_links';
 import * as notesApi from '@/api/notes';
+import { Note } from '@/types/note';
 
 vi.mock('@/api/note_links', () => ({
   getNoteLinkss: vi.fn(),
