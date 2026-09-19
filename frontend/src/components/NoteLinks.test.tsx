@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { NoteLinks } from './NoteLinks';
 import * as noteLinksApi from '@/api/note_links';
 import * as notesApi from '@/api/notes';
-import { Note } from '@/types/note';
+import type { Note } from '@/types/note';
 
 vi.mock('@/api/note_links', () => ({
   getNoteLinkss: vi.fn(),
@@ -35,7 +35,7 @@ describe('NoteLinks', () => {
     });
 
     render(<NoteLinks workspaceId="ws-1" noteId="note-1" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Incoming Note')).toBeInTheDocument();
       expect(screen.getByText('Outgoing Note')).toBeInTheDocument();
@@ -50,16 +50,16 @@ describe('NoteLinks', () => {
     vi.mocked(notesApi.getNote).mockResolvedValue({ id: 'note-3', title: 'Outgoing Note' } as unknown as Note);
 
     render(<NoteLinks workspaceId="ws-1" noteId="note-1" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Outgoing Note')).toBeInTheDocument();
     });
-    
+
     const removeBtn = screen.getByTitle('Remove link');
     await userEvent.click(removeBtn);
-    
+
     expect(noteLinksApi.deleteNoteLink).toHaveBeenCalledWith('note-1', 'note-3');
-    
+
     await waitFor(() => {
       expect(screen.queryByText('Outgoing Note')).not.toBeInTheDocument();
     });
