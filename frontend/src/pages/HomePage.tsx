@@ -9,37 +9,355 @@ import { UserCreateForm } from '@/components/UserCreateForm';
 import { UserList } from '@/components/UserList';
 import { WorkspaceCreateForm } from '@/components/WorkspaceCreateForm';
 import { WorkspaceList } from '@/components/WorkspaceList';
+import { NotesDashboard } from '@/pages/NotesDashboard';
+import {
+  Search,
+  Home,
+  Inbox,
+  BarChart2,
+  Users,
+  Calendar,
+  Settings,
+  LogOut,
+  Database,
+  ChevronDown,
+} from 'lucide-react';
+import { StarField } from '@/components/StarField';
+import { FlowHoverButton } from '@/components/ui/flow-hover-button';
 
-const blobsData = [
-  { size: 312, left: 18, top: 24, animationDelay: -16, animationDuration: 22 },
-  { size: 248, left: 67, top: 16, animationDelay: -9, animationDuration: 27 },
-  { size: 336, left: 43, top: 62, animationDelay: -19, animationDuration: 18 },
-  { size: 201, left: 79, top: 48, animationDelay: -4, animationDuration: 25 },
-  { size: 287, left: 29, top: 74, animationDelay: -13, animationDuration: 30 },
-  { size: 359, left: 58, top: 37, animationDelay: -7, animationDuration: 20 },
-];
-
-type WorkflowPhase = 'users' | 'workspaces';
+type WorkflowPhase = 'users' | 'workspaces' | 'notes';
 
 interface HomePageProps {
   healthStatus: HealthStatus;
   onRefreshHealth: () => void;
 }
 
+// Sidebar Navigation Item
+interface NavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+  active?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+}
+const NavItem: React.FC<NavItemProps> = ({ icon, label, badge, active, disabled, onClick }) => (
+  <button
+    type="button"
+    onClick={disabled ? undefined : onClick}
+    className={[
+      'sidebar-nav-item',
+      active ? 'active' : '',
+      disabled ? 'disabled' : '',
+    ].join(' ')}
+    title={disabled ? `${label} (coming soon)` : undefined}
+    aria-current={active ? 'page' : undefined}
+    aria-disabled={disabled}
+  >
+    {icon}
+    <span style={{ flex: 1 }}>{label}</span>
+    {badge !== undefined && <span className="sidebar-badge">{badge}</span>}
+  </button>
+);
+
+// Sidebar Component
+interface SidebarProps {
+  phase: WorkflowPhase;
+  selectedWorkspace: Workspace | null;
+  selectedUser: User | null;
+  healthStatus: HealthStatus;
+  onRefreshHealth: () => void;
+  onNavigate: (phase: WorkflowPhase) => void;
+}
+
+const AppSidebar: React.FC<SidebarProps> = ({
+  phase,
+  selectedWorkspace,
+  healthStatus,
+  onRefreshHealth,
+  onNavigate,
+}) => {
+  const displayText = HEALTH_DISPLAY_TEXT[healthStatus];
+  const wsInitial = selectedWorkspace?.name?.charAt(0).toUpperCase() ?? 'K';
+  const wsName = selectedWorkspace?.name ?? 'Knowledge Atlas';
+
+  return (
+    <nav className="app-sidebar" aria-label="Main navigation">
+      {/* Workspace Switcher */}
+      <div
+        className="sidebar-workspace-switcher"
+        role="button"
+        tabIndex={0}
+        aria-label={`Current workspace: ${wsName}`}
+        onClick={() => onNavigate('workspaces')}
+        onKeyDown={(e) => e.key === 'Enter' && onNavigate('workspaces')}
+      >
+        <div className="sidebar-ws-avatar" aria-hidden="true">{wsInitial}</div>
+        <div className="sidebar-ws-info">
+          <div className="sidebar-ws-name">{wsName}</div>
+          <div className="sidebar-ws-plan">Knowledge Atlas v0.2</div>
+        </div>
+        <ChevronDown size={14} className="sidebar-ws-chevron" aria-hidden="true" />
+      </div>
+
+      {/* Search */}
+      <button type="button" className="sidebar-search-btn" aria-label="Search" onClick={() => {}}>
+        <Search size={14} aria-hidden="true" />
+        <span>Search</span>
+      </button>
+
+      {/* Primary Nav */}
+      <div className="sidebar-nav">
+        <NavItem
+          icon={<Home size={15} aria-hidden="true" />}
+          label="Home"
+          active={phase === 'users'}
+          onClick={() => onNavigate('users')}
+        />
+        <NavItem
+          icon={<Inbox size={15} aria-hidden="true" />}
+          label="Inbox"
+          badge={12}
+          disabled
+        />
+        <NavItem
+          icon={<BarChart2 size={15} aria-hidden="true" />}
+          label="Analytics"
+          disabled
+        />
+
+        <div className="sidebar-section-label">Workspace</div>
+
+        <NavItem
+          icon={<Database size={15} aria-hidden="true" />}
+          label="Knowledge Base"
+          active={phase === 'notes'}
+          onClick={() => selectedWorkspace && onNavigate('notes')}
+          disabled={!selectedWorkspace}
+        />
+        <NavItem
+          icon={<Users size={15} aria-hidden="true" />}
+          label="Team"
+          active={phase === 'users'}
+          onClick={() => onNavigate('users')}
+        />
+        <NavItem
+          icon={<Calendar size={15} aria-hidden="true" />}
+          label="Workspaces"
+          active={phase === 'workspaces'}
+          onClick={() => onNavigate('workspaces')}
+        />
+      </div>
+
+      {/* Footer: health + settings */}
+      <div className="sidebar-footer">
+        {/* Health status indicator */}
+        <div className="health-status" aria-live="polite">
+          <span
+            className="health-indicator"
+            style={{
+              backgroundColor:
+                healthStatus === 'connected'
+                  ? 'var(--green)'
+                  : healthStatus === 'loading'
+                  ? 'var(--yellow)'
+                  : 'var(--red)',
+            }}
+            aria-hidden="true"
+          />
+          <span data-testid="health-status" style={{ flex: 1, fontSize: '11px' }}>
+            {displayText}
+          </span>
+          <button
+            type="button"
+            onClick={onRefreshHealth}
+            className="secondary-button"
+            style={{ padding: '3px 8px', fontSize: '10px', borderRadius: '4px' }}
+          >
+            ↻
+          </button>
+        </div>
+
+        <NavItem icon={<Settings size={14} aria-hidden="true" />} label="Settings" disabled />
+        <NavItem icon={<LogOut size={14} aria-hidden="true" />} label="Log out" disabled />
+      </div>
+    </nav>
+  );
+};
+
+// Setup Screen (Phase 01 & 02)
+interface SetupScreenProps {
+  phase: 'users' | 'workspaces';
+  selectedUser: User | null;
+  selectedWorkspace: Workspace | null;
+  users: User[];
+  workspaces: Workspace[];
+  loadingUsers: boolean;
+  loadingWorkspaces: boolean;
+  userError: ApiError | null;
+  workspaceError: ApiError | null;
+  onUserCreated: (user: User) => void;
+  onWorkspaceCreated: (workspace: Workspace) => void;
+  onUserSelect: (user: User) => void;
+  onWorkspaceSelect: (workspace: Workspace) => void;
+  onWorkspaceSelectAndOpen: (workspace: Workspace) => void;
+  onRefreshUsers: () => void;
+  onRefreshWorkspaces: () => void;
+  onProceed: () => void;
+  onBack: () => void;
+}
+
+const SetupScreen: React.FC<SetupScreenProps> = ({
+  phase,
+  selectedUser,
+  selectedWorkspace,
+  users,
+  workspaces,
+  loadingUsers,
+  loadingWorkspaces,
+  userError,
+  workspaceError,
+  onUserCreated,
+  onWorkspaceCreated,
+  onUserSelect,
+  onWorkspaceSelectAndOpen,
+  onRefreshUsers,
+  onRefreshWorkspaces,
+  onProceed,
+  onBack,
+}) => {
+  const isUsersPhase = phase === 'users';
+
+  return (
+    <div className="setup-container animate-fade-in">
+      {/* Breadcrumb */}
+      <div className="setup-breadcrumb">
+        <span>Knowledge Atlas</span>
+        <span className="setup-breadcrumb-sep">/</span>
+        <span className="setup-breadcrumb-current">
+          {isUsersPhase ? 'User Management' : 'Workspace Management'}
+        </span>
+      </div>
+
+      {/* Heading area */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '24px' }}>
+        <div>
+          <span className="panel-kicker">Phase 0{isUsersPhase ? '1' : '2'}</span>
+          <h2 className="setup-heading" id={isUsersPhase ? 'user-management-title' : 'workspace-management-title'}>
+            {isUsersPhase ? 'User Management' : 'Workspace Management'}
+          </h2>
+          <p className="setup-sub">
+            {isUsersPhase
+              ? 'Create a user or select an existing identity to own the workspace.'
+              : selectedUser
+              ? `Creating a workspace for ${selectedUser.display_name}.`
+              : 'Select a workspace to open the knowledge base.'}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0, paddingTop: '8px' }}>
+          {!isUsersPhase && (
+            <button type="button" className="btn-ghost-dark" onClick={onBack}>
+              ← Users
+            </button>
+          )}
+          {isUsersPhase && selectedUser && (
+            <FlowHoverButton
+              type="button"
+              className="px-3.5 py-1.5 text-xs font-semibold"
+              data-testid="continue-to-workspaces"
+              onClick={onProceed}
+            >
+              Continue →
+            </FlowHoverButton>
+          )}
+          {!isUsersPhase && selectedWorkspace && (
+            <FlowHoverButton
+              type="button"
+              className="px-3.5 py-1.5 text-xs font-semibold"
+              data-testid="continue-to-notes"
+              onClick={onProceed}
+            >
+              Open Knowledge Base →
+            </FlowHoverButton>
+          )}
+        </div>
+      </div>
+
+      {/* Selection notice */}
+      {isUsersPhase && selectedUser && (
+        <p className="selection-notice" role="status">
+          Selected owner: <strong>{selectedUser.display_name}</strong>
+        </p>
+      )}
+      {!isUsersPhase && selectedWorkspace && (
+        <p className="selection-notice" role="status">
+          Selected workspace: <strong>{selectedWorkspace.name}</strong>
+        </p>
+      )}
+
+      {/* Panel content */}
+      <div className="workflow-panel">
+        {isUsersPhase ? (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10">
+            <div className="xl:col-span-5 xl:border-r xl:border-slate-800/80 xl:pr-8">
+              <UserCreateForm onUserCreated={onUserCreated} />
+            </div>
+            <div className="xl:col-span-7 xl:pl-2">
+              <UserList
+                users={users}
+                loading={loadingUsers}
+                error={userError}
+                onRefresh={onRefreshUsers}
+                selectedUserId={selectedUser?.id}
+                onUserSelect={onUserSelect}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10">
+            <div className="xl:col-span-5 xl:border-r xl:border-slate-800/80 xl:pr-8">
+              {selectedUser && (
+                <WorkspaceCreateForm
+                  users={users}
+                  selectedUser={selectedUser}
+                  onWorkspaceCreated={onWorkspaceCreated}
+                />
+              )}
+            </div>
+            <div className="xl:col-span-7 xl:pl-2">
+              <WorkspaceList
+                workspaces={workspaces}
+                loading={loadingWorkspaces}
+                error={workspaceError}
+                onRefresh={onRefreshWorkspaces}
+                selectedWorkspaceId={selectedWorkspace?.id}
+                onSelectWorkspace={(workspace) => {
+                  onWorkspaceSelectAndOpen(workspace);
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Root Component
 export const HomePage: React.FC<HomePageProps> = ({
   healthStatus,
   onRefreshHealth,
 }) => {
-  const displayText = HEALTH_DISPLAY_TEXT[healthStatus];
   const [phase, setPhase] = useState<WorkflowPhase>('users');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userError, setUserError] = useState<ApiError | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loadingWorkspaces, setLoadingWorkspaces] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<ApiError | null>(null);
-  const blobRefs = useRef<(HTMLDivElement | null)[]>([]);
   const hasRequestedWorkspaces = useRef(false);
 
   const fetchUsers = useCallback(async () => {
@@ -68,9 +386,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   useEffect(() => {
     if (phase === 'workspaces' && !hasRequestedWorkspaces.current) {
@@ -79,143 +395,74 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
   }, [fetchWorkspaces, phase]);
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      const x = event.clientX / window.innerWidth;
-      const y = event.clientY / window.innerHeight;
-      blobRefs.current.forEach((blob, index) => {
-        if (blob) {
-          const speed = (index + 1) * 20;
-          blob.style.marginLeft = x * speed + 'px';
-          blob.style.marginTop = y * speed + 'px';
-        }
-      });
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
   const handleUserCreated = (user: User) => {
-    setUsers((currentUsers) => [...currentUsers, user]);
+    setUsers((cur) => [...cur, user]);
     setSelectedUser(user);
   };
 
   const handleWorkspaceCreated = (workspace: Workspace) => {
-    setWorkspaces((currentWorkspaces) => [...currentWorkspaces, workspace]);
+    setWorkspaces((cur) => [...cur, workspace]);
+    setSelectedWorkspace(workspace);
   };
 
+  const handleNavigate = (target: WorkflowPhase) => {
+    if (target === 'workspaces' && !hasRequestedWorkspaces.current) {
+      hasRequestedWorkspaces.current = true;
+      fetchWorkspaces();
+    }
+    setPhase(target);
+  };
+
+  // Select workspace and navigate to notes phase
+  const handleSelectWorkspaceAndOpenNotes = (workspace: Workspace) => {
+    setSelectedWorkspace(workspace);
+    setPhase('notes');
+  };
+
+  // Render
   return (
-    <div className="mercury-wrapper">
-      <svg className="svg-filter-hidden" aria-hidden="true">
-        <defs>
-          <filter id="gooey">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"
-              result="goo"
-            />
-            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-          </filter>
-        </defs>
-      </svg>
-      <div className="stage" aria-hidden="true">
-        {blobsData.map((data, index) => (
-          <div
-            key={index}
-            ref={(element) => { blobRefs.current[index] = element; }}
-            className="blob"
-            style={{
-              width: data.size + 'px',
-              height: data.size + 'px',
-              left: data.left + '%',
-              top: data.top + '%',
-              animationDelay: data.animationDelay + 's',
-              animationDuration: data.animationDuration + 's',
-            }}
+    <div className="app-shell">
+      <StarField />
+      <AppSidebar
+        phase={phase}
+        selectedWorkspace={selectedWorkspace}
+        selectedUser={selectedUser}
+        healthStatus={healthStatus}
+        onRefreshHealth={onRefreshHealth}
+        onNavigate={handleNavigate}
+      />
+
+      <main className="app-main" aria-label="Main content">
+        {phase === 'notes' && selectedWorkspace ? (
+          <NotesDashboard
+            workspaceId={selectedWorkspace.id}
+            workspaceName={selectedWorkspace.name}
+            onBack={() => setPhase('workspaces')}
           />
-        ))}
-      </div>
-
-      <main className="dashboard-shell">
-        <header className="dashboard-header">
-          <div>
-            <span className="brand-id">System Node: 0x992 / Knowledge Atlas</span>
-            <h1 className="dashboard-title">Dashboard</h1>
-          </div>
-          <div className="health-status" aria-live="polite">
-            <span data-testid="health-status">{displayText}</span>
-            <span
-              className="health-indicator"
-              style={{ backgroundColor: healthStatus === 'connected' ? '#22c55e' : healthStatus === 'loading' ? '#eab308' : '#ef4444' }}
-            />
-            <button type="button" onClick={onRefreshHealth} className="secondary-button">↻ Refresh</button>
-          </div>
-        </header>
-
-        <nav className="workflow-steps" aria-label="Workspace setup progress">
-          <div className={'workflow-step ' + (phase === 'users' ? 'is-current' : 'is-complete')} aria-current={phase === 'users' ? 'step' : undefined}>
-            <span className="workflow-marker" aria-hidden="true">{phase === 'users' ? '1' : '✓'}</span>
-            <span>User Management</span>
-            <span className="sr-only">{phase === 'users' ? 'Current phase' : 'Completed phase'}</span>
-          </div>
-          <span className="workflow-connector" aria-hidden="true" />
-          <div className={'workflow-step ' + (phase === 'workspaces' ? 'is-current' : 'is-upcoming')} aria-current={phase === 'workspaces' ? 'step' : undefined}>
-            <span className="workflow-marker" aria-hidden="true">2</span>
-            <span>Workspace Management</span>
-            <span className="sr-only">{phase === 'workspaces' ? 'Current phase' : 'Upcoming phase'}</span>
-          </div>
-        </nav>
-
-        {phase === 'users' ? (
-          <section className="workflow-panel" aria-labelledby="user-management-title">
-            <div className="workflow-panel-heading">
-              <div>
-                <span className="panel-kicker">Phase 01</span>
-                <h2 id="user-management-title">User Management</h2>
-                <p>Create a user or select an existing identity to own the workspace.</p>
-              </div>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => selectedUser && setPhase('workspaces')}
-                disabled={!selectedUser}
-                data-testid="continue-to-workspaces"
-              >
-                Continue to Workspace
-              </button>
-            </div>
-            {selectedUser && <p className="selection-notice" role="status">Selected owner: <strong>{selectedUser.display_name}</strong></p>}
-            <UserCreateForm onUserCreated={handleUserCreated} />
-            <UserList
-              users={users}
-              loading={loadingUsers}
-              error={userError}
-              onRefresh={fetchUsers}
-              selectedUserId={selectedUser?.id}
-              onUserSelect={setSelectedUser}
-            />
-          </section>
         ) : (
-          <section className="workflow-panel" aria-labelledby="workspace-management-title">
-            <div className="workflow-panel-heading">
-              <div>
-                <span className="panel-kicker">Phase 02</span>
-                <h2 id="workspace-management-title">Workspace Management</h2>
-                <p>Creating a workspace for <strong>{selectedUser?.display_name}</strong>.</p>
-              </div>
-              <button type="button" className="secondary-button" onClick={() => setPhase('users')}>← Back to Users</button>
-            </div>
-            {selectedUser && <WorkspaceCreateForm users={users} selectedUser={selectedUser} onWorkspaceCreated={handleWorkspaceCreated} />}
-            <WorkspaceList
-              workspaces={workspaces}
-              loading={loadingWorkspaces}
-              error={workspaceError}
-              onRefresh={fetchWorkspaces}
-            />
-          </section>
+          <SetupScreen
+            phase={phase === 'notes' ? 'workspaces' : phase}
+            selectedUser={selectedUser}
+            selectedWorkspace={selectedWorkspace}
+            users={users}
+            workspaces={workspaces}
+            loadingUsers={loadingUsers}
+            loadingWorkspaces={loadingWorkspaces}
+            userError={userError}
+            workspaceError={workspaceError}
+            onUserCreated={handleUserCreated}
+            onWorkspaceCreated={handleWorkspaceCreated}
+            onUserSelect={setSelectedUser}
+            onWorkspaceSelect={setSelectedWorkspace}
+            onRefreshUsers={fetchUsers}
+            onRefreshWorkspaces={fetchWorkspaces}
+            onWorkspaceSelectAndOpen={handleSelectWorkspaceAndOpenNotes}
+            onProceed={() => {
+              if (phase === 'users') handleNavigate('workspaces');
+              else if (selectedWorkspace) setPhase('notes');
+            }}
+            onBack={() => setPhase('users')}
+          />
         )}
       </main>
     </div>

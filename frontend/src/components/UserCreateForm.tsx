@@ -41,10 +41,10 @@ export const UserCreateForm: React.FC<UserCreateFormProps> = ({ onUserCreated })
   };
 
   return (
-    <div style={styles.card}>
-      <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600 }}>Create User</h3>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div className="form-group" style={{ marginBottom: '20px' }}>
+    <div className="mb-6">
+      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono mb-4">Create New Identity</h3>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="form-group mb-5">
           <label htmlFor="user-display-name">Display Name</label>
           <input
             id="user-display-name"
@@ -52,22 +52,24 @@ export const UserCreateForm: React.FC<UserCreateFormProps> = ({ onUserCreated })
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="e.g. Alice Smith"
+            placeholder="e.g. Ada Lovelace"
             disabled={loading}
           />
-          <div className="input-glow"></div>
+          <div className="input-glow" />
         </div>
 
         {error && <ErrorState error={error} />}
 
         {successUser && (
-          <div data-testid="user-create-success" style={styles.success}>
-            User created: <strong>{successUser.display_name}</strong> (ID: {successUser.id})
+          <div 
+            data-testid="user-create-success" 
+            className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-xs font-mono text-emerald-300"
+          >
+            User created: <strong className="text-emerald-200">{successUser.display_name}</strong> (ID: {successUser.id})
           </div>
         )}
 
-        <div className="submit-wrap" style={{ marginTop: '20px' }}>
-          <div className="mercury-drop"></div>
+        <div className="submit-wrap mt-4">
           <button
             type="submit"
             data-testid="user-create-submit"
@@ -80,21 +82,4 @@ export const UserCreateForm: React.FC<UserCreateFormProps> = ({ onUserCreated })
       </form>
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  card: {
-    background: 'transparent',
-    padding: '0',
-    marginBottom: '20px',
-  },
-  success: {
-    padding: '8px 12px',
-    background: 'rgba(6, 78, 59, 0.5)',
-    border: '1px solid #047857',
-    borderRadius: '4px',
-    color: '#a7f3d0',
-    fontSize: '13px',
-    fontFamily: 'Space Mono, monospace',
-  },
 };

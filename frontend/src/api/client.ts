@@ -71,6 +71,10 @@ export class ApiClient {
       throw parsed;
     }
 
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
     try {
       return (await response.json()) as T;
     } catch {
@@ -94,6 +98,18 @@ export class ApiClient {
       method: 'POST',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+  }
+
+  patch<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
+    return this.request<T>(path, {
+      ...init,
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  delete<T = void>(path: string, init?: RequestInit): Promise<T> {
+    return this.request<T>(path, { ...init, method: 'DELETE' });
   }
 }
 
