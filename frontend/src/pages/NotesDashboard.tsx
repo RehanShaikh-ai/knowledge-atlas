@@ -12,12 +12,14 @@ import { Plus, Archive, ChevronLeft, AlertTriangle } from 'lucide-react';
 interface NotesDashboardProps {
   workspaceId: string;
   workspaceName?: string;
+  userId?: string;
   onBack?: () => void;
 }
 
 export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   workspaceId,
   workspaceName,
+  userId,
   onBack,
 }) => {
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
@@ -325,6 +327,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
             <div style={{ flex: 1, minWidth: 0 }}>
               <NoteEditor
                 workspaceId={workspaceId}
+                userId={userId}
                 initialNote={selectedNote || undefined}
                 onClose={closeEditor}
                 onSaved={handleNoteSaved}

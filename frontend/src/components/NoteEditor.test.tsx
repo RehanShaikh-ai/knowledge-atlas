@@ -27,7 +27,7 @@ describe('NoteEditor', () => {
       title: 'New Title',
       content: 'New Content',
       workspace_id: 'ws-1',
-      created_by: 'default-user-id',
+      created_by: '00000000-0000-0000-0000-000000000000',
       is_pinned: false,
       is_archived: false,
       tags: [],
@@ -49,7 +49,7 @@ describe('NoteEditor', () => {
       expect(notesApi.createNote).toHaveBeenCalledWith('ws-1', {
         title: 'New Title',
         content: 'New Content',
-        created_by: 'default-user-id'
+        created_by: '00000000-0000-0000-0000-000000000000'
       });
       expect(handleSaved).toHaveBeenCalled();
     });

@@ -437,6 +437,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <NotesDashboard
             workspaceId={selectedWorkspace.id}
             workspaceName={selectedWorkspace.name}
+            userId={selectedUser?.id}
             onBack={() => setPhase('workspaces')}
           />
         ) : (

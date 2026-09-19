@@ -33,7 +33,7 @@ interface NoteEditorProps {
 
 export const NoteEditor: React.FC<NoteEditorProps> = ({ 
   workspaceId, 
-  userId = 'default-user-id',
+  userId = '00000000-0000-0000-0000-000000000000',
   initialNote, 
   onClose, 
   onSaved, 
