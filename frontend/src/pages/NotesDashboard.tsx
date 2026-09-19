@@ -6,13 +6,7 @@ import { NoteEditor } from '@/components/NoteEditor';
 import { NoteLinks } from '@/components/NoteLinks';
 import { SearchBar } from '@/components/SearchBar';
 import { TagFilter } from '@/components/TagFilter';
-import { Plus, Archive, ChevronLeft } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { Plus, Archive, ChevronLeft, AlertTriangle } from 'lucide-react';
 
 interface NotesDashboardProps {
   workspaceId: string;
@@ -30,13 +24,12 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const [isArchivedView, setIsArchivedView] = useState(false);
   const [archivedNotes, setArchivedNotes] = useState<Note[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
-  
+
   const [isLoadingPinned, setIsLoadingPinned] = useState(false);
   const [isLoadingRecent, setIsLoadingRecent] = useState(false);
   const [isLoadingArchived, setIsLoadingArchived] = useState(false);
-  
+
   const [error, setError] = useState<Error | null>(null);
-  
   const [totalNotes, setTotalNotes] = useState(0);
 
   // Editor State
@@ -47,22 +40,22 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
     setError(null);
     setIsLoadingPinned(true);
     setIsLoadingRecent(true);
-    
+
     try {
       const [pinnedRes, recentRes] = await Promise.all([
         listNotes(workspaceId, { is_pinned: true, tag: selectedTag, page_size: 100 }),
-        listNotes(workspaceId, { is_archived: false, tag: selectedTag, sort: 'updated_at_desc', page_size: 100 })
+        listNotes(workspaceId, { is_archived: false, tag: selectedTag, sort: 'updated_at_desc', page_size: 100 }),
       ]);
-      
+
       setPinnedNotes(pinnedRes.items);
-      
-      const pinnedIds = new Set(pinnedRes.items.map(n => n.id));
-      setRecentNotes(recentRes.items.filter(n => !pinnedIds.has(n.id)));
-      
+      const pinnedIds = new Set(pinnedRes.items.map((n) => n.id));
+      setRecentNotes(recentRes.items.filter((n) => !pinnedIds.has(n.id)));
       setTotalNotes(recentRes.total);
     } catch (err) {
       const apiErr = err as { error?: { message?: string } };
-      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Failed to load dashboard data');
+      const msg =
+        apiErr?.error?.message ||
+        (err instanceof Error ? err.message : 'Failed to load dashboard data');
       setError(new Error(msg));
     } finally {
       setIsLoadingPinned(false);
@@ -73,11 +66,18 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const fetchArchivedData = useCallback(async () => {
     setIsLoadingArchived(true);
     try {
-      const res = await listNotes(workspaceId, { is_archived: true, tag: selectedTag, sort: 'updated_at_desc', page_size: 100 });
+      const res = await listNotes(workspaceId, {
+        is_archived: true,
+        tag: selectedTag,
+        sort: 'updated_at_desc',
+        page_size: 100,
+      });
       setArchivedNotes(res.items);
     } catch (err) {
       const apiErr = err as { error?: { message?: string } };
-      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Failed to load archived notes');
+      const msg =
+        apiErr?.error?.message ||
+        (err instanceof Error ? err.message : 'Failed to load archived notes');
       setError(new Error(msg));
     } finally {
       setIsLoadingArchived(false);
@@ -110,200 +110,218 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const handleNoteSaved = (note: Note) => {
     setSelectedNote(note);
     setIsCreatingNote(false);
-    if (isArchivedView) {
-      fetchArchivedData();
-    } else {
-      fetchDashboardData();
-    }
+    if (isArchivedView) fetchArchivedData();
+    else fetchDashboardData();
   };
 
   const handleNoteDeleted = () => {
     closeEditor();
-    if (isArchivedView) {
-      fetchArchivedData();
-    } else {
-      fetchDashboardData();
-    }
+    if (isArchivedView) fetchArchivedData();
+    else fetchDashboardData();
   };
 
   const isEditorOpen = isCreatingNote || selectedNote !== null;
+  const isBackendPending =
+    error && (error.message.includes('404') || error.message.toLowerCase().includes('not found'));
 
   return (
-    <div className="flex h-full bg-slate-50/30 min-h-screen overflow-hidden">
-      {/* Main Dashboard Area */}
-      <div className={cn(
-        "flex-1 flex flex-col transition-all duration-300 ease-in-out h-screen overflow-y-auto",
-        isEditorOpen ? "w-0 lg:w-1/3 opacity-0 lg:opacity-100 hidden lg:flex" : "w-full"
-      )}>
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3">
+    <div className="notes-layout">
+      {/* ── Left: Dashboard Panel ─────────────────────────────── */}
+      <div
+        className="notes-panel animate-slide-right"
+        style={isEditorOpen ? { maxWidth: '45%', minWidth: '320px' } : {}}
+      >
+        {/* Top bar */}
+        <header className="notes-topbar">
+          <div className="notes-topbar-left">
             {onBack && (
               <button
                 type="button"
                 data-testid="back-to-workspaces"
                 onClick={onBack}
-                className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 text-sm font-medium"
+                className="btn-back"
                 title="Back to Workspaces"
               >
-                <ChevronLeft size={18} />
-                <span className="hidden sm:inline">Workspaces</span>
+                <ChevronLeft size={15} aria-hidden="true" />
+                <span className="sr-only">Back</span>
               </button>
             )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Knowledge Base</h1>
-                {workspaceName && (
+            <nav className="notes-breadcrumb" aria-label="Location">
+              {workspaceName && (
+                <>
                   <span
                     data-testid="active-workspace-badge"
-                    className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/70 font-semibold font-mono"
                   >
                     {workspaceName}
                   </span>
-                )}
-              </div>
-              <p className="text-sm text-slate-500 mt-0.5 font-medium">
-                {totalNotes} {totalNotes === 1 ? 'note' : 'notes'} in workspace
-              </p>
-            </div>
+                  <span className="notes-breadcrumb-sep" aria-hidden="true">/</span>
+                </>
+              )}
+              <span className="notes-breadcrumb-current">
+                Knowledge Base
+              </span>
+            </nav>
           </div>
-          
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 overflow-visible w-full sm:w-auto">
-            <SearchBar 
-              workspaceId={workspaceId} 
+
+          <div className="notes-topbar-right">
+            <SearchBar
+              workspaceId={workspaceId}
               onNoteSelect={handleNoteSelect}
-              className="w-full sm:w-64 md:w-80"
             />
-            
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-              <button 
-                onClick={() => setIsArchivedView(!isArchivedView)}
-                className={cn(
-                  "p-2.5 rounded-full transition-all flex items-center justify-center gap-2 text-sm font-semibold shrink-0 min-w-[100px]",
-                  isArchivedView 
-                    ? "bg-slate-800 text-white shadow-md hover:bg-slate-700" 
-                    : "text-slate-600 hover:bg-slate-100 bg-white border border-slate-200 hover:border-slate-300 hover:text-slate-900"
-                )}
-              >
-                <Archive size={16} strokeWidth={2.5} />
-                <span>Archived</span>
-              </button>
-              
-              <button 
-                onClick={handleNewNote}
-                className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-indigo-700 hover:shadow-md hover:-translate-y-0.5 transition-all shrink-0 min-w-[120px]"
-              >
-                <Plus size={18} strokeWidth={2.5} />
-                <span>New Note</span>
-              </button>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsArchivedView(!isArchivedView)}
+              className={`btn-ghost-dark${isArchivedView ? ' active' : ''}`}
+              aria-pressed={isArchivedView}
+              title="Toggle archived notes"
+            >
+              <Archive size={14} aria-hidden="true" />
+              <span>Archived</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNewNote}
+              className="btn-primary-dark"
+            >
+              <Plus size={15} strokeWidth={2.5} aria-hidden="true" />
+              <span>New Note</span>
+            </button>
           </div>
         </header>
 
-        <div className="bg-white border-b border-slate-200/50 px-6 py-3">
-            <TagFilter 
-              workspaceId={workspaceId} 
-              selectedTag={selectedTag}
-              onSelectTag={setSelectedTag}
-            />
+        {/* Tag strip */}
+        <div className="notes-tagstrip" role="navigation" aria-label="Tag filters">
+          <TagFilter
+            workspaceId={workspaceId}
+            selectedTag={selectedTag}
+            onSelectTag={setSelectedTag}
+          />
         </div>
 
-        <main className="flex-1 p-6 lg:p-8 w-full max-w-[1600px] mx-auto">
+        {/* Scrollable content */}
+        <main className="notes-scroll" aria-label="Notes">
+          {/* Error banner */}
           {error && (
-            <div className="mb-8 p-4 bg-amber-50/90 border border-amber-200 text-amber-800 rounded-2xl flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg shrink-0 text-amber-700">
-                  <Archive size={16} />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">
-                    {error.message.includes('404') || error.message.toLowerCase().includes('not found')
-                      ? 'Backend Notes API Pending (Workstream B)'
-                      : 'Notice loading workspace notes'}
-                  </p>
-                  <p className="text-xs mt-1 text-amber-700/90 leading-relaxed">
-                    {error.message.includes('404') || error.message.toLowerCase().includes('not found')
-                      ? 'Backend notes endpoints (/api/v1/workspaces/.../notes) are not yet implemented by Workstream B. You can still test the Note Editor and Markdown preview!'
-                      : error.message}
-                  </p>
-                </div>
+            <div className="error-banner" role="alert">
+              <div className="error-banner-icon" aria-hidden="true">
+                <AlertTriangle size={15} />
               </div>
-              <button
-                type="button"
-                onClick={handleNewNote}
-                className="shrink-0 bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-              >
-                Test Editor
-              </button>
+              <div style={{ flex: 1 }}>
+                <p className="error-banner-title">
+                  {isBackendPending
+                    ? 'Backend Notes API Pending (Workstream B)'
+                    : 'Error loading notes'}
+                </p>
+                <p className="error-banner-msg">
+                  {isBackendPending
+                    ? 'Notes endpoints (/api/v1/workspaces/.../notes) are not yet implemented. You can still test the Note Editor and Markdown preview!'
+                    : error.message}
+                </p>
+              </div>
+              {isBackendPending && (
+                <button
+                  type="button"
+                  className="btn-ghost-dark"
+                  onClick={handleNewNote}
+                  style={{ flexShrink: 0 }}
+                >
+                  Test Editor
+                </button>
+              )}
             </div>
           )}
 
           {isArchivedView ? (
-            <section className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-slate-200/50 rounded-lg text-slate-500">
-                  <Archive size={18} strokeWidth={2.5} />
-                </div>
-                <h2 className="text-xl font-bold text-slate-800 tracking-tight">Archived Notes</h2>
-              </div>
-              <NoteList 
-                notes={archivedNotes} 
-                isLoading={isLoadingArchived} 
+            <section aria-labelledby="archived-heading">
+              <h2 id="archived-heading" className="notes-section-heading">
+                <span className="node-dot" aria-hidden="true" />
+                Archived Notes
+              </h2>
+              <NoteList
+                notes={archivedNotes}
+                isLoading={isLoadingArchived}
                 onNoteClick={handleNoteSelect}
+                onNoteUpdated={handleNoteSaved}
+                onNoteDeleted={handleNoteDeleted}
                 emptyStateMessage="No archived notes"
                 emptyStateSubMessage="Notes you archive will appear here."
               />
             </section>
           ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <>
               {(pinnedNotes.length > 0 || isLoadingPinned) && (
-                <section className="mb-12">
-                  <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 tracking-tight">
-                    <div className="w-1.5 h-4 rounded-full bg-amber-400 mr-1" />
+                <section aria-labelledby="pinned-heading" style={{ marginBottom: '28px' }}>
+                  <h2 id="pinned-heading" className="notes-section-heading">
+                    <span className="node-dot amber" aria-hidden="true" />
                     Pinned
                   </h2>
-                  <NoteList 
-                    notes={pinnedNotes} 
-                    isLoading={isLoadingPinned} 
+                  <NoteList
+                    notes={pinnedNotes}
+                    isLoading={isLoadingPinned}
                     onNoteClick={handleNoteSelect}
+                    onNoteUpdated={handleNoteSaved}
+                    onNoteDeleted={handleNoteDeleted}
                     emptyStateMessage="No pinned notes"
                     emptyStateSubMessage=""
                   />
                 </section>
               )}
 
-              <section className="mb-12">
-                <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 tracking-tight">
-                  <div className="w-1.5 h-4 rounded-full bg-indigo-400 mr-1" />
+              <section aria-labelledby="recent-heading">
+                <h2 id="recent-heading" className="notes-section-heading">
+                  <span className="node-dot" aria-hidden="true" />
                   Recent Notes
+                  {totalNotes > 0 && (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontFamily: 'Space Mono, monospace',
+                        color: 'var(--overlay0)',
+                        marginLeft: '6px',
+                      }}
+                    >
+                      {totalNotes}
+                    </span>
+                  )}
                 </h2>
-                <NoteList 
-                  notes={recentNotes} 
-                  isLoading={isLoadingRecent} 
+                <NoteList
+                  notes={recentNotes}
+                  isLoading={isLoadingRecent}
                   onNoteClick={handleNoteSelect}
+                  onNoteUpdated={handleNoteSaved}
+                  onNoteDeleted={handleNoteDeleted}
                   emptyStateMessage="No recent notes"
-                  emptyStateSubMessage="Create your first note to get started building your knowledge atlas."
+                  emptyStateSubMessage="Create your first note to begin building your knowledge atlas."
                 />
               </section>
-            </div>
+            </>
           )}
         </main>
       </div>
 
-      {/* Editor Sidebar Panel */}
+      {/* ── Right: Editor Panel ──────────────────────────────── */}
       {isEditorOpen && (
-        <div className="w-full lg:w-2/3 h-screen bg-slate-50/50 flex flex-col border-l border-slate-200/80 shadow-2xl z-30 animate-in slide-in-from-right-8 duration-300">
-          <div className="lg:hidden p-4 bg-white border-b border-slate-200">
-             <button 
-               onClick={closeEditor}
-               className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
-             >
-               <ChevronLeft size={16} /> Back to Dashboard
-             </button>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 lg:p-6 flex flex-col xl:flex-row gap-6">
-            <div className="flex-1 min-w-0">
-              <NoteEditor 
+        <aside className="editor-panel animate-slide-left" aria-label="Note editor">
+          <div className="editor-panel-inner">
+            {/* Mobile close strip */}
+            <div
+              style={{
+                display: 'none',
+                padding: '12px 16px',
+                borderBottom: '1px solid var(--card-border)',
+              }}
+              className="editor-mobile-close"
+            >
+              <button type="button" onClick={closeEditor} className="btn-back">
+                <ChevronLeft size={15} />
+                Back to Dashboard
+              </button>
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NoteEditor
                 workspaceId={workspaceId}
                 initialNote={selectedNote || undefined}
                 onClose={closeEditor}
@@ -312,28 +330,22 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 className="h-full min-h-[700px]"
               />
             </div>
-            
-            {/* Note Links Panel - Only show if editing an existing note */}
+
             {selectedNote && (
-              <div className="w-full xl:w-80 shrink-0">
-                <NoteLinks 
-                  workspaceId={workspaceId} 
-                  noteId={selectedNote.id} 
+              <div style={{ minWidth: 0 }}>
+                <NoteLinks
+                  workspaceId={workspaceId}
+                  noteId={selectedNote.id}
                   onNavigateToNote={(id) => {
-                    // Quick and dirty navigation for MVP - in a real app we'd fetch the note
-                    // but we can just use the search API to find it, or listNotes, or just close the editor and let user find it.
-                    // Wait, we can fetch it via getNote here if we want, or just trigger a fetch.
-                    // Let's implement it correctly.
-                    const existingNote = pinnedNotes.find(n => n.id === id) || 
-                                       recentNotes.find(n => n.id === id) || 
-                                       archivedNotes.find(n => n.id === id);
-                    if (existingNote) {
-                        handleNoteSelect(existingNote);
+                    const found =
+                      pinnedNotes.find((n) => n.id === id) ||
+                      recentNotes.find((n) => n.id === id) ||
+                      archivedNotes.find((n) => n.id === id);
+                    if (found) {
+                      handleNoteSelect(found);
                     } else {
-                        // If it's not in the current list, we could close the editor and let the dashboard reload,
-                        // but ideally we'd fetch it. For now, close and alert.
-                        closeEditor();
-                        alert("Note link clicked. The note might not be in the current view.");
+                      closeEditor();
+                      alert('Note link clicked. The note might not be in the current view.');
                     }
                   }}
                   className="sticky top-6"
@@ -341,7 +353,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </aside>
       )}
     </div>
   );

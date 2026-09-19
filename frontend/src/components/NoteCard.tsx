@@ -1,83 +1,140 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Note } from '@/types/note';
 import { Pin, Archive } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { RadialMenu } from './RadialMenu';
 
 interface NoteCardProps {
   note: Note;
   onClick?: (note: Note) => void;
+  onNoteUpdated?: (note: Note) => void;
+  onNoteDeleted?: () => void;
   className?: string;
 }
 
-export const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, className }) => {
+export const NoteCard: React.FC<NoteCardProps> = ({
+  note,
+  onClick,
+  onNoteUpdated,
+  onNoteDeleted,
+  className,
+}) => {
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+
   const formattedDate = new Date(note.updated_at).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
 
-  return (
-    <div
-      onClick={() => onClick?.(note)}
-      role="article"
-      aria-label={`Note: ${note.title}`}
-      className={cn(
-        "group relative flex flex-col justify-between p-5 rounded-2xl border transition-all duration-300 ease-out",
-        "hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 cursor-pointer",
-        note.is_pinned 
-          ? "border-amber-200 bg-amber-50/50" 
-          : "border-slate-200/60 bg-white hover:border-slate-300/80",
-        note.is_archived && "opacity-60 bg-slate-50 border-slate-200 hover:opacity-100",
-        className
-      )}
-    >
-      <div className="flex justify-between items-start mb-3 gap-3">
-        <h3 className="font-semibold text-slate-900 leading-snug line-clamp-2">
-          {note.title}
-        </h3>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {note.is_pinned && (
-            <div className="p-1 rounded-full bg-amber-100/80 text-amber-600" title="Pinned">
-              <Pin size={14} className="fill-current" />
-            </div>
-          )}
-          {note.is_archived && (
-            <div className="p-1 rounded-full bg-slate-100 text-slate-500" title="Archived">
-              <Archive size={14} />
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <p className="text-sm text-slate-600 line-clamp-3 mb-5 leading-relaxed font-normal">
-        {note.content}
-      </p>
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuPos({ x: e.clientX, y: e.clientY });
+  };
 
-      <div className="flex items-end justify-between mt-auto">
-        <div className="flex flex-wrap gap-1.5">
-          {note.tags.map((tag, i) => i < 3 ? (
-            <span 
-              key={tag.id} 
-              className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium tracking-wide bg-slate-100/80 text-slate-600 uppercase"
-            >
-              {tag.name}
-            </span>
-          ) : null)}
-          {note.tags.length > 3 && (
-            <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium text-slate-500 bg-slate-50">
-              +{note.tags.length - 3}
-            </span>
-          )}
+  const cardClass = [
+    'note-card',
+    note.is_pinned ? 'pinned' : '',
+    note.is_archived ? 'archived' : '',
+    className ?? '',
+  ]
+    .join(' ')
+    .trim();
+
+  return (
+    <>
+      <div
+        onClick={() => onClick?.(note)}
+        onContextMenu={handleContextMenu}
+        role="article"
+        aria-label={`Note: ${note.title}`}
+        className={cardClass}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onClick?.(note);
+        }}
+      >
+        {/* Status icons */}
+        {(note.is_pinned || note.is_archived) && (
+          <div className="note-card-icons">
+            {note.is_pinned && (
+              <span className="note-icon-pin" title="Pinned">
+                <Pin size={11} className="fill-current" aria-label="Pinned" />
+              </span>
+            )}
+            {note.is_archived && (
+              <span className="note-icon-archive" title="Archived">
+                <Archive size={11} aria-label="Archived" />
+              </span>
+            )}
+          </div>
+        )}
+
+        <h3 className="note-card-title">{note.title}</h3>
+
+        {note.content && (
+          <p className="note-card-preview">{note.content}</p>
+        )}
+
+        <div className="note-card-footer">
+          <div className="note-card-tags">
+            {note.tags.slice(0, 3).map((tag) => (
+              <span key={tag.id} className="note-tag-pill">
+                {tag.name}
+              </span>
+            ))}
+            {note.tags.length > 3 && (
+              <span className="note-tag-pill" style={{ opacity: 0.6 }}>
+                +{note.tags.length - 3}
+              </span>
+            )}
+          </div>
+          <time dateTime={note.updated_at} className="note-card-date">
+            {formattedDate}
+          </time>
         </div>
-        <time dateTime={note.updated_at} className="text-[11px] font-medium text-slate-400 shrink-0 ml-3">
-          {formattedDate}
-        </time>
+
+        {/* Right-click hint — subtle, appears on hover */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '10px',
+            right: '14px',
+            fontSize: '9px',
+            fontFamily: 'Space Mono, monospace',
+            color: 'var(--overlay0)',
+            opacity: 0,
+            transition: 'opacity 0.2s ease',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+            pointerEvents: 'none',
+          }}
+          className="note-card-hint"
+          aria-hidden="true"
+        >
+          right-click
+        </div>
       </div>
-    </div>
+
+      {menuPos && (
+        <RadialMenu
+          note={note}
+          position={menuPos}
+          onClose={() => setMenuPos(null)}
+          onEdit={(n) => {
+            setMenuPos(null);
+            onClick?.(n);
+          }}
+          onNoteUpdated={(updated) => {
+            setMenuPos(null);
+            onNoteUpdated?.(updated);
+          }}
+          onNoteDeleted={() => {
+            setMenuPos(null);
+            onNoteDeleted?.();
+          }}
+        />
+      )}
+    </>
   );
 };

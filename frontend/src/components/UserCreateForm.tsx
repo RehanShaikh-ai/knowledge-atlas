@@ -67,7 +67,6 @@ export const UserCreateForm: React.FC<UserCreateFormProps> = ({ onUserCreated })
         )}
 
         <div className="submit-wrap" style={{ marginTop: '20px' }}>
-          <div className="mercury-drop"></div>
           <button
             type="submit"
             data-testid="user-create-submit"

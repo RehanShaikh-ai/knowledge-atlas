@@ -12,7 +12,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 function renderMarkdown(content: string) {
-  let html = content
+  const html = content
     .replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-6 mb-4">$1</h1>')
     .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-5 mb-3">$1</h2>')
@@ -20,7 +20,7 @@ function renderMarkdown(content: string) {
     .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
     .replace(/\*(.*)\*/gim, '<em>$1</em>')
     .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-indigo-600 hover:underline">$1</a>')
-    .replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-slate-300 pl-4 italic my-4">$1</blockquote>')
+    .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-slate-300 pl-4 italic my-4">$1</blockquote>')
     .replace(/\n\n/g, '</p><p class="my-3">');
   
   return `<div class="prose max-w-none text-slate-700">${html}</div>`;

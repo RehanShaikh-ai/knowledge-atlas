@@ -162,7 +162,6 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
         )}
 
         <div className="submit-wrap" style={{ marginTop: '20px' }}>
-          <div className="mercury-drop"></div>
           <button
             type="submit"
             data-testid="workspace-create-submit"

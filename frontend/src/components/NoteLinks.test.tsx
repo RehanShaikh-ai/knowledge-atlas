@@ -28,8 +28,8 @@ describe('NoteLinks', () => {
     });
 
     vi.mocked(notesApi.getNote).mockImplementation(async (id) => {
-      if (id === 'note-2') return { id: 'note-2', title: 'Incoming Note' } as any;
-      if (id === 'note-3') return { id: 'note-3', title: 'Outgoing Note' } as any;
+      if (id === 'note-2') return { id: 'note-2', title: 'Incoming Note' } as unknown as Note;
+      if (id === 'note-3') return { id: 'note-3', title: 'Outgoing Note' } as unknown as Note;
       throw new Error('Not found');
     });
 
@@ -46,7 +46,7 @@ describe('NoteLinks', () => {
       incoming: [],
       outgoing: [{ source_note_id: 'note-1', target_note_id: 'note-3', created_at: '' }]
     });
-    vi.mocked(notesApi.getNote).mockResolvedValue({ id: 'note-3', title: 'Outgoing Note' } as any);
+    vi.mocked(notesApi.getNote).mockResolvedValue({ id: 'note-3', title: 'Outgoing Note' } as unknown as Note);
 
     render(<NoteLinks workspaceId="ws-1" noteId="note-1" />);
     

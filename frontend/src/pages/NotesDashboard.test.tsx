@@ -6,6 +6,11 @@ import * as notesApi from '@/api/notes';
 
 vi.mock('@/api/notes', () => ({
   listNotes: vi.fn(),
+  searchNotes: vi.fn().mockResolvedValue({ items: [], total: 0, query: '' }),
+}));
+
+vi.mock('@/api/tags', () => ({
+  listWorkspaceTags: vi.fn().mockResolvedValue({ items: [], total: 0 }),
 }));
 
 const mockNote = {
@@ -36,15 +41,21 @@ describe('NotesDashboard', () => {
 
     render(<NotesDashboard workspaceId="ws-1" />);
 
+    // "Knowledge Base" text appears in the breadcrumb
     expect(screen.getByText('Knowledge Base')).toBeInTheDocument();
-    
+
     await waitFor(() => {
       expect(screen.getByText('Pinned Note')).toBeInTheDocument();
       expect(screen.getByText('Recent Note')).toBeInTheDocument();
     });
-    
-    // Check total notes (1 recent note returned in total)
-    expect(screen.getByText('1 note in workspace')).toBeInTheDocument();
+  });
+
+  it('shows workspace name badge when workspaceName prop is provided', async () => {
+    vi.mocked(notesApi.listNotes).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 100 });
+
+    render(<NotesDashboard workspaceId="ws-1" workspaceName="My Workspace" />);
+
+    expect(screen.getByTestId('active-workspace-badge')).toHaveTextContent('My Workspace');
   });
 
   it('toggles archived view', async () => {
@@ -56,11 +67,11 @@ describe('NotesDashboard', () => {
     });
 
     render(<NotesDashboard workspaceId="ws-1" />);
-    
-    // Click archived toggle (button with text "Archived" or title depending on responsive setup, we have span text)
+
+    // Click archived toggle (button with text "Archived")
     const archiveBtn = screen.getByRole('button', { name: /Archived/i });
     await userEvent.click(archiveBtn);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Archived Notes')).toBeInTheDocument();
       expect(screen.getByText('Archived Note')).toBeInTheDocument();

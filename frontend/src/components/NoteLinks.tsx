@@ -54,7 +54,7 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
             try {
               const note = await getNote(targetId);
               noteTitle = note.title;
-            } catch (e) {
+            } catch {
               console.warn('Failed to fetch linked note', targetId);
             }
             return { link, noteTitle, noteId: targetId };
