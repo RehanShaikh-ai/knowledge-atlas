@@ -5,10 +5,11 @@ Canonical model per contract §5.1.
 
 import uuid
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, Computed, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -18,6 +19,20 @@ if TYPE_CHECKING:
     from app.models.tag import Tag
     from app.models.user import User
     from app.models.workspace import Workspace
+
+
+@compiles(Computed, "sqlite")
+def _compile_computed_sqlite(element: Computed, compiler: Any, **kw: Any) -> str:
+    """Override DDL compilation for Computed columns on SQLite dialect.
+
+    PostgreSQL full-text search functions like `to_tsvector` are not available in SQLite.
+    Replacing PostgreSQL-specific functions allows SQLite in-memory unit test tables
+    to compile without errors while leaving PostgreSQL DDL unchanged.
+    """
+    sql = str(element.sqltext)
+    if "to_tsvector" in sql:
+        sql = "coalesce(title, '') || ' ' || coalesce(content, '')"
+    return f"GENERATED ALWAYS AS ({sql}) STORED"
 
 
 class Note(Base):
@@ -86,6 +101,10 @@ class Note(Base):
     )
     search_vector: Mapped[str | None] = mapped_column(
         TSVECTOR().with_variant(Text(), "sqlite"),
+        Computed(
+            "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, ''))",
+            persisted=True,
+        ),
         nullable=True,
     )
 

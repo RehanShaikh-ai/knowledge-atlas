@@ -143,3 +143,17 @@ def test_note_links_validate_workspace_and_cascade(client: TestClient):
     assert client.delete(f"/api/v1/notes/{source['id']}").status_code == 204
     links_after_delete = client.get(f"/api/v1/notes/{target['id']}/links")
     assert links_after_delete.json() == {"outgoing": [], "incoming": []}
+
+
+def test_note_creation_succeeds_with_generated_search_vector(client: TestClient):
+    """Regression test: Note creation succeeds when search_vector is a GENERATED ALWAYS column."""
+    user_id, workspace_id = _create_workspace(client)
+    note = _create_note(
+        client,
+        workspace_id,
+        user_id,
+        title="Search Vector Regression Test",
+        content="Testing generated search_vector column",
+    )
+    assert note["id"] is not None
+    assert note["title"] == "Search Vector Regression Test"
