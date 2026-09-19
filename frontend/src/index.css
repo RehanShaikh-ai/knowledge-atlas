@@ -318,9 +318,9 @@ textarea:focus-visible {
 .setup-container {
   flex: 1;
   width: 100%;
-  max-width: 1140px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 40px 36px;
+  padding: 44px 40px;
   overflow-y: auto;
 }
 
@@ -405,59 +405,65 @@ textarea:focus-visible {
 }
 
 .selection-notice {
-  background: rgba(74, 222, 128, 0.08);
-  border: 1px solid rgba(74, 222, 128, 0.3);
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-family: 'Space Mono', monospace;
-  color: var(--green) !important;
-  margin: 0 0 20px 0 !important;
-  font-size: 12px !important;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 9999px;
+  padding: 6px 16px;
+  font-family: inherit;
+  color: #38bdf8 !important;
+  margin: 0 0 24px 0 !important;
+  font-size: 12.5px !important;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  backdrop-filter: blur(12px);
 }
 
 /* ==========================================================================
    Forms & Inputs (Harmonious Dark Theme)
    ========================================================================== */
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   position: relative;
-  transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1);
-}
-
-.form-group:focus-within {
-  transform: translateX(4px);
 }
 
 .form-group label {
   color: var(--subtext0);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   margin-bottom: 8px;
   font-family: 'Space Mono', monospace;
   font-size: 11px;
+  font-weight: 600;
   display: block;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-  border: none;
-  border-bottom: 1px solid var(--overlay0);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   width: 100%;
   color: var(--text);
-  background: transparent;
-  border-radius: 0;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 8px;
   outline: none;
-  padding: 8px 0;
-  font-size: 15px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: rgba(56, 189, 248, 0.6);
+  background: rgba(15, 23, 42, 0.85);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: var(--overlay1);
+  color: #64748b;
 }
 
 .form-group select option {
@@ -466,48 +472,38 @@ textarea:focus-visible {
 }
 
 .input-glow {
-  background: var(--blue);
-  width: 0;
-  height: 2px;
-  box-shadow: 0 0 12px var(--blue);
-  transition: width 0.35s ease;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-
-.form-group:focus-within .input-glow {
-  width: 100%;
+  display: none;
 }
 
 .submit-wrap {
-  margin-top: 16px;
+  margin-top: 20px;
   position: relative;
 }
 
 .btn-base {
-  background: var(--blue);
-  color: var(--crust);
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  color: #ffffff;
   cursor: pointer;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  border-radius: 7px;
-  padding: 8px 18px;
-  font-size: 12px;
-  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
 }
 
 .btn-base:hover {
-  background: #7dd3fc;
-  border-color: #7dd3fc;
+  background: linear-gradient(135deg, #0369a1, #0284c7);
+  border-color: #38bdf8;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
 }
 
 .btn-base:active {
@@ -913,11 +909,11 @@ textarea:focus-visible {
   cursor: pointer;
   white-space: nowrap;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 7px;
+  border-radius: 8px;
   justify-content: center;
   align-items: center;
   gap: 7px;
-  padding: 6px 12px;
+  padding: 7px 14px;
   font-size: 13px;
   font-weight: 500;
   transition: all 0.15s;
