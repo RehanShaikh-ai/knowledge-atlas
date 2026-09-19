@@ -62,7 +62,7 @@ Knowledge Atlas is in active early development. The foundation is being built me
 
 - ✅ Users and workspaces
 - ✅ Full-stack infrastructure (FastAPI, React, PostgreSQL, Docker)
-- 🔄 Notes with Markdown, tags, full-text search, and note linking *(in progress)*
+- ✅ Notes with Markdown, workspace tags, full-text search (`tsvector`), and note-to-note linking (v0.2.1 Knowledge Foundation)
 
 **What's coming:**
 
@@ -161,15 +161,31 @@ Base URL: `http://localhost:8080/api/v1`
 **Current endpoints:**
 
 ```http
-GET  /api/v1/health
+GET    /api/v1/health
 
-POST /api/v1/users
-GET  /api/v1/users
-GET  /api/v1/users/{id}
+POST   /api/v1/users
+GET    /api/v1/users
+GET    /api/v1/users/{id}
 
-POST /api/v1/workspaces
-GET  /api/v1/workspaces
-GET  /api/v1/workspaces/{id}
+POST   /api/v1/workspaces
+GET    /api/v1/workspaces
+GET    /api/v1/workspaces/{id}
+
+POST   /api/v1/workspaces/{workspace_id}/notes
+GET    /api/v1/workspaces/{workspace_id}/notes
+GET    /api/v1/notes/{note_id}
+PATCH  /api/v1/notes/{note_id}
+DELETE /api/v1/notes/{note_id}
+
+POST   /api/v1/notes/{note_id}/tags
+DELETE /api/v1/notes/{note_id}/tags/{tag_id}
+GET    /api/v1/workspaces/{workspace_id}/tags
+
+POST   /api/v1/notes/{note_id}/links
+DELETE /api/v1/notes/{note_id}/links/{target_note_id}
+GET    /api/v1/notes/{note_id}/links
+
+GET    /api/v1/workspaces/{workspace_id}/notes/search?q={query}
 ```
 
 Full API documentation is generated automatically at `http://localhost:8080/docs` when the backend is running.
