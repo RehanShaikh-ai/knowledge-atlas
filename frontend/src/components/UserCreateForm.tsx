@@ -55,7 +55,6 @@ export const UserCreateForm: React.FC<UserCreateFormProps> = ({ onUserCreated })
             placeholder="e.g. Ada Lovelace"
             disabled={loading}
           />
-          <div className="input-glow" />
         </div>
 
         {error && <ErrorState error={error} />}

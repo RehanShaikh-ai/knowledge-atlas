@@ -98,8 +98,9 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
         <div className="form-group mb-5">
           <label htmlFor="workspace-owner-select">Owner</label>
           {selectedUser ? (
-            <div data-testid="selected-workspace-owner" className="border-b border-slate-800 text-sky-300 font-mono text-xs py-2.5">
-              {selectedUser.display_name} ({selectedUser.id})
+            <div data-testid="selected-workspace-owner" className="px-3.5 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-lg text-xs font-mono flex items-center justify-between gap-3">
+              <span className="font-semibold text-slate-200">{selectedUser.display_name}</span>
+              <span className="text-slate-500 text-[11px] truncate max-w-[220px]">{selectedUser.id}</span>
             </div>
           ) : !isManualOwner && users.length > 0 ? (
             <div className="flex gap-2 items-center">
@@ -109,7 +110,7 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
                 value={ownerId || users[0]?.id || ''}
                 onChange={(e) => setOwnerId(e.target.value)}
                 disabled={loading}
-                className="flex-1 bg-transparent border-b border-slate-800 text-slate-100 py-2.5 outline-none font-mono text-xs"
+                className="flex-1 bg-slate-950/60 border border-slate-800 text-slate-100 px-3.5 py-2.5 rounded-lg outline-none font-mono text-xs focus:border-sky-500/60"
               >
                 {users.map((u) => (
                   <option key={u.id} value={u.id} className="bg-slate-900 text-slate-100">
@@ -120,31 +121,28 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
               <button
                 type="button"
                 onClick={() => setIsManualOwner(true)}
-                className="px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 rounded text-xs font-mono uppercase"
+                className="px-3 py-2 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 rounded-lg text-xs font-mono whitespace-nowrap transition-colors"
               >
-                Enter UUID
+                Manual UUID
               </button>
             </div>
           ) : (
             <div className="flex gap-2 items-center">
-              <div className="relative flex-1">
-                <input
-                  id="workspace-owner-input"
-                  data-testid="workspace-owner-input"
-                  type="text"
-                  value={customOwnerId}
-                  onChange={(e) => setCustomOwnerId(e.target.value)}
-                  placeholder="Enter owner UUID (e.g. 123e4567-e89b...)"
-                  disabled={loading}
-                  className="w-full bg-transparent border-b border-slate-800 text-slate-100 py-2.5 font-mono text-xs outline-none"
-                />
-                <div className="input-glow" />
-              </div>
+              <input
+                id="workspace-owner-input"
+                data-testid="workspace-owner-input"
+                type="text"
+                value={customOwnerId}
+                onChange={(e) => setCustomOwnerId(e.target.value)}
+                placeholder="Enter owner UUID (e.g. 123e4567-e89b...)"
+                disabled={loading}
+                className="flex-1 bg-slate-950/60 border border-slate-800 text-slate-100 px-3.5 py-2.5 rounded-lg font-mono text-xs outline-none focus:border-sky-500/60"
+              />
               {users.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setIsManualOwner(false)}
-                  className="px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 rounded text-xs font-mono uppercase"
+                  className="px-3 py-2 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 rounded-lg text-xs font-mono whitespace-nowrap transition-colors"
                 >
                   Select User
                 </button>
