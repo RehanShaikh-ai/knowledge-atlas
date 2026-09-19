@@ -5,21 +5,20 @@ import { createNote, updateNote, deleteNote } from '@/api/notes';
 import { addTag, removeTag } from '@/api/tags';
 import { Pin, Archive, Trash2, Save, X, Eye, Edit3, Tag as TagIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FlowHoverButton } from '@/components/ui/flow-hover-button';
 
 function renderMarkdown(content: string) {
   const html = content
     .replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-6 mb-4">$1</h1>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-5 mb-3">$1</h2>')
-    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-4 mb-2">$1</h3>')
-    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*)\*/gim, '<em>$1</em>')
-    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-indigo-600 hover:underline">$1</a>')
-    .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-slate-300 pl-4 italic my-4">$1</blockquote>')
-    .replace(/\n\n/g, '</p><p class="my-3">');
+    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-6 mb-3 text-slate-100">$1</h1>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-5 mb-2.5 text-slate-100">$1</h2>')
+    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2 text-slate-200">$1</h3>')
+    .replace(/\*\*(.*)\*\*/gim, '<strong class="text-slate-100 font-semibold">$1</strong>')
+    .replace(/\*(.*)\*/gim, '<em class="text-slate-300">$1</em>')
+    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-sky-400 hover:text-sky-300 hover:underline">$1</a>')
+    .replace(/^> (.*$)/gim, '<blockquote class="border-l-2 border-sky-500/50 pl-4 italic my-3 text-slate-400 bg-sky-950/10 py-1 rounded-r">$1</blockquote>')
+    .replace(/\n\n/g, '</p><p class="my-3 text-slate-300 leading-relaxed">');
   
-  return `<div class="prose max-w-none text-slate-700">${html}</div>`;
+  return `<div class="max-w-none text-slate-300 text-sm sm:text-base leading-relaxed">${html}</div>`;
 }
 
 interface NoteEditorProps {
@@ -33,13 +32,13 @@ interface NoteEditorProps {
 }
 
 export const NoteEditor: React.FC<NoteEditorProps> = ({ 
-  workspaceId,
+  workspaceId, 
   userId = 'default-user-id',
   initialNote, 
   onClose, 
-  onSaved,
+  onSaved, 
   onDeleted,
-  className
+  className 
 }) => {
   const isEditing = !!initialNote;
   
@@ -170,86 +169,108 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden", className)}>
-      <header className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
+    <div className={cn("flex flex-col h-full bg-[#0c1017]/95 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-2xl text-slate-100 overflow-hidden", className)}>
+      <header className="flex items-center justify-between p-3.5 sm:p-4 border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md">
         <div className="flex items-center gap-1 sm:gap-2">
             <button 
+                type="button"
                 onClick={() => setIsPinned(!isPinned)}
-                className={cn("p-2 rounded-lg transition-colors", isPinned ? "bg-amber-100 text-amber-600 shadow-sm" : "text-slate-400 hover:bg-slate-200 hover:text-slate-600")}
+                className={cn(
+                    "p-2 rounded-lg transition-colors border text-xs font-medium flex items-center gap-1.5",
+                    isPinned 
+                        ? "bg-amber-400/15 text-amber-300 border-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.15)]" 
+                        : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                )}
                 title={isPinned ? "Unpin note" : "Pin note"}
             >
-                <Pin size={18} className={isPinned ? "fill-current" : ""} />
+                <Pin size={16} className={isPinned ? "fill-current" : ""} />
             </button>
             <button 
+                type="button"
                 onClick={() => setIsArchived(!isArchived)}
-                className={cn("p-2 rounded-lg transition-colors", isArchived ? "bg-slate-200 text-slate-700 shadow-sm" : "text-slate-400 hover:bg-slate-200 hover:text-slate-600")}
+                className={cn(
+                    "p-2 rounded-lg transition-colors border text-xs font-medium flex items-center gap-1.5",
+                    isArchived 
+                        ? "bg-purple-400/15 text-purple-300 border-purple-400/30 shadow-[0_0_10px_rgba(192,132,252,0.15)]" 
+                        : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                )}
                 title={isArchived ? "Unarchive note" : "Archive note"}
             >
-                <Archive size={18} />
+                <Archive size={16} />
             </button>
             
-            <div className="w-px h-6 bg-slate-200 mx-1 sm:mx-2" />
+            <div className="w-px h-5 bg-slate-800 mx-1 sm:mx-2" />
             
             <button
+                type="button"
                 onClick={() => setIsPreview(!isPreview)}
                 className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors",
-                    isPreview ? "bg-slate-200 text-slate-800 shadow-sm" : "text-slate-600 hover:bg-slate-100"
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border",
+                    isPreview 
+                        ? "bg-sky-500/15 text-sky-300 border-sky-500/30 shadow-[0_0_10px_rgba(56,189,248,0.15)]" 
+                        : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
                 )}
             >
-                {isPreview ? <><Edit3 size={16} /> <span className="hidden sm:inline">Edit</span></> : <><Eye size={16} /> <span className="hidden sm:inline">Preview</span></>}
+                {isPreview ? <><Edit3 size={15} /> <span className="hidden sm:inline">Edit</span></> : <><Eye size={15} /> <span className="hidden sm:inline">Preview</span></>}
             </button>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
             {isEditing && (
                 <button 
+                    type="button"
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/20"
                     title="Delete note"
                 >
-                    {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                 </button>
             )}
-            <FlowHoverButton 
+            <button 
+                type="button"
                 onClick={handleSave}
                 disabled={isSaving || !isDirty}
-                icon={isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 className={cn(
-                    "px-4 py-1.5 text-xs font-semibold",
+                    "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all border",
                     isDirty 
-                        ? "bg-indigo-600 text-white border-indigo-500" 
-                        : "opacity-40 cursor-not-allowed"
+                        ? "bg-sky-500 hover:bg-sky-400 text-slate-950 border-sky-400 shadow-[0_0_14px_rgba(56,189,248,0.35)] hover:-translate-y-0.5" 
+                        : "bg-slate-800/40 text-slate-500 border-slate-700/40 cursor-not-allowed"
                 )}
             >
+                {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 Save
-            </FlowHoverButton>
-            <button onClick={handleClose} aria-label="Close" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors ml-1">
-                <X size={20} />
+            </button>
+            <button 
+                type="button"
+                onClick={handleClose} 
+                aria-label="Close" 
+                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg transition-colors ml-1"
+            >
+                <X size={18} />
             </button>
         </div>
       </header>
 
       {error && (
-        <div className="m-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm font-medium">
+        <div className="m-4 p-3 bg-rose-950/40 border border-rose-800/50 text-rose-300 rounded-lg text-xs font-medium">
             {error.message}
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto p-6 lg:p-10 flex flex-col">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8 flex flex-col">
         <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Note title"
-            className="text-3xl lg:text-4xl font-bold text-slate-900 placeholder:text-slate-300 border-none outline-none bg-transparent mb-6 lg:mb-8 focus:ring-0 w-full"
+            className="text-2xl lg:text-3xl font-bold text-slate-100 placeholder:text-slate-600 border-none outline-none bg-transparent mb-5 focus:ring-0 w-full tracking-tight"
             readOnly={isPreview}
         />
         
         {isPreview ? (
             <div 
-                className="flex-1"
+                className="flex-1 overflow-y-auto"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(content || '*Empty note*') }} 
             />
         ) : (
@@ -257,20 +278,25 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Write your note here... (Markdown supported)"
-                className="flex-1 resize-none border-none outline-none bg-transparent text-slate-700 placeholder:text-slate-300 focus:ring-0 leading-relaxed text-lg min-h-[300px]"
+                className="flex-1 resize-none border-none outline-none bg-transparent text-slate-200 placeholder:text-slate-600 focus:ring-0 leading-relaxed text-sm sm:text-base min-h-[300px]"
             />
         )}
       </main>
 
-      <footer className="p-4 border-t border-slate-100 bg-slate-50 flex items-center gap-3 overflow-x-auto">
-        <TagIcon size={16} className="text-slate-400 shrink-0" />
+      <footer className="p-3.5 border-t border-slate-800/80 bg-slate-900/40 backdrop-blur-md flex items-center gap-3 overflow-x-auto">
+        <TagIcon size={15} className="text-slate-500 shrink-0" />
         <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-1 sm:pb-0">
             {tags.map(tag => (
-                <span key={tag.id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide bg-slate-200 text-slate-700 whitespace-nowrap uppercase">
+                <span key={tag.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-medium tracking-wide bg-sky-950/50 border border-sky-500/30 text-sky-300 whitespace-nowrap lowercase">
                     {tag.name}
                     {isEditing && (
-                        <button onClick={() => handleRemoveTag(tag.id)} aria-label={`Remove tag ${tag.name}`} className="hover:text-red-500 rounded-full hover:bg-slate-300 p-0.5 transition-colors">
-                            <X size={12} strokeWidth={3} />
+                        <button 
+                            type="button"
+                            onClick={() => handleRemoveTag(tag.id)} 
+                            aria-label={`Remove tag ${tag.name}`} 
+                            className="hover:text-rose-400 rounded-full hover:bg-rose-500/20 p-0.5 transition-colors"
+                        >
+                            <X size={11} strokeWidth={2.5} />
                         </button>
                     )}
                 </span>
@@ -282,11 +308,11 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={handleAddTag}
                     placeholder="Add tag..."
-                    className="text-sm font-medium bg-transparent border-none outline-none w-24 focus:ring-0 placeholder:text-slate-400"
+                    className="text-xs font-mono bg-transparent border-none outline-none w-24 focus:ring-0 text-slate-300 placeholder:text-slate-600"
                 />
             )}
             {!isEditing && tags.length === 0 && (
-                <span className="text-xs font-medium text-slate-400">Save note to add tags</span>
+                <span className="text-xs font-mono text-slate-500">Save note to add tags</span>
             )}
         </div>
       </footer>

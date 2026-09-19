@@ -1,7 +1,6 @@
-import React from 'react';
-import GradientButton from "@/components/ui/button-1";
-import { Button as FlowHoverButton } from "@/components/ui/flow-hover-button";
+import { Button } from "@/components/ui/flow-hover-button";
 
+// Fallback GitHub icon since Lucide v1+ removed brand icons in favor of general git icons
 const Github = ({ className = "w-4 h-4", ...props }: React.SVGProps<SVGSVGElement>) => (
   <svg
     viewBox="0 0 24 24"
@@ -20,28 +19,10 @@ const Github = ({ className = "w-4 h-4", ...props }: React.SVGProps<SVGSVGElemen
   </svg>
 );
 
-const DemoOne = () => {
+export default function DemoOne() {
   return (
-    <div className="flex w-full h-screen justify-center items-center">
-      <GradientButton
-        onClick={() => console.log('clicked')}
-        width="300px"
-        height="60px"
-        disabled={false}
-      >
-        Button
-      </GradientButton>
-    </div>
-  );
-};
-
-export function FlowHoverDemo() {
-  return (
-    <FlowHoverButton icon={<Github />}>
+    <Button icon={<Github />}>
       Hover Over Me
-    </FlowHoverButton>
+    </Button>
   );
 }
-
-export { DemoOne };
-export default DemoOne;

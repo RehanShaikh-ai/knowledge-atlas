@@ -5,12 +5,7 @@ import { getNoteLinkss, createNoteLink, deleteNoteLink } from '@/api/note_links'
 import { getNote } from '@/api/notes';
 import { SearchBar } from './SearchBar';
 import { Link2, ArrowRight, ArrowLeft, Loader2, X, Plus } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface NoteLinksProps {
   workspaceId: string;
@@ -118,15 +113,16 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col border border-slate-200 rounded-2xl bg-white shadow-sm overflow-hidden", className)}>
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/80">
-        <div className="flex items-center gap-2 text-slate-800 font-bold text-sm tracking-tight">
-          <Link2 size={16} className="text-slate-500" />
+    <div className={cn("flex flex-col border border-slate-700/60 rounded-2xl bg-[#0c1017]/95 shadow-2xl backdrop-blur-2xl text-slate-100 overflow-hidden", className)}>
+      <div className="flex items-center justify-between p-4 border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md">
+        <div className="flex items-center gap-2 text-slate-200 font-bold text-sm tracking-tight">
+          <Link2 size={16} className="text-sky-400" />
           Note Links
         </div>
         <button
+          type="button"
           onClick={() => setIsLinking(!isLinking)}
-          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-sky-300 hover:bg-sky-500/15 rounded-lg transition-colors border border-transparent hover:border-sky-500/30"
           title="Add link"
         >
           {isLinking ? <X size={16} strokeWidth={2.5} /> : <Plus size={16} strokeWidth={2.5} />}
@@ -135,53 +131,55 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
       
       <div className="p-4">
         {error && (
-          <div className="mb-4 text-xs text-red-600 bg-red-50/80 border border-red-100 p-2.5 rounded-lg font-medium">
+          <div className="mb-4 text-xs text-rose-300 bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-lg font-medium">
             {error.message}
           </div>
         )}
         
         {isLinking && (
-          <div className="mb-5 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-200">
-            <p className="text-xs font-semibold text-indigo-800/80 uppercase tracking-wide mb-3">Search to link note</p>
+          <div className="mb-5 p-3.5 bg-sky-950/25 rounded-xl border border-sky-500/30 animate-in fade-in slide-in-from-top-2 duration-200">
+            <p className="text-[11px] font-semibold text-sky-300 uppercase tracking-wider mb-2.5">Search to link note</p>
             <SearchBar 
               workspaceId={workspaceId} 
               onNoteSelect={handleCreateLink}
-              className="w-full shadow-none border-indigo-200/60"
+              className="w-full shadow-none border-sky-500/30"
             />
           </div>
         )}
         
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-            <Loader2 size={24} className="animate-spin mb-2 text-indigo-400" />
-            <span className="text-xs font-medium">Loading links...</span>
+            <Loader2 size={24} className="animate-spin mb-2 text-sky-400" />
+            <span className="text-xs font-mono">Loading constellation links...</span>
           </div>
         ) : incoming.length === 0 && outgoing.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-sm font-medium">
+          <div className="text-center py-8 text-slate-500 text-xs font-mono">
             No linked notes yet
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {incoming.length > 0 && (
               <div>
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <ArrowRight size={12} strokeWidth={2.5} /> Linked from
+                <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5 font-mono">
+                  <ArrowRight size={12} strokeWidth={2.5} className="text-sky-400" /> Linked from
                 </h4>
                 <ul className="space-y-1">
                   {incoming.map(item => (
-                    <li key={item.noteId} className="flex items-center justify-between group p-1.5 -mx-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+                    <li key={item.noteId} className="flex items-center justify-between group px-2.5 py-1.5 rounded-lg hover:bg-slate-800/50 border border-transparent hover:border-slate-700/50 transition-colors">
                       <button 
+                        type="button"
                         onClick={() => onNavigateToNote?.(item.noteId)}
-                        className="text-sm text-slate-700 font-medium hover:text-indigo-600 text-left truncate pr-2 transition-colors"
+                        className="text-xs sm:text-sm text-slate-300 font-medium hover:text-sky-300 text-left truncate pr-2 transition-colors"
                       >
                         {item.noteTitle}
                       </button>
                       <button 
+                        type="button"
                         onClick={() => handleDeleteLink(item.noteId, true)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 rounded transition-all"
                         title="Remove link"
                       >
-                        <X size={14} strokeWidth={2.5} />
+                        <X size={13} strokeWidth={2.5} />
                       </button>
                     </li>
                   ))}
@@ -191,24 +189,26 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
             
             {outgoing.length > 0 && (
               <div>
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <ArrowLeft size={12} strokeWidth={2.5} /> Links to
+                <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5 font-mono">
+                  <ArrowLeft size={12} strokeWidth={2.5} className="text-purple-400" /> Links to
                 </h4>
                 <ul className="space-y-1">
                   {outgoing.map(item => (
-                    <li key={item.noteId} className="flex items-center justify-between group p-1.5 -mx-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+                    <li key={item.noteId} className="flex items-center justify-between group px-2.5 py-1.5 rounded-lg hover:bg-slate-800/50 border border-transparent hover:border-slate-700/50 transition-colors">
                       <button 
+                        type="button"
                         onClick={() => onNavigateToNote?.(item.noteId)}
-                        className="text-sm text-slate-700 font-medium hover:text-indigo-600 text-left truncate pr-2 transition-colors"
+                        className="text-xs sm:text-sm text-slate-300 font-medium hover:text-sky-300 text-left truncate pr-2 transition-colors"
                       >
                         {item.noteTitle}
                       </button>
                       <button 
+                        type="button"
                         onClick={() => handleDeleteLink(item.noteId, false)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 rounded transition-all"
                         title="Remove link"
                       >
-                        <X size={14} strokeWidth={2.5} />
+                        <X size={13} strokeWidth={2.5} />
                       </button>
                     </li>
                   ))}

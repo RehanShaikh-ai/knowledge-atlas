@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { StarField } from '@/components/StarField';
 import { FlowHoverButton } from '@/components/ui/flow-hover-button';
-import GradientButton from '@/components/ui/button-1';
 
 type WorkflowPhase = 'users' | 'workspaces' | 'notes';
 
@@ -273,15 +272,14 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
             </FlowHoverButton>
           )}
           {!isUsersPhase && selectedWorkspace && (
-            <GradientButton
-              width="210px"
-              height="38px"
+            <FlowHoverButton
+              type="button"
+              className="px-3.5 py-1.5 text-xs font-semibold"
               data-testid="continue-to-notes"
               onClick={onProceed}
-              className="text-xs font-semibold px-4"
             >
               Open Knowledge Base →
-            </GradientButton>
+            </FlowHoverButton>
           )}
         </div>
       </div>
@@ -301,37 +299,45 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
       {/* Panel content */}
       <div className="workflow-panel">
         {isUsersPhase ? (
-          <>
-            <UserCreateForm onUserCreated={onUserCreated} />
-            <UserList
-              users={users}
-              loading={loadingUsers}
-              error={userError}
-              onRefresh={onRefreshUsers}
-              selectedUserId={selectedUser?.id}
-              onUserSelect={onUserSelect}
-            />
-          </>
-        ) : (
-          <>
-            {selectedUser && (
-              <WorkspaceCreateForm
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+            <div className="lg:border-r lg:border-slate-800/80 lg:pr-8">
+              <UserCreateForm onUserCreated={onUserCreated} />
+            </div>
+            <div className="lg:pl-2">
+              <UserList
                 users={users}
-                selectedUser={selectedUser}
-                onWorkspaceCreated={onWorkspaceCreated}
+                loading={loadingUsers}
+                error={userError}
+                onRefresh={onRefreshUsers}
+                selectedUserId={selectedUser?.id}
+                onUserSelect={onUserSelect}
               />
-            )}
-            <WorkspaceList
-              workspaces={workspaces}
-              loading={loadingWorkspaces}
-              error={workspaceError}
-              onRefresh={onRefreshWorkspaces}
-              selectedWorkspaceId={selectedWorkspace?.id}
-              onSelectWorkspace={(workspace) => {
-                onWorkspaceSelectAndOpen(workspace);
-              }}
-            />
-          </>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+            <div className="lg:border-r lg:border-slate-800/80 lg:pr-8">
+              {selectedUser && (
+                <WorkspaceCreateForm
+                  users={users}
+                  selectedUser={selectedUser}
+                  onWorkspaceCreated={onWorkspaceCreated}
+                />
+              )}
+            </div>
+            <div className="lg:pl-2">
+              <WorkspaceList
+                workspaces={workspaces}
+                loading={loadingWorkspaces}
+                error={workspaceError}
+                onRefresh={onRefreshWorkspaces}
+                selectedWorkspaceId={selectedWorkspace?.id}
+                onSelectWorkspace={(workspace) => {
+                  onWorkspaceSelectAndOpen(workspace);
+                }}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>
