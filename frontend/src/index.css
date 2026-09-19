@@ -80,16 +80,6 @@ textarea:focus-visible {
    ========================================================================== */
 .app-shell {
   background: var(--crust);
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(148, 163, 184, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.025) 1px, transparent 1px);
-  background-size:
-    40px 40px,
-    40px 40px,
-    10px 10px,
-    10px 10px;
   height: 100vh;
   display: flex;
   position: relative;

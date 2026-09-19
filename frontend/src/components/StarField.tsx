@@ -10,8 +10,10 @@ interface Star {
 }
 
 /**
- * Animated canvas starfield with subtle mouse parallax and twinkling.
- * Renders behind all UI layers as a fixed background.
+ * Animated background canvas featuring:
+ * 1. Large Fisheye Lens styled curved blueprint grid
+ * 2. Subtle optical center tracking with mouse parallax
+ * 3. Deep space twinkling constellation starfield
  */
 export const StarField: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,12 +26,18 @@ export const StarField: React.FC = () => {
 
     let animFrame: number;
     let stars: Star[] = [];
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
+    
+    // Optical & mouse tracking
+    let targetFocalX = window.innerWidth / 2;
+    let targetFocalY = window.innerHeight / 2;
+    let focalX = targetFocalX;
+    let focalY = targetFocalY;
+    let mouseX = targetFocalX;
+    let mouseY = targetFocalY;
     let time = 0;
 
     const initStars = () => {
-      const density = 8000; // Pixels squared per star
+      const density = 9000;
       const count = Math.floor((canvas.width * canvas.height) / density);
       stars = Array.from({ length: count }, () => ({
         x: Math.random() * canvas.width,
@@ -47,18 +55,112 @@ export const StarField: React.FC = () => {
       initStars();
     };
 
+    // Fisheye Lens Projection
+    const projectFisheye = (x: number, y: number, fx: number, fy: number, maxRadius: number) => {
+      const dx = x - fx;
+      const dy = y - fy;
+      const dist = Math.hypot(dx, dy);
+      if (dist === 0) return { x, y };
+
+      const norm = dist / maxRadius;
+      // Barrel fisheye expansion: curves lines radially outwards from the optical center
+      const factor = 1 + 0.34 * Math.pow(norm, 2);
+      return {
+        x: fx + dx * factor,
+        y: fy + dy * factor,
+      };
+    };
+
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       time += 1;
 
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
-      const dx = (mouseX - cx) / cx; // Range: -1 to 1
-      const dy = (mouseY - cy) / cy; // Range: -1 to 1
+      // Smooth dampening for the fisheye optical focal center
+      focalX += (targetFocalX - focalX) * 0.04;
+      focalY += (targetFocalY - focalY) * 0.04;
+
+      const w = canvas.width;
+      const h = canvas.height;
+      const maxRadius = Math.hypot(w, h) * 0.65;
+
+      // ======================================================================
+      // 1. Large Fisheye Lens Grid
+      // ======================================================================
+      const gridSize = 100; // Large, prominent grid size
+      const step = 20;      // Step size along curve for smooth arcs
+
+      // Create radial lens gradient for subtle, high-end visibility
+      const gridGradient = ctx.createRadialGradient(focalX, focalY, 40, focalX, focalY, maxRadius);
+      gridGradient.addColorStop(0, 'rgba(56, 189, 248, 0.22)');     // Optical center cyan tint
+      gridGradient.addColorStop(0.4, 'rgba(148, 163, 184, 0.16)');  // Subtle, clearly visible body
+      gridGradient.addColorStop(0.85, 'rgba(148, 163, 184, 0.08)'); // Distant horizon fade
+      gridGradient.addColorStop(1, 'rgba(148, 163, 184, 0.02)');
+
+      ctx.save();
+      ctx.strokeStyle = gridGradient;
+      ctx.lineWidth = 1.1;
+
+      // Vertical Curved Lines
+      const startX = Math.floor((focalX % gridSize) - gridSize * 3);
+      const endX = w + gridSize * 3;
+      for (let gx = startX; gx <= endX; gx += gridSize) {
+        ctx.beginPath();
+        let first = true;
+        for (let gy = -gridSize * 2; gy <= h + gridSize * 2; gy += step) {
+          const pt = projectFisheye(gx, gy, focalX, focalY, maxRadius);
+          if (first) {
+            ctx.moveTo(pt.x, pt.y);
+            first = false;
+          } else {
+            ctx.lineTo(pt.x, pt.y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      // Horizontal Curved Lines
+      const startY = Math.floor((focalY % gridSize) - gridSize * 3);
+      const endY = h + gridSize * 3;
+      for (let gy = startY; gy <= endY; gy += gridSize) {
+        ctx.beginPath();
+        let first = true;
+        for (let gx = -gridSize * 2; gx <= w + gridSize * 2; gx += step) {
+          const pt = projectFisheye(gx, gy, focalX, focalY, maxRadius);
+          if (first) {
+            ctx.moveTo(pt.x, pt.y);
+            first = false;
+          } else {
+            ctx.lineTo(pt.x, pt.y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      // Fisheye Grid Intersection Nodes
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      for (let gx = startX; gx <= endX; gx += gridSize) {
+        for (let gy = startY; gy <= endY; gy += gridSize) {
+          const pt = projectFisheye(gx, gy, focalX, focalY, maxRadius);
+          if (pt.x >= -10 && pt.x <= w + 10 && pt.y >= -10 && pt.y <= h + 10) {
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+      ctx.restore();
+
+      // ======================================================================
+      // 2. Constellation Stars & Twinkle
+      // ======================================================================
+      const cx = w / 2;
+      const cy = h / 2;
+      const dx = (mouseX - cx) / cx;
+      const dy = (mouseY - cy) / cy;
 
       for (const star of stars) {
         const twinkle = Math.sin(time * star.twinkleSpeed + star.twinkleOffset);
-        const opacity = Math.max(0.05, Math.min(1, star.baseOpacity + twinkle * 0.15));
+        const opacity = Math.max(0.06, Math.min(1, star.baseOpacity + twinkle * 0.15));
 
         // Parallax effect
         const parallaxScale = star.size * 1.8;
@@ -66,8 +168,8 @@ export const StarField: React.FC = () => {
         const py = star.y + dy * parallaxScale;
 
         // Edge wrapping
-        const wx = ((px % canvas.width) + canvas.width) % canvas.width;
-        const wy = ((py % canvas.height) + canvas.height) % canvas.height;
+        const wx = ((px % w) + w) % w;
+        const wy = ((py % h) + h) % h;
 
         ctx.beginPath();
         ctx.arc(wx, wy, star.size, 0, Math.PI * 2);
@@ -77,7 +179,7 @@ export const StarField: React.FC = () => {
         ctx.fillStyle = `hsla(${hue}, 80%, 92%, ${opacity})`;
         ctx.fill();
 
-        // Star glow effect
+        // Star glow effect for brighter stars
         if (star.size > 0.85) {
           ctx.beginPath();
           ctx.arc(wx, wy, star.size * 2.5, 0, Math.PI * 2);
@@ -92,6 +194,9 @@ export const StarField: React.FC = () => {
     const handleMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
+      // Gently bias focal center toward cursor for interactive optical depth
+      targetFocalX = canvas.width / 2 + (e.clientX - canvas.width / 2) * 0.25;
+      targetFocalY = canvas.height / 2 + (e.clientY - canvas.height / 2) * 0.25;
     };
 
     resize();
