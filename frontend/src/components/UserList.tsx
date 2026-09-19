@@ -4,6 +4,7 @@ import { ApiError } from '@/types/api';
 import { LoadingState } from './LoadingState';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
+import { FlowHoverButton } from '@/components/ui/flow-hover-button';
 
 interface UserListProps {
   users: User[];
@@ -27,14 +28,14 @@ export const UserList: React.FC<UserListProps> = ({
       <div style={styles.header}>
         <h3 style={styles.title}>Users ({users.length})</h3>
         {onRefresh && (
-          <button
+          <FlowHoverButton
             type="button"
             data-testid="refresh-users-button"
             onClick={onRefresh}
-            style={styles.refreshBtn}
+            className="text-xs px-2.5 py-1"
           >
             Refresh
-          </button>
+          </FlowHoverButton>
         )}
       </div>
 

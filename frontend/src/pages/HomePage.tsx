@@ -23,6 +23,8 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { StarField } from '@/components/StarField';
+import { FlowHoverButton } from '@/components/ui/flow-hover-button';
+import GradientButton from '@/components/ui/button-1';
 
 type WorkflowPhase = 'users' | 'workspaces' | 'notes';
 
@@ -261,24 +263,25 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
             </button>
           )}
           {isUsersPhase && selectedUser && (
-            <button
+            <FlowHoverButton
               type="button"
-              className="btn-primary-dark"
+              className="px-3.5 py-1.5 text-xs font-semibold"
               data-testid="continue-to-workspaces"
               onClick={onProceed}
             >
               Continue →
-            </button>
+            </FlowHoverButton>
           )}
           {!isUsersPhase && selectedWorkspace && (
-            <button
-              type="button"
-              className="btn-primary-dark"
+            <GradientButton
+              width="210px"
+              height="38px"
               data-testid="continue-to-notes"
               onClick={onProceed}
+              className="text-xs font-semibold px-4"
             >
               Open Knowledge Base →
-            </button>
+            </GradientButton>
           )}
         </div>
       </div>

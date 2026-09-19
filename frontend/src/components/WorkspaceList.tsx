@@ -4,6 +4,7 @@ import { ApiError } from '@/types/api';
 import { LoadingState } from './LoadingState';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
+import { FlowHoverButton } from '@/components/ui/flow-hover-button';
 
 interface WorkspaceListProps {
   workspaces: Workspace[];
@@ -27,14 +28,14 @@ export const WorkspaceList: React.FC<WorkspaceListProps> = ({
       <div style={styles.header}>
         <h3 style={styles.title}>Workspaces ({workspaces.length})</h3>
         {onRefresh && (
-          <button
+          <FlowHoverButton
             type="button"
             data-testid="refresh-workspaces-button"
             onClick={onRefresh}
-            style={styles.refreshBtn}
+            className="text-xs px-2.5 py-1"
           >
             Refresh
-          </button>
+          </FlowHoverButton>
         )}
       </div>
 
@@ -72,14 +73,14 @@ export const WorkspaceList: React.FC<WorkspaceListProps> = ({
                 <div style={styles.actionsRow}>
                   <span style={styles.owner}>Owner: {workspace.owner_id}</span>
                   {onSelectWorkspace && (
-                    <button
+                    <FlowHoverButton
                       type="button"
                       data-testid={`open-workspace-${workspace.id}`}
                       onClick={() => onSelectWorkspace(workspace)}
-                      style={styles.openBtn}
+                      className="text-xs px-3 py-1 font-semibold"
                     >
                       Open Knowledge Base →
-                    </button>
+                    </FlowHoverButton>
                   )}
                 </div>
               </li>

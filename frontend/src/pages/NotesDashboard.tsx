@@ -6,6 +6,7 @@ import { NoteEditor } from '@/components/NoteEditor';
 import { NoteLinks } from '@/components/NoteLinks';
 import { SearchBar } from '@/components/SearchBar';
 import { TagFilter } from '@/components/TagFilter';
+import { FlowHoverButton } from '@/components/ui/flow-hover-button';
 import { Plus, Archive, ChevronLeft, AlertTriangle } from 'lucide-react';
 
 interface NotesDashboardProps {
@@ -180,14 +181,14 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
               <span>Archived</span>
             </button>
 
-            <button
+            <FlowHoverButton
               type="button"
               onClick={handleNewNote}
-              className="btn-primary-dark"
+              icon={<Plus size={15} strokeWidth={2.5} aria-hidden="true" />}
+              className="px-3.5 py-1.5 text-xs font-semibold"
             >
-              <Plus size={15} strokeWidth={2.5} aria-hidden="true" />
-              <span>New Note</span>
-            </button>
+              New Note
+            </FlowHoverButton>
           </div>
         </header>
 

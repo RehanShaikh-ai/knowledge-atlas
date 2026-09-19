@@ -3119,3 +3119,34 @@ to {
 .stagger-4 { animation-delay: 0.2s; opacity: 0; }
 .stagger-5 { animation-delay: 0.25s; opacity: 0; }
 
+/* Rotating Gradient Button styles */
+:root {
+  --color-background: var(--mantle, #11111b);
+  --color-text: var(--text, #f1f5f9);
+}
+
+@property --r {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotateGradient {
+  0% {
+    --r: 0deg;
+  }
+  100% {
+    --r: 360deg;
+  }
+}
+
+.rotatingGradient {
+  background: conic-gradient(from var(--r, 0deg), #89b4fa, #cba6f7, #f38ba8, #fab387, #a6e3a1, #89b4fa);
+  animation: rotateGradient 4s linear infinite;
+}
+
+.rotatingGradient:hover {
+  animation-duration: 2s;
+}
+
+

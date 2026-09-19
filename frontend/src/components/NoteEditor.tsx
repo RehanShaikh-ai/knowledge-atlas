@@ -4,12 +4,8 @@ import { Tag } from '@/types/tag';
 import { createNote, updateNote, deleteNote } from '@/api/notes';
 import { addTag, removeTag } from '@/api/tags';
 import { Pin, Archive, Trash2, Save, X, Eye, Edit3, Tag as TagIcon, Loader2 } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '@/lib/utils';
+import { FlowHoverButton } from '@/components/ui/flow-hover-button';
 
 function renderMarkdown(content: string) {
   const html = content
@@ -216,19 +212,19 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                     {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                 </button>
             )}
-            <button 
+            <FlowHoverButton 
                 onClick={handleSave}
                 disabled={isSaving || !isDirty}
+                icon={isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all",
+                    "px-4 py-1.5 text-xs font-semibold",
                     isDirty 
-                        ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:-translate-y-0.5" 
-                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        ? "bg-indigo-600 text-white border-indigo-500" 
+                        : "opacity-40 cursor-not-allowed"
                 )}
             >
-                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                 Save
-            </button>
+            </FlowHoverButton>
             <button onClick={handleClose} aria-label="Close" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors ml-1">
                 <X size={20} />
             </button>
