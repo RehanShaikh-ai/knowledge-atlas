@@ -299,11 +299,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
       {/* Panel content */}
       <div className="workflow-panel">
         {isUsersPhase ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-            <div className="lg:border-r lg:border-slate-800/80 lg:pr-8">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10">
+            <div className="xl:col-span-5 xl:border-r xl:border-slate-800/80 xl:pr-8">
               <UserCreateForm onUserCreated={onUserCreated} />
             </div>
-            <div className="lg:pl-2">
+            <div className="xl:col-span-7 xl:pl-2">
               <UserList
                 users={users}
                 loading={loadingUsers}
@@ -315,8 +315,8 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-            <div className="lg:border-r lg:border-slate-800/80 lg:pr-8">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10">
+            <div className="xl:col-span-5 xl:border-r xl:border-slate-800/80 xl:pr-8">
               {selectedUser && (
                 <WorkspaceCreateForm
                   users={users}
@@ -325,7 +325,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
                 />
               )}
             </div>
-            <div className="lg:pl-2">
+            <div className="xl:col-span-7 xl:pl-2">
               <WorkspaceList
                 workspaces={workspaces}
                 loading={loadingWorkspaces}

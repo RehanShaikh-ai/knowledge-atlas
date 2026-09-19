@@ -318,9 +318,9 @@ textarea:focus-visible {
 .setup-container {
   flex: 1;
   width: 100%;
-  max-width: 980px;
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 40px 32px;
+  padding: 40px 36px;
   overflow-y: auto;
 }
 
@@ -364,12 +364,12 @@ textarea:focus-visible {
 .workflow-panel {
   border: 1px solid var(--card-border);
   background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 12px;
-  margin-bottom: 20px;
-  padding: 28px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  padding: 32px 36px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
 }
 
 .workflow-panel h2 {
