@@ -39,14 +39,7 @@ export const TagFilter: React.FC<TagFilterProps> = ({
   }, [workspaceId]);
 
   if (error) {
-    return (
-      <span
-        style={{ fontSize: '11px', color: 'var(--red)', fontFamily: 'Space Mono, monospace' }}
-        className={className}
-      >
-        Failed to load tags
-      </span>
-    );
+    return null;
   }
 
   if (isLoading && tags.length === 0) {

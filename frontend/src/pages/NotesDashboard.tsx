@@ -203,102 +203,103 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
 
         {/* Scrollable content */}
         <main className="notes-scroll" aria-label="Notes">
-          {/* Error banner */}
-          {error && (
-            <div className="error-banner" role="alert">
-              <div className="error-banner-icon" aria-hidden="true">
-                <AlertTriangle size={15} />
+          <div className="notes-container">
+            {/* Error banner */}
+            {error && (
+              <div className="error-banner" role="alert">
+                <div className="error-banner-icon" aria-hidden="true">
+                  <AlertTriangle size={18} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p className="error-banner-title">
+                    {isBackendPending
+                      ? 'Backend Notes API Pending (Workstream B)'
+                      : 'Error loading notes'}
+                  </p>
+                  <p className="error-banner-msg">
+                    {isBackendPending
+                      ? 'Notes endpoints (/api/v1/workspaces/.../notes) are not yet implemented. You can still test the Note Editor and Markdown preview!'
+                      : error.message}
+                  </p>
+                </div>
+                {isBackendPending && (
+                  <button
+                    type="button"
+                    className="btn-ghost-dark whitespace-nowrap shrink-0"
+                    onClick={handleNewNote}
+                  >
+                    Launch Editor
+                  </button>
+                )}
               </div>
-              <div style={{ flex: 1 }}>
-                <p className="error-banner-title">
-                  {isBackendPending
-                    ? 'Backend Notes API Pending (Workstream B)'
-                    : 'Error loading notes'}
-                </p>
-                <p className="error-banner-msg">
-                  {isBackendPending
-                    ? 'Notes endpoints (/api/v1/workspaces/.../notes) are not yet implemented. You can still test the Note Editor and Markdown preview!'
-                    : error.message}
-                </p>
-              </div>
-              {isBackendPending && (
-                <button
-                  type="button"
-                  className="btn-ghost-dark"
-                  onClick={handleNewNote}
-                  style={{ flexShrink: 0 }}
-                >
-                  Test Editor
-                </button>
-              )}
-            </div>
-          )}
+            )}
 
-          {isArchivedView ? (
-            <section aria-labelledby="archived-heading">
-              <h2 id="archived-heading" className="notes-section-heading">
-                <span className="node-dot" aria-hidden="true" />
-                Archived Notes
-              </h2>
-              <NoteList
-                notes={archivedNotes}
-                isLoading={isLoadingArchived}
-                onNoteClick={handleNoteSelect}
-                onNoteUpdated={handleNoteSaved}
-                onNoteDeleted={handleNoteDeleted}
-                emptyStateMessage="No archived notes"
-                emptyStateSubMessage="Notes you archive will appear here."
-              />
-            </section>
-          ) : (
-            <>
-              {(pinnedNotes.length > 0 || isLoadingPinned) && (
-                <section aria-labelledby="pinned-heading" style={{ marginBottom: '28px' }}>
-                  <h2 id="pinned-heading" className="notes-section-heading">
-                    <span className="node-dot amber" aria-hidden="true" />
-                    Pinned
-                  </h2>
-                  <NoteList
-                    notes={pinnedNotes}
-                    isLoading={isLoadingPinned}
-                    onNoteClick={handleNoteSelect}
-                    onNoteUpdated={handleNoteSaved}
-                    onNoteDeleted={handleNoteDeleted}
-                    emptyStateMessage="No pinned notes"
-                    emptyStateSubMessage=""
-                  />
-                </section>
-              )}
-
-              <section aria-labelledby="recent-heading">
-                <h2 id="recent-heading" className="notes-section-heading">
+            {isArchivedView ? (
+              <section aria-labelledby="archived-heading">
+                <h2 id="archived-heading" className="notes-section-heading">
                   <span className="node-dot" aria-hidden="true" />
-                  Recent Notes
-                  {totalNotes > 0 && (
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        fontFamily: 'Space Mono, monospace',
-                        color: 'var(--overlay0)',
-                        marginLeft: '6px',
-                      }}
-                    >
-                      {totalNotes}
-                    </span>
-                  )}
+                  Archived Notes
                 </h2>
                 <NoteList
-                  notes={recentNotes}
-                  isLoading={isLoadingRecent}
+                  notes={archivedNotes}
+                  isLoading={isLoadingArchived}
                   onNoteClick={handleNoteSelect}
                   onNoteUpdated={handleNoteSaved}
                   onNoteDeleted={handleNoteDeleted}
-                  emptyStateMessage="No recent notes"
-                  emptyStateSubMessage="Create your first note to begin building your knowledge atlas."
+                  emptyStateMessage="No archived notes"
+                  emptyStateSubMessage="Notes you archive will appear here."
                 />
               </section>
-            </>
-          )}
+            ) : (
+              <>
+                {(pinnedNotes.length > 0 || isLoadingPinned) && (
+                  <section aria-labelledby="pinned-heading" style={{ marginBottom: '32px' }}>
+                    <h2 id="pinned-heading" className="notes-section-heading">
+                      <span className="node-dot amber" aria-hidden="true" />
+                      Pinned
+                    </h2>
+                    <NoteList
+                      notes={pinnedNotes}
+                      isLoading={isLoadingPinned}
+                      onNoteClick={handleNoteSelect}
+                      onNoteUpdated={handleNoteSaved}
+                      onNoteDeleted={handleNoteDeleted}
+                      emptyStateMessage="No pinned notes"
+                      emptyStateSubMessage=""
+                    />
+                  </section>
+                )}
+
+                <section aria-labelledby="recent-heading">
+                  <h2 id="recent-heading" className="notes-section-heading">
+                    <span className="node-dot" aria-hidden="true" />
+                    Recent Notes
+                    {totalNotes > 0 && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontFamily: 'Space Mono, monospace',
+                          color: 'var(--overlay0)',
+                          marginLeft: '6px',
+                        }}
+                      >
+                        {totalNotes}
+                      </span>
+                    )}
+                  </h2>
+                  <NoteList
+                    notes={recentNotes}
+                    isLoading={isLoadingRecent}
+                    onNoteClick={handleNoteSelect}
+                    onNoteUpdated={handleNoteSaved}
+                    onNoteDeleted={handleNoteDeleted}
+                    emptyStateMessage="No recent notes"
+                    emptyStateSubMessage="Create your first note to begin building your knowledge atlas."
+                  />
+                </section>
+              </>
+            )}
+          </div>
         </main>
       </div>
 
