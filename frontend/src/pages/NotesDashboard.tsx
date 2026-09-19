@@ -38,6 +38,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   // Editor State
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
+  const [newNoteCounter, setNewNoteCounter] = useState(0);
 
   const fetchDashboardData = useCallback(async () => {
     setError(null);
@@ -103,6 +104,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const handleNewNote = () => {
     setSelectedNote(null);
     setIsCreatingNote(true);
+    setNewNoteCounter((c) => c + 1);
   };
 
   const closeEditor = () => {
@@ -326,6 +328,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <NoteEditor
+                key={selectedNote ? selectedNote.id : `new-${newNoteCounter}`}
                 workspaceId={workspaceId}
                 userId={userId}
                 initialNote={selectedNote || undefined}
