@@ -422,13 +422,148 @@ def test_v0_2_1_foreign_key_cascades(migrated_engine):
 # ── Test 7: Migration reversibility ───────────────────────────────────────────
 
 
+def test_v0_2_2_sources_schema_constraints_and_foreign_keys(migrated_engine):
+    """Contract sections 5-6: provenance schema is complete and enforceable."""
+    inspector = inspect(migrated_engine)
+    assert "sources" in inspector.get_table_names()
+
+    source_columns = {column["name"]: column for column in inspector.get_columns("sources")}
+    expected_columns = {
+        "id",
+        "workspace_id",
+        "note_id",
+        "source_type",
+        "original_path",
+        "source_identifier",
+        "content_hash",
+        "import_batch_id",
+        "import_status",
+        "raw_metadata",
+        "error_message",
+        "imported_at",
+        "last_synced_at",
+    }
+    assert expected_columns <= source_columns.keys()
+    assert source_columns["workspace_id"]["nullable"] is False
+    assert source_columns["note_id"]["nullable"] is True
+    assert source_columns["raw_metadata"]["nullable"] is True
+
+    note_columns = {column["name"]: column for column in inspector.get_columns("notes")}
+    assert note_columns["metadata"]["nullable"] is True
+    assert note_columns["metadata"]["type"].__class__.__name__ == "JSONB"
+
+    source_indexes = {index["name"]: index for index in inspector.get_indexes("sources")}
+    assert source_indexes["idx_sources_workspace_identifier"]["unique"] is True
+    assert source_indexes["idx_sources_workspace_identifier"]["column_names"] == [
+        "workspace_id",
+        "source_identifier",
+    ]
+    assert source_indexes["idx_sources_workspace_batch"]["column_names"] == [
+        "workspace_id",
+        "import_batch_id",
+    ]
+    assert source_indexes["idx_sources_note_id"]["column_names"] == ["note_id"]
+
+    foreign_keys = inspector.get_foreign_keys("sources")
+    workspace_fk = next(fk for fk in foreign_keys if fk["constrained_columns"] == ["workspace_id"])
+    note_fk = next(fk for fk in foreign_keys if fk["constrained_columns"] == ["note_id"])
+    assert workspace_fk["referred_table"] == "workspaces"
+    assert workspace_fk["options"].get("ondelete") == "CASCADE"
+    assert note_fk["referred_table"] == "notes"
+    assert note_fk["options"].get("ondelete") == "SET NULL"
+
+
+def test_v0_2_2_source_note_fk_sets_null_and_dedup_is_unique(migrated_engine):
+    """Contract sections 5.5 and 6.1: source provenance survives note deletion."""
+    user_id = uuid.uuid4()
+    workspace_id = uuid.uuid4()
+    note_id = uuid.uuid4()
+    source_id = uuid.uuid4()
+    source_values = {
+        "id": str(source_id),
+        "workspace_id": str(workspace_id),
+        "note_id": str(note_id),
+        "content_hash": "a" * 64,
+        "batch_id": str(uuid.uuid4()),
+    }
+    with migrated_engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO users (id, display_name, created_at, updated_at) "
+                "VALUES (:id, 'Source Test User', now(), now())"
+            ),
+            {"id": str(user_id)},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO workspaces (id, name, owner_id, created_at, updated_at) "
+                "VALUES (:id, 'Source Test Workspace', :owner_id, now(), now())"
+            ),
+            {"id": str(workspace_id), "owner_id": str(user_id)},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO notes "
+                "(id, workspace_id, created_by, title, content, created_at, updated_at) "
+                "VALUES (:id, :workspace_id, :created_by, 'Imported', 'content', now(), now())"
+            ),
+            {"id": str(note_id), "workspace_id": str(workspace_id), "created_by": str(user_id)},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO sources (id, workspace_id, note_id, source_type, original_path, "
+                "source_identifier, content_hash, import_batch_id, import_status) "
+                "VALUES (:id, :workspace_id, :note_id, 'markdown', 'research/note.md', "
+                "'research/note.md', :content_hash, :batch_id, 'completed')"
+            ),
+            source_values,
+        )
+
+    with pytest.raises(IntegrityError):
+        with migrated_engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO sources (id, workspace_id, source_type, original_path, "
+                    "source_identifier, content_hash, import_batch_id, import_status) "
+                    "VALUES (:id, :workspace_id, 'text', 'duplicate.txt', 'research/note.md', "
+                    ":content_hash, :batch_id, 'completed')"
+                ),
+                {
+                    "id": str(uuid.uuid4()),
+                    "workspace_id": str(workspace_id),
+                    "content_hash": "b" * 64,
+                    "batch_id": str(uuid.uuid4()),
+                },
+            )
+
+    with migrated_engine.begin() as conn:
+        conn.execute(text("DELETE FROM notes WHERE id = :id"), {"id": str(note_id)})
+    with migrated_engine.connect() as conn:
+        assert (
+            conn.execute(
+                text("SELECT note_id FROM sources WHERE id = :id"), {"id": str(source_id)}
+            ).scalar()
+            is None
+        )
+
+
 def test_migration_downgrade_and_upgrade_are_reversible(db_url):
     """Contract §19.1 — downgrade() fully reverses upgrade().
 
     Uses the shared db_url but a fresh alembic config so as not to interfere
     with the module-scoped migrated_engine fixture.
     """
-    # Test step-by-step downgrade to 0001
+    # Downgrading only v0.2.2 preserves the v0.2.1 schema.
+    _alembic_downgrade(db_url, "0002")
+    engine = create_engine(db_url)
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    assert "sources" not in tables
+    assert "notes" in tables
+    assert "metadata" not in {column["name"] for column in inspector.get_columns("notes")}
+    engine.dispose()
+
+    # Test step-by-step downgrade to 0001.
     _alembic_downgrade(db_url, "0001")
     engine = create_engine(db_url)
     inspector = inspect(engine)
@@ -464,4 +599,6 @@ def test_migration_downgrade_and_upgrade_are_reversible(db_url):
     assert "tags" in tables
     assert "note_tags" in tables
     assert "note_links" in tables
+    assert "sources" in tables
+    assert "metadata" in {column["name"] for column in inspector.get_columns("notes")}
     engine.dispose()
