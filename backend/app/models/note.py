@@ -7,8 +7,8 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
-from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
+from sqlalchemy import JSON, Boolean, DateTime, FetchedValue, ForeignKey, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -86,7 +86,18 @@ class Note(Base):
     )
     search_vector: Mapped[str | None] = mapped_column(
         TSVECTOR().with_variant(Text(), "sqlite"),
+        FetchedValue(),
         nullable=True,
+    )
+    # Contract §6.2 (v0.2.2): nullable JSONB column for frontmatter mirrored from
+    # the linked Source.raw_metadata.  NULL for manually created notes.
+    # NOTE: "metadata" is reserved by SQLAlchemy's Declarative API so we use
+    # the Python attribute name "note_metadata" mapped to the DB column "metadata".
+    note_metadata: Mapped[dict | None] = mapped_column(
+        "metadata",
+        JSONB().with_variant(JSON(), "sqlite"),
+        nullable=True,
+        default=None,
     )
 
     workspace: Mapped["Workspace"] = relationship("Workspace")
