@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, Boolean, DateTime, FetchedValue, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
+from sqlalchemy import Boolean, DateTime, FetchedValue, ForeignKey, String, Text, func
+from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -88,6 +90,8 @@ class Note(Base):
         TSVECTOR().with_variant(Text(), "sqlite"),
         FetchedValue(),
         nullable=True,
+        server_default=FetchedValue(),
+        server_onupdate=FetchedValue(),
     )
     # Contract §6.2 (v0.2.2): nullable JSONB column for frontmatter mirrored from
     # the linked Source.raw_metadata.  NULL for manually created notes.
