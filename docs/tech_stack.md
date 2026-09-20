@@ -1,5 +1,18 @@
 # Knowledge Atlas — Technology Stack
 
+## v0.2.2 release baseline
+
+v0.2.2 uses PostgreSQL 16, Alembic, and Testcontainers PostgreSQL integration
+tests. Its additive schema introduces sources for import provenance and nullable
+notes.metadata (JSONB) for source frontmatter mirrored onto an imported note.
+Sources are indexed by workspace/source identifier, workspace/import batch, and
+note ID. Deleting a workspace cascades to sources; deleting a note retains its
+source record and clears note_id.
+
+The release does not add authentication, authorization, embeddings, pgvector,
+RAG, OCR, web scraping, or automatic relationship generation. The sections below
+are roadmap material, not v0.2.2 dependencies.
+
 ## Frontend
 
 - Language: TypeScript

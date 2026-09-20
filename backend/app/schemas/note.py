@@ -2,10 +2,20 @@
 
 import uuid
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.tag import TagResponse
+
+
+class NoteSourceAttribution(BaseModel):
+    """Source attribution for imported notes."""
+
+    source_type: str
+    original_path: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NoteCreate(BaseModel):
@@ -78,6 +88,10 @@ class NoteResponse(BaseModel):
     tags: list[TagResponse]
     created_at: datetime
     updated_at: datetime
+    metadata: dict[str, Any] | None = Field(
+        default=None, validation_alias=AliasChoices("metadata_", "metadata")
+    )
+    source: NoteSourceAttribution | None = None
 
 
 class NoteListResponse(BaseModel):

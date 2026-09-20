@@ -60,11 +60,16 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
+  const initialTagIds = (initialNote?.tags || []).map(t => t.id).sort().join(',');
+  const currentTagIds = tags.map(t => t.id).sort().join(',');
+  const areTagsDirty = initialTagIds !== currentTagIds;
+
   const isDirty = 
     title !== (initialNote?.title || '') || 
     content !== (initialNote?.content || '') ||
     isPinned !== (initialNote?.is_pinned || false) ||
-    isArchived !== (initialNote?.is_archived || false);
+    isArchived !== (initialNote?.is_archived || false) ||
+    areTagsDirty;
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

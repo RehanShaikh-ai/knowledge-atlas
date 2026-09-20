@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { NoteEditor } from './NoteEditor';
 import * as notesApi from '@/api/notes';
+import * as tagsApi from '@/api/tags';
 
 vi.mock('@/api/notes', () => ({
   createNote: vi.fn(),
@@ -122,5 +123,30 @@ describe('NoteEditor', () => {
     render(<NoteEditor key="new-1" {...props} />);
     expect((screen.getByPlaceholderText('Note title') as HTMLInputElement).value).toBe('');
     expect((screen.getByPlaceholderText(/Write your note here/i) as HTMLTextAreaElement).value).toBe('');
+  });
+
+  it('enables Save button when a tag is added to an existing note', async () => {
+    const existingNote = {
+      id: 'existing-1', workspace_id: 'ws-1', created_by: 'u1',
+      title: 'Existing Title', content: 'Existing Content',
+      is_pinned: false, is_archived: false, tags: [],
+      created_at: '', updated_at: '',
+    };
+    vi.mocked(tagsApi.addTag).mockResolvedValue({
+      id: 'tag-1', workspace_id: 'ws-1', name: 'react',
+    });
+
+    const props = { workspaceId: 'ws-1', onClose: vi.fn(), onSaved: vi.fn(), onDeleted: vi.fn() };
+    render(<NoteEditor {...props} initialNote={existingNote} />);
+
+    const saveButton = screen.getByRole('button', { name: /Save/i });
+    expect(saveButton).toBeDisabled();
+
+    const tagInput = screen.getByPlaceholderText('Add tag...');
+    await userEvent.type(tagInput, 'react{enter}');
+
+    await waitFor(() => {
+      expect(saveButton).toBeEnabled();
+    });
   });
 });

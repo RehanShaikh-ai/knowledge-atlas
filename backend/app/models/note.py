@@ -5,16 +5,18 @@ Canonical model per contract §5.1.
 
 import uuid
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, DateTime, FetchedValue, ForeignKey, String, Text, func
-from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
+from sqlalchemy.dialects.sqlite import JSON as SQLITE_JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.note_link import NoteLink
+    from app.models.source import Source
     from app.models.tag import Tag
     from app.models.user import User
     from app.models.workspace import Workspace
@@ -86,9 +88,18 @@ class Note(Base):
     )
     search_vector: Mapped[str | None] = mapped_column(
         TSVECTOR().with_variant(Text(), "sqlite"),
-        nullable=True,
         server_default=FetchedValue(),
-        server_onupdate=FetchedValue(),
+        nullable=True,
+    )
+    # Contract §6.2 (v0.2.2): nullable JSONB column for frontmatter mirrored from
+    # the linked Source.raw_metadata. NULL for manually created notes.
+    # NOTE: "metadata" is reserved by SQLAlchemy's Declarative API so we use
+    # the Python attribute name "metadata_" mapped to the DB column "metadata".
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column(
+        "metadata",
+        JSONB().with_variant(SQLITE_JSON(), "sqlite"),
+        nullable=True,
+        default=None,
     )
 
     workspace: Mapped["Workspace"] = relationship("Workspace")
@@ -109,4 +120,9 @@ class Note(Base):
         foreign_keys="NoteLink.target_note_id",
         back_populates="target_note",
         passive_deletes=True,
+    )
+    source: Mapped["Source | None"] = relationship(
+        "Source",
+        back_populates="note",
+        uselist=False,
     )
