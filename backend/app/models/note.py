@@ -7,7 +7,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func, FetchedValue
 from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -87,6 +87,8 @@ class Note(Base):
     search_vector: Mapped[str | None] = mapped_column(
         TSVECTOR().with_variant(Text(), "sqlite"),
         nullable=True,
+        server_default=FetchedValue(),
+        server_onupdate=FetchedValue(),
     )
 
     workspace: Mapped["Workspace"] = relationship("Workspace")
