@@ -11,6 +11,10 @@ export interface Note {
   tags: Tag[];
   created_at: string;
   updated_at: string;
+  source?: {
+    source_type: string;
+    original_path: string;
+  } | null;
 }
 
 export interface NoteCreate {

@@ -7,7 +7,12 @@ import { NoteLinks } from '@/components/NoteLinks';
 import { SearchBar } from '@/components/SearchBar';
 import { TagFilter } from '@/components/TagFilter';
 import { FlowHoverButton } from '@/components/ui/flow-hover-button';
-import { Plus, Archive, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { Plus, Archive, ChevronLeft, AlertTriangle, UploadCloud, LayoutDashboard, Share2, FileText } from 'lucide-react';
+import { DashboardView } from './DashboardView';
+import { GraphView } from '@/components/GraphView';
+import { ImportWizard } from '@/components/ImportWizard';
+import { NoteDetailPanel } from '@/components/NoteDetailPanel';
+import { cn } from '@/lib/utils';
 
 interface NotesDashboardProps {
   workspaceId: string;
@@ -16,12 +21,18 @@ interface NotesDashboardProps {
   onBack?: () => void;
 }
 
+type TabType = 'notes' | 'graph' | 'dashboard';
+
 export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   workspaceId,
   workspaceName,
   userId,
   onBack,
 }) => {
+  const [currentTab, setCurrentTab] = useState<TabType>('notes');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [graphSelectedNoteId, setGraphSelectedNoteId] = useState<string | null>(null);
+
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
   const [recentNotes, setRecentNotes] = useState<Note[]>([]);
   const [isArchivedView, setIsArchivedView] = useState(false);
@@ -125,20 +136,49 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
     else fetchDashboardData();
   };
 
+  const handleNavigateToNote = (noteId: string) => {
+    const found =
+      pinnedNotes.find((n) => n.id === noteId) ||
+      recentNotes.find((n) => n.id === noteId) ||
+      archivedNotes.find((n) => n.id === noteId);
+    if (found) {
+      handleNoteSelect(found);
+      setCurrentTab('notes');
+    } else {
+      // Fallback: If not in current view, could fetch it, but for now just close editor
+      closeEditor();
+    }
+  };
+
   const isEditorOpen = isCreatingNote || selectedNote !== null;
   const isBackendPending =
     error && (error.message.includes('404') || error.message.toLowerCase().includes('not found'));
 
+  const TabButton = ({ tab, label, icon: Icon }: { tab: TabType, label: string, icon: any }) => (
+    <button
+      onClick={() => setCurrentTab(tab)}
+      className={cn(
+        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
+        currentTab === tab 
+          ? "bg-sky-500/15 text-sky-300 border-sky-500/30" 
+          : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+      )}
+    >
+      <Icon size={16} />
+      {label}
+    </button>
+  );
+
   return (
     <div className="notes-layout">
-      {/* ── Left: Dashboard Panel ─────────────────────────────── */}
+      {/* ── Left: Main Panel ─────────────────────────────── */}
       <div
-        className="notes-panel animate-slide-right"
-        style={isEditorOpen ? { maxWidth: '45%', minWidth: '320px' } : {}}
+        className="notes-panel animate-slide-right flex flex-col h-full"
+        style={currentTab === 'notes' && isEditorOpen ? { maxWidth: '45%', minWidth: '320px' } : {}}
       >
         {/* Top bar */}
-        <header className="notes-topbar">
-          <div className="notes-topbar-left">
+        <header className="notes-topbar flex-wrap gap-y-3">
+          <div className="notes-topbar-left w-full sm:w-auto">
             {onBack && (
               <button
                 type="button"
@@ -154,9 +194,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
             <nav className="notes-breadcrumb" aria-label="Location">
               {workspaceName && (
                 <>
-                  <span
-                    data-testid="active-workspace-badge"
-                  >
+                  <span data-testid="active-workspace-badge">
                     {workspaceName}
                   </span>
                   <span className="notes-breadcrumb-sep" aria-hidden="true">/</span>
@@ -166,166 +204,204 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 Knowledge Base
               </span>
             </nav>
+            
+            <div className="flex items-center gap-1 ml-2">
+              <TabButton tab="notes" label="Notes" icon={FileText} />
+              <TabButton tab="graph" label="Graph" icon={Share2} />
+              <TabButton tab="dashboard" label="Dashboard" icon={LayoutDashboard} />
+            </div>
           </div>
 
-          <div className="notes-topbar-right">
-            <SearchBar
-              workspaceId={workspaceId}
-              onNoteSelect={handleNoteSelect}
-            />
+          <div className="notes-topbar-right ml-auto">
+            {currentTab === 'notes' && (
+              <>
+                <SearchBar
+                  workspaceId={workspaceId}
+                  onNoteSelect={handleNoteSelect}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsArchivedView(!isArchivedView)}
+                  className={`btn-ghost-dark${isArchivedView ? ' active' : ''}`}
+                  aria-pressed={isArchivedView}
+                  title="Toggle archived notes"
+                >
+                  <Archive size={14} aria-hidden="true" />
+                  <span className="hidden xl:inline">Archived</span>
+                </button>
+              </>
+            )}
 
             <button
-              type="button"
-              onClick={() => setIsArchivedView(!isArchivedView)}
-              className={`btn-ghost-dark${isArchivedView ? ' active' : ''}`}
-              aria-pressed={isArchivedView}
-              title="Toggle archived notes"
+              onClick={() => setIsImportModalOpen(true)}
+              className="btn-ghost-dark flex items-center gap-2 text-sky-400 hover:text-sky-300"
             >
-              <Archive size={14} aria-hidden="true" />
-              <span>Archived</span>
+              <UploadCloud size={15} />
+              <span className="hidden lg:inline">Import</span>
             </button>
 
-            <FlowHoverButton
-              type="button"
-              onClick={handleNewNote}
-              icon={<Plus size={15} strokeWidth={2.5} aria-hidden="true" />}
-              className="px-3.5 py-1.5 text-xs font-semibold"
-            >
-              New Note
-            </FlowHoverButton>
+            {currentTab === 'notes' && (
+              <FlowHoverButton
+                type="button"
+                onClick={handleNewNote}
+                icon={<Plus size={15} strokeWidth={2.5} aria-hidden="true" />}
+                className="px-3.5 py-1.5 text-xs font-semibold"
+              >
+                New Note
+              </FlowHoverButton>
+            )}
           </div>
         </header>
 
-        {/* Tag strip */}
-        <div className="notes-tagstrip" role="navigation" aria-label="Tag filters">
-          <TagFilter
-            workspaceId={workspaceId}
-            selectedTag={selectedTag}
-            onSelectTag={setSelectedTag}
-          />
-        </div>
+        {currentTab === 'notes' && (
+          <>
+            {/* Tag strip */}
+            <div className="notes-tagstrip" role="navigation" aria-label="Tag filters">
+              <TagFilter
+                workspaceId={workspaceId}
+                selectedTag={selectedTag}
+                onSelectTag={setSelectedTag}
+              />
+            </div>
 
-        {/* Scrollable content */}
-        <main className="notes-scroll" aria-label="Notes">
-          <div className="notes-container">
-            {/* Error banner */}
-            {error && (
-              <div className="error-banner" role="alert">
-                <div className="error-banner-icon" aria-hidden="true">
-                  <AlertTriangle size={18} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p className="error-banner-title">
-                    {isBackendPending
-                      ? 'Backend Notes API Pending (Workstream B)'
-                      : 'Error loading notes'}
-                  </p>
-                  <p className="error-banner-msg">
-                    {isBackendPending
-                      ? 'Notes endpoints (/api/v1/workspaces/.../notes) are not yet implemented. You can still test the Note Editor and Markdown preview!'
-                      : error.message}
-                  </p>
-                </div>
-                {isBackendPending && (
-                  <button
-                    type="button"
-                    className="btn-ghost-dark whitespace-nowrap shrink-0"
-                    onClick={handleNewNote}
-                  >
-                    Launch Editor
-                  </button>
+            {/* Scrollable content */}
+            <main className="notes-scroll" aria-label="Notes">
+              <div className="notes-container">
+                {/* Error banner */}
+                {error && (
+                  <div className="error-banner" role="alert">
+                    <div className="error-banner-icon" aria-hidden="true">
+                      <AlertTriangle size={18} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p className="error-banner-title">
+                        {isBackendPending
+                          ? 'Backend Notes API Pending (Workstream B)'
+                          : 'Error loading notes'}
+                      </p>
+                      <p className="error-banner-msg">
+                        {isBackendPending
+                          ? 'Notes endpoints (/api/v1/workspaces/.../notes) are not yet implemented. You can still test the Note Editor and Markdown preview!'
+                          : error.message}
+                      </p>
+                    </div>
+                    {isBackendPending && (
+                      <button
+                        type="button"
+                        className="btn-ghost-dark whitespace-nowrap shrink-0"
+                        onClick={handleNewNote}
+                      >
+                        Launch Editor
+                      </button>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
 
-            {isArchivedView ? (
-              <section aria-labelledby="archived-heading">
-                <h2 id="archived-heading" className="notes-section-heading">
-                  <span className="node-dot" aria-hidden="true" />
-                  Archived Notes
-                </h2>
-                <NoteList
-                  notes={archivedNotes}
-                  isLoading={isLoadingArchived}
-                  onNoteClick={handleNoteSelect}
-                  onNoteUpdated={handleNoteSaved}
-                  onNoteDeleted={handleNoteDeleted}
-                  emptyStateMessage="No archived notes"
-                  emptyStateSubMessage="Notes you archive will appear here."
-                />
-              </section>
-            ) : (
-              <>
-                {(pinnedNotes.length > 0 || isLoadingPinned) && (
-                  <section aria-labelledby="pinned-heading" style={{ marginBottom: '32px' }}>
-                    <h2 id="pinned-heading" className="notes-section-heading">
-                      <span className="node-dot amber" aria-hidden="true" />
-                      Pinned
+                {isArchivedView ? (
+                  <section aria-labelledby="archived-heading">
+                    <h2 id="archived-heading" className="notes-section-heading">
+                      <span className="node-dot" aria-hidden="true" />
+                      Archived Notes
                     </h2>
                     <NoteList
-                      notes={pinnedNotes}
-                      isLoading={isLoadingPinned}
+                      notes={archivedNotes}
+                      isLoading={isLoadingArchived}
                       onNoteClick={handleNoteSelect}
                       onNoteUpdated={handleNoteSaved}
                       onNoteDeleted={handleNoteDeleted}
-                      emptyStateMessage="No pinned notes"
-                      emptyStateSubMessage=""
+                      emptyStateMessage="No archived notes"
+                      emptyStateSubMessage="Notes you archive will appear here."
                     />
                   </section>
-                )}
-
-                <section aria-labelledby="recent-heading">
-                  <h2 id="recent-heading" className="notes-section-heading">
-                    <span className="node-dot" aria-hidden="true" />
-                    Recent Notes
-                    {totalNotes > 0 && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          fontFamily: 'Space Mono, monospace',
-                          color: 'var(--overlay0)',
-                          marginLeft: '6px',
-                        }}
-                      >
-                        {totalNotes}
-                      </span>
+                ) : (
+                  <>
+                    {(pinnedNotes.length > 0 || isLoadingPinned) && (
+                      <section aria-labelledby="pinned-heading" style={{ marginBottom: '32px' }}>
+                        <h2 id="pinned-heading" className="notes-section-heading">
+                          <span className="node-dot amber" aria-hidden="true" />
+                          Pinned
+                        </h2>
+                        <NoteList
+                          notes={pinnedNotes}
+                          isLoading={isLoadingPinned}
+                          onNoteClick={handleNoteSelect}
+                          onNoteUpdated={handleNoteSaved}
+                          onNoteDeleted={handleNoteDeleted}
+                          emptyStateMessage="No pinned notes"
+                          emptyStateSubMessage=""
+                        />
+                      </section>
                     )}
-                  </h2>
-                  <NoteList
-                    notes={recentNotes}
-                    isLoading={isLoadingRecent}
-                    onNoteClick={handleNoteSelect}
-                    onNoteUpdated={handleNoteSaved}
-                    onNoteDeleted={handleNoteDeleted}
-                    emptyStateMessage="No recent notes"
-                    emptyStateSubMessage="Create your first note to begin building your knowledge atlas."
-                  />
-                </section>
-              </>
+
+                    <section aria-labelledby="recent-heading">
+                      <h2 id="recent-heading" className="notes-section-heading">
+                        <span className="node-dot" aria-hidden="true" />
+                        Recent Notes
+                        {totalNotes > 0 && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontFamily: 'Space Mono, monospace',
+                              color: 'var(--overlay0)',
+                              marginLeft: '6px',
+                            }}
+                          >
+                            {totalNotes}
+                          </span>
+                        )}
+                      </h2>
+                      <NoteList
+                        notes={recentNotes}
+                        isLoading={isLoadingRecent}
+                        onNoteClick={handleNoteSelect}
+                        onNoteUpdated={handleNoteSaved}
+                        onNoteDeleted={handleNoteDeleted}
+                        emptyStateMessage="No recent notes"
+                        emptyStateSubMessage="Create your first note to begin building your knowledge atlas."
+                      />
+                    </section>
+                  </>
+                )}
+              </div>
+            </main>
+          </>
+        )}
+
+        {currentTab === 'graph' && (
+          <div className="flex-1 flex p-4 relative">
+            <GraphView 
+              workspaceId={workspaceId} 
+              onNodeClick={setGraphSelectedNoteId} 
+              className="flex-1"
+            />
+            {graphSelectedNoteId && (
+              <div className="absolute top-8 right-8 w-[380px] z-20">
+                <NoteDetailPanel 
+                  noteId={graphSelectedNoteId} 
+                  onClose={() => setGraphSelectedNoteId(null)}
+                  onEditNote={(note) => {
+                    handleNoteSelect(note);
+                    setCurrentTab('notes');
+                    setGraphSelectedNoteId(null);
+                  }}
+                />
+              </div>
             )}
           </div>
-        </main>
+        )}
+
+        {currentTab === 'dashboard' && (
+          <DashboardView 
+            workspaceId={workspaceId}
+            onNavigateToNote={handleNavigateToNote}
+          />
+        )}
       </div>
 
-      {/* ── Right: Editor Panel ──────────────────────────────── */}
-      {isEditorOpen && (
+      {/* ── Right: Editor Panel (Only visible on Notes tab) ──────────────────────────────── */}
+      {currentTab === 'notes' && isEditorOpen && (
         <aside className="editor-panel animate-slide-left" aria-label="Note editor">
           <div className="editor-panel-inner">
-            {/* Mobile close strip */}
-            <div
-              style={{
-                display: 'none',
-                padding: '12px 16px',
-                borderBottom: '1px solid var(--card-border)',
-              }}
-              className="editor-mobile-close"
-            >
-              <button type="button" onClick={closeEditor} className="btn-back">
-                <ChevronLeft size={15} />
-                Back to Dashboard
-              </button>
-            </div>
-
             <div style={{ flex: 1, minWidth: 0 }}>
               <NoteEditor
                 key={selectedNote ? selectedNote.id : `new-${newNoteCounter}`}
@@ -344,24 +420,28 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 <NoteLinks
                   workspaceId={workspaceId}
                   noteId={selectedNote.id}
-                  onNavigateToNote={(id) => {
-                    const found =
-                      pinnedNotes.find((n) => n.id === id) ||
-                      recentNotes.find((n) => n.id === id) ||
-                      archivedNotes.find((n) => n.id === id);
-                    if (found) {
-                      handleNoteSelect(found);
-                    } else {
-                      closeEditor();
-                      alert('Note link clicked. The note might not be in the current view.');
-                    }
-                  }}
+                  onNavigateToNote={handleNavigateToNote}
                   className="sticky top-6"
                 />
               </div>
             )}
           </div>
         </aside>
+      )}
+
+      {/* ── Import Modal ──────────────────────────────── */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07090e]/80 backdrop-blur-sm">
+          <ImportWizard 
+            workspaceId={workspaceId}
+            userId={userId || '00000000-0000-0000-0000-000000000000'}
+            onClose={() => setIsImportModalOpen(false)}
+            onImportComplete={() => {
+              fetchDashboardData();
+              if (isArchivedView) fetchArchivedData();
+            }}
+          />
+        </div>
       )}
     </div>
   );
