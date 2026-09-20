@@ -14,7 +14,7 @@ interface NoteDetailPanelProps {
 
 export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClose, onEditNote, className }) => {
   const [note, setNote] = useState<Note | null>(null);
-  const [neighborhood, setNeighborhood] = useState<any>(null);
+  const [neighborhood, setNeighborhood] = useState<{ edges?: unknown[] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

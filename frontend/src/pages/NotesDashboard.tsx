@@ -23,6 +23,21 @@ interface NotesDashboardProps {
 
 type TabType = 'notes' | 'graph' | 'dashboard';
 
+const TabButton = ({ tab, label, icon: Icon, currentTab, setCurrentTab }: { tab: TabType, label: string, icon: React.ElementType, currentTab: TabType, setCurrentTab: (t: TabType) => void }) => (
+  <button
+    onClick={() => setCurrentTab(tab)}
+    className={cn(
+      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
+      currentTab === tab 
+        ? "bg-sky-500/15 text-sky-300 border-sky-500/30" 
+        : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+    )}
+  >
+    <Icon size={16} />
+    {label}
+  </button>
+);
+
 export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   workspaceId,
   workspaceName,
@@ -154,20 +169,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const isBackendPending =
     error && (error.message.includes('404') || error.message.toLowerCase().includes('not found'));
 
-  const TabButton = ({ tab, label, icon: Icon }: { tab: TabType, label: string, icon: any }) => (
-    <button
-      onClick={() => setCurrentTab(tab)}
-      className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
-        currentTab === tab 
-          ? "bg-sky-500/15 text-sky-300 border-sky-500/30" 
-          : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-      )}
-    >
-      <Icon size={16} />
-      {label}
-    </button>
-  );
+
 
   return (
     <div className="notes-layout">
@@ -206,9 +208,9 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
             </nav>
             
             <div className="flex items-center gap-1 ml-2">
-              <TabButton tab="notes" label="Notes" icon={FileText} />
-              <TabButton tab="graph" label="Graph" icon={Share2} />
-              <TabButton tab="dashboard" label="Dashboard" icon={LayoutDashboard} />
+              <TabButton tab="notes" label="Notes" icon={FileText} currentTab={currentTab} setCurrentTab={setCurrentTab} />
+              <TabButton tab="graph" label="Graph" icon={Share2} currentTab={currentTab} setCurrentTab={setCurrentTab} />
+              <TabButton tab="dashboard" label="Dashboard" icon={LayoutDashboard} currentTab={currentTab} setCurrentTab={setCurrentTab} />
             </div>
           </div>
 

@@ -11,7 +11,7 @@ export interface Source {
   content_hash: string;
   import_batch_id: string;
   import_status: ImportStatus;
-  raw_metadata: Record<string, any> | null;
+  raw_metadata: Record<string, unknown> | null;
   error_message: string | null;
   imported_at: string;
   last_synced_at: string | null;

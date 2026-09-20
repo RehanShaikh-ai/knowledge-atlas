@@ -18,6 +18,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphRef = useRef<any>();
 
   useEffect(() => {
@@ -54,7 +55,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
     setIsFullscreen(!isFullscreen);
   };
 
-  const handleNodeClick = useCallback((node: any) => {
+  const handleNodeClick = useCallback((node: { id: string }) => {
     if (onNodeClick) {
       onNodeClick(node.id);
     }
@@ -127,7 +128,10 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
           height={dimensions.height}
           graphData={data}
           nodeLabel="title"
-          nodeColor={(node: any) => node.degree === 0 ? '#475569' : (node.is_pinned ? '#fbbf24' : '#38bdf8')}
+          nodeColor={(node: { degree?: number, is_pinned?: boolean } | unknown) => {
+            const n = node as { degree?: number, is_pinned?: boolean };
+            return n.degree === 0 ? '#475569' : (n.is_pinned ? '#fbbf24' : '#38bdf8');
+          }}
           nodeRelSize={5}
           linkColor={() => 'rgba(148, 163, 184, 0.2)'}
           linkWidth={1}
