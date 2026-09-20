@@ -45,7 +45,7 @@ def search_notes(
     total = db.scalar(select(func.count(Note.id)).where(*filters)) or 0
     statement = (
         select(Note)
-        .options(selectinload(Note.tags))
+        .options(selectinload(Note.tags), selectinload(Note.source))
         .where(*filters)
         .order_by(ordering)
         .offset((page - 1) * page_size)

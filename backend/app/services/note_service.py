@@ -22,7 +22,7 @@ from app.services import user_service, workspace_service
 
 
 def _note_statement() -> Select[tuple[Note]]:
-    return select(Note).options(selectinload(Note.tags))
+    return select(Note).options(selectinload(Note.tags), selectinload(Note.source))
 
 
 def get_workspace_or_raise(db: Session, workspace_id: uuid.UUID) -> None:

@@ -76,3 +76,10 @@ class ValidationError(AppException):
 
     def __init__(self, message: str) -> None:
         super().__init__(status.HTTP_422_UNPROCESSABLE_CONTENT, "VALIDATION_ERROR", message)
+
+
+class SourceNotFoundError(AppException):
+    """Raised when a source is not found (404, SOURCE_NOT_FOUND)."""
+
+    def __init__(self, message: str = "Source not found.") -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, "SOURCE_NOT_FOUND", message)
