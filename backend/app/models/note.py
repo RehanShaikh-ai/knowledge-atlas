@@ -91,12 +91,15 @@ class Note(Base):
         server_default=FetchedValue(),
         nullable=True,
     )
+    # Contract §6.2 (v0.2.2): nullable JSONB column for frontmatter mirrored from
+    # the linked Source.raw_metadata. NULL for manually created notes.
+    # NOTE: "metadata" is reserved by SQLAlchemy's Declarative API so we use
+    # the Python attribute name "metadata_" mapped to the DB column "metadata".
     metadata_: Mapped[dict[str, Any] | None] = mapped_column(
         "metadata",
         JSONB().with_variant(SQLITE_JSON(), "sqlite"),
         nullable=True,
-        server_default=FetchedValue(),
-        server_onupdate=FetchedValue(),
+        default=None,
     )
 
     workspace: Mapped["Workspace"] = relationship("Workspace")
