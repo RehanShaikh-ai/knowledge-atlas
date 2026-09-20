@@ -5,20 +5,25 @@ import { createNote, updateNote, deleteNote } from '@/api/notes';
 import { addTag, removeTag } from '@/api/tags';
 import { Pin, Archive, Trash2, Save, X, Eye, Edit3, Tag as TagIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import DOMPurify from 'dompurify';
 
 function renderMarkdown(content: string) {
-  const html = content
-    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  let html = content
     .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-6 mb-3 text-slate-100">$1</h1>')
     .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-5 mb-2.5 text-slate-100">$1</h2>')
     .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2 text-slate-200">$1</h3>')
     .replace(/\*\*(.*)\*\*/gim, '<strong class="text-slate-100 font-semibold">$1</strong>')
     .replace(/\*(.*)\*/gim, '<em class="text-slate-300">$1</em>')
-    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-sky-400 hover:text-sky-300 hover:underline">$1</a>')
+    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-sky-400 hover:text-sky-300 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
     .replace(/^> (.*$)/gim, '<blockquote class="border-l-2 border-sky-500/50 pl-4 italic my-3 text-slate-400 bg-sky-950/10 py-1 rounded-r">$1</blockquote>')
     .replace(/\n\n/g, '</p><p class="my-3 text-slate-300 leading-relaxed">');
   
-  return `<div class="max-w-none text-slate-300 text-sm sm:text-base leading-relaxed">${html}</div>`;
+  html = `<div class="max-w-none text-slate-300 text-sm sm:text-base leading-relaxed">${html}</div>`;
+  
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'blockquote', 'div', 'span', 'br', 'hr', 'code', 'pre', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'u', 's', 'sub', 'sup', 'mark'],
+    ALLOWED_ATTR: ['href', 'class', 'target', 'rel', 'src', 'alt', 'title', 'style']
+  });
 }
 
 interface NoteEditorProps {
