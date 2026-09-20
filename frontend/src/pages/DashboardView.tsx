@@ -60,11 +60,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
     <div className="flex-1 p-8 overflow-y-auto">
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[var(--text)] flex items-center gap-2">
             <Activity className="text-sky-400" />
             Knowledge Telemetry
           </h1>
-          <p className="text-slate-400 text-sm mt-1">Factual statistics about your workspace.</p>
+          <p className="text-[var(--subtext0)] text-sm mt-1">Factual statistics about your workspace.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -93,8 +93,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-[#0c1017]/80 border border-slate-700/50 rounded-xl p-5">
-            <h3 className="text-sm font-semibold tracking-wide uppercase text-slate-400 flex items-center gap-2 mb-4">
+          <div className="dashboard-card p-5">
+            <h3 className="dashboard-metric-label flex items-center gap-2 mb-4">
               <Zap size={16} className="text-amber-400" />
               Most Connected Notes
             </h3>
@@ -122,8 +122,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
           </div>
 
           <div className="space-y-6">
-            <div className="bg-[#0c1017]/80 border border-slate-700/50 rounded-xl p-5">
-              <h3 className="text-sm font-semibold tracking-wide uppercase text-slate-400 flex items-center gap-2 mb-4">
+            <div className="dashboard-card p-5">
+              <h3 className="dashboard-metric-label flex items-center gap-2 mb-4">
                 <TagIcon size={16} className="text-purple-400" />
                 Top Tags
               </h3>
@@ -141,10 +141,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
               </div>
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-700/30 rounded-xl p-5 flex items-center justify-between">
+            <div className="dashboard-card p-5 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-slate-300">Isolated Notes</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Notes without any connections</p>
+                <h3 className="text-sm font-medium text-[var(--text)]">Isolated Notes</h3>
+                <p className="text-xs text-[var(--subtext0)] mt-0.5">Notes without any connections</p>
               </div>
               <span className="text-2xl font-mono text-slate-400 bg-slate-800/50 px-3 py-1 rounded-lg border border-slate-700/50">
                 {stats.isolated_notes_count}

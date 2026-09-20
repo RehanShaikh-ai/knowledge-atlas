@@ -431,7 +431,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
 
       {/* ── Import Modal ──────────────────────────────── */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07090e]/80 backdrop-blur-sm">
+        <div className="fixed inset-0 flex items-center justify-center p-4 modal-overlay">
           <ImportWizard 
             workspaceId={workspaceId}
             userId={userId || '00000000-0000-0000-0000-000000000000'}

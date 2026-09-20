@@ -43,14 +43,14 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({ preview }) => {
         </div>
       )}
 
-      <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-slate-800/40 border-b border-slate-700/50 text-xs font-semibold text-slate-400 uppercase tracking-wider flex justify-between">
+      <div className="bg-[var(--crust)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+        <div className="px-4 py-3 bg-[var(--surface1)] border-b border-[var(--card-border)] text-xs font-semibold text-[var(--overlay1)] uppercase tracking-wider flex justify-between">
           <span>Detected Files</span>
           <span>Status</span>
         </div>
         <div className="max-h-64 overflow-y-auto p-2 space-y-1">
           {preview.detected_notes.map((note, idx) => (
-            <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800/40 text-sm">
+            <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-[var(--surface1)] text-sm">
               <div className="flex flex-col overflow-hidden mr-4">
                 <span className="font-medium text-slate-200 truncate">{note.title}</span>
                 <span className="text-xs text-slate-500 truncate">{note.original_path}</span>

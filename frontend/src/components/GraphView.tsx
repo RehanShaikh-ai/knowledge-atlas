@@ -95,7 +95,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
     <div 
       ref={containerRef}
       className={cn(
-        "relative bg-[#07090e] border border-slate-700/50 rounded-xl overflow-hidden flex flex-col group",
+        "relative bg-[var(--crust)] border border-[var(--card-border)] rounded-xl overflow-hidden flex flex-col group",
         isFullscreen ? "fixed inset-4 z-50 shadow-2xl" : className || "flex-1"
       )}
     >
@@ -134,7 +134,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
           onNodeClick={handleNodeClick}
           cooldownTicks={100}
           onEngineStop={() => graphRef.current?.zoomToFit(400, 50)}
-          backgroundColor="#07090e"
+          backgroundColor="rgba(0,0,0,0)"
         />
       </div>
     </div>

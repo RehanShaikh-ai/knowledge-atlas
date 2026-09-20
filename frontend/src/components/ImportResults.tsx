@@ -28,8 +28,8 @@ export const ImportResults: React.FC<ImportResultsProps> = ({ results }) => {
         </div>
       </div>
 
-      <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-slate-800/40 border-b border-slate-700/50 text-xs font-semibold text-slate-400 uppercase tracking-wider flex justify-between">
+      <div className="bg-[var(--crust)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+        <div className="px-4 py-3 bg-[var(--surface1)] border-b border-[var(--card-border)] text-xs font-semibold text-[var(--overlay1)] uppercase tracking-wider flex justify-between">
           <span>File Results</span>
           <span>Status</span>
         </div>
@@ -47,7 +47,7 @@ export const ImportResults: React.FC<ImportResultsProps> = ({ results }) => {
             }
 
             return (
-              <div key={idx} className="flex flex-col p-2 rounded-lg hover:bg-slate-800/40 text-sm border border-transparent hover:border-slate-700/50">
+              <div key={idx} className="flex flex-col p-2 rounded-lg hover:bg-[var(--surface1)] text-sm border border-transparent hover:border-[var(--card-border)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 overflow-hidden mr-4">
                     <FileText size={14} className="text-slate-500 shrink-0" />

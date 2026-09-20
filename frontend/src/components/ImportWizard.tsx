@@ -77,7 +77,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
   };
 
   return (
-    <div className="bg-[#0c1017]/95 border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-2xl max-h-[85vh]">
+    <div className="modal-panel overflow-hidden flex flex-col w-full max-w-2xl max-h-[85vh]">
       <header className="p-5 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
         <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
           <UploadCloud className="text-sky-400" />
@@ -168,7 +168,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
             <button
               onClick={step === 1 ? handlePreview : handleCommit}
               disabled={isLoading || (step === 1 && (!files || files.length === 0))}
-              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-5 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-base"
             >
               {isLoading && <Loader2 size={16} className="animate-spin" />}
               {step === 1 ? 'Preview Import' : 'Confirm & Import'}
@@ -178,7 +178,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
         ) : (
           <button
             onClick={onClose}
-            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-5 py-2 rounded-lg transition-colors"
+            className="btn-base"
           >
             <Check size={16} />
             Done

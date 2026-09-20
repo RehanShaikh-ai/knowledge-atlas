@@ -44,7 +44,7 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
 
   if (isLoading) {
     return (
-      <div className={cn("bg-[#0c1017]/95 border border-slate-700/60 rounded-2xl shadow-2xl p-6 flex flex-col items-center justify-center", className)}>
+      <div className={cn("modal-panel p-6 flex flex-col items-center justify-center", className)}>
         <Loader2 size={24} className="animate-spin text-sky-400 mb-2" />
         <p className="text-slate-400 text-sm">Loading details...</p>
       </div>
@@ -53,7 +53,7 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
 
   if (error || !note) {
     return (
-      <div className={cn("bg-[#0c1017]/95 border border-slate-700/60 rounded-2xl shadow-2xl p-6 relative", className)}>
+      <div className={cn("modal-panel p-6 relative", className)}>
         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-200">
           <X size={18} />
         </button>
@@ -68,7 +68,7 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
   const edgesCount = neighborhood?.edges?.length || 0;
 
   return (
-    <div className={cn("bg-[#0c1017]/95 border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col", className)}>
+    <div className={cn("modal-panel overflow-hidden flex flex-col", className)}>
       <header className="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-start">
         <div className="pr-8">
           <h3 className="font-bold text-slate-100 text-lg leading-tight mb-1">{note.title}</h3>
@@ -112,7 +112,7 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
       <footer className="p-3 border-t border-slate-800 bg-slate-900/50">
         <button 
           onClick={() => onEditNote(note)}
-          className="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+          className="btn-base w-full"
         >
           Open in Editor
         </button>
