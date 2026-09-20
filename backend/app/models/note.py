@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy import Boolean, DateTime, FetchedValue, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
 from sqlalchemy.dialects.sqlite import JSON as SQLITE_JSON
-from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
