@@ -4,6 +4,7 @@ import { ApiError } from '@/types/api';
 import { LoadingState } from './LoadingState';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
+import { Check } from 'lucide-react';
 
 interface UserListProps {
   users: User[];
@@ -23,15 +24,15 @@ export const UserList: React.FC<UserListProps> = ({
   onUserSelect,
 }) => {
   return (
-    <div style={styles.card}>
-      <div style={styles.header}>
-        <h3 style={styles.title}>Users ({users.length})</h3>
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Identities ({users.length})</h3>
         {onRefresh && (
           <button
             type="button"
             data-testid="refresh-users-button"
             onClick={onRefresh}
-            style={styles.refreshBtn}
+            className="px-2.5 py-1 text-xs font-mono text-slate-400 hover:text-slate-200 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 rounded transition-colors"
           >
             Refresh
           </button>
@@ -46,130 +47,55 @@ export const UserList: React.FC<UserListProps> = ({
       )}
 
       {!loading && !error && users.length > 0 && (
-        <ul data-testid="user-list" style={styles.list}>
-          {users.map((user) => (
-            <li
-              key={user.id}
-              data-testid="user-item"
-              style={{
-                ...styles.item,
-                ...(selectedUserId === user.id ? styles.selectedItem : {}),
-              }}
-            >
-              <div style={styles.userMain}>
-                <span style={styles.userName}>{user.display_name}</span>
-                <span style={styles.userId}>{user.id}</span>
-              </div>
-              <div style={styles.itemActions}>
-                <span style={styles.timestamp}>
-                  {new Date(user.created_at).toLocaleDateString()}
-                </span>
-                {onUserSelect && (
-                  <button
-                    type="button"
-                    onClick={() => onUserSelect(user)}
-                    style={styles.selectBtn}
-                    aria-pressed={selectedUserId === user.id}
-                    data-testid={`select-user-${user.id}`}
-                  >
-                    {selectedUserId === user.id ? 'Selected' : 'Select'}
-                  </button>
-                )}
-              </div>
-            </li>
-          ))}
+        <ul data-testid="user-list" className="flex flex-col gap-2.5 list-none p-0 m-0">
+          {users.map((user) => {
+            const isSelected = selectedUserId === user.id;
+            return (
+              <li
+                key={user.id}
+                data-testid="user-item"
+                className={`flex justify-between items-center p-3 sm:p-3.5 rounded-xl border backdrop-blur-md transition-all ${
+                  isSelected 
+                    ? 'bg-sky-500/10 border-sky-500/50 shadow-[0_0_15px_rgba(56,189,248,0.2)]' 
+                    : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/70'
+                }`}
+              >
+                <div className="flex flex-col gap-1 min-w-0 pr-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-100 text-sm tracking-tight truncate">{user.display_name}</span>
+                    {isSelected && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 bg-sky-500/20 text-sky-300 border border-sky-500/40 rounded-full">
+                        <Check size={10} strokeWidth={3} /> Active
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-mono truncate">{user.id}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-[11px] text-slate-500 font-mono hidden sm:inline">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </span>
+                  {onUserSelect && (
+                    <button
+                      type="button"
+                      onClick={() => onUserSelect(user)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-mono transition-all border ${
+                        isSelected
+                          ? 'bg-sky-500/15 text-sky-300 border-sky-500/40'
+                          : 'bg-slate-800/60 hover:bg-slate-700/80 text-slate-300 border-slate-700/80 hover:border-slate-600'
+                      }`}
+                      aria-pressed={isSelected}
+                      data-testid={`select-user-${user.id}`}
+                    >
+                      {isSelected ? 'Selected' : 'Select'}
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  card: {
-    background: 'transparent',
-    padding: '0',
-    marginBottom: '20px',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
-  },
-  title: {
-    margin: 0,
-    fontSize: '11px',
-    fontFamily: 'Space Mono, monospace',
-    textTransform: 'uppercase',
-    color: 'var(--text-dim)',
-    letterSpacing: '2px',
-  },
-  refreshBtn: {
-    background: 'rgba(255,255,255,0.1)',
-    color: 'var(--accent)',
-    border: 'none',
-    borderRadius: '4px',
-    padding: '4px 10px',
-    fontSize: '10px',
-    fontFamily: 'Space Mono, monospace',
-    textTransform: 'uppercase',
-    cursor: 'pointer',
-  },
-  list: {
-    listStyle: 'none',
-    margin: 0,
-    padding: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  item: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 14px',
-    background: 'rgba(255,255,255,0.03)',
-    borderRadius: '6px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    backdropFilter: 'blur(10px)',
-  },
-  selectedItem: {
-    border: '1px solid rgba(34, 197, 94, 0.8)',
-    background: 'rgba(6, 78, 59, 0.25)',
-  },
-  userMain: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  userName: {
-    fontWeight: 600,
-    color: 'var(--accent)',
-    fontSize: '14px',
-  },
-  userId: {
-    fontSize: '11px',
-    color: 'var(--text-dim)',
-    fontFamily: 'Space Mono, monospace',
-  },
-  timestamp: {
-    fontSize: '11px',
-    color: 'var(--text-dim)',
-    fontFamily: 'Space Mono, monospace',
-  },
-  itemActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  selectBtn: {
-    background: 'rgba(255,255,255,0.1)',
-    color: 'var(--accent)',
-    border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: '4px',
-    padding: '4px 8px',
-    fontSize: '10px',
-    fontFamily: 'Space Mono, monospace',
-    cursor: 'pointer',
-  },
 };
