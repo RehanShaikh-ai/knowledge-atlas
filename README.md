@@ -66,8 +66,8 @@ Knowledge Atlas is in active early development. The foundation is being built me
 
 **What's coming:**
 
-- Knowledge graph (concepts, relationships, graph navigation)
-- Source ingestion (PDFs, papers, web links, files)
+- Source import endpoints for Markdown, text, PDFs, and Obsidian vaults
+- Knowledge graph and dashboard endpoints/UI
 - Semantic search and AI-powered retrieval
 - AI assistant grounded in your actual knowledge base
 - Study tools, quizzes, and learning progress tracking
@@ -153,6 +153,19 @@ npm run dev
 ```
 
 ---
+
+### Database and integration validation
+
+The v0.2.2 migration creates sources for import provenance and adds nullable
+notes.metadata (JSONB). It is additive and reversible. Run:
+
+    uv run python scripts/verify_migrations.py
+    uv run pytest tests/integration -v
+    docker compose config --quiet
+
+The integration suite uses Testcontainers with PostgreSQL 16, so Docker must be
+running locally. The source import, graph, and dashboard API implementation is
+delivered by the backend/frontend workstreams against this schema.
 
 ## API
 
