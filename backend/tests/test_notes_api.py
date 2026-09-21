@@ -110,6 +110,24 @@ def test_tags_and_search(client: TestClient):
     assert client.delete(f"/api/v1/notes/{note['id']}/tags/{tag.json()['id']}").status_code == 204
 
 
+def test_partial_query_search(client: TestClient):
+    """Verify search returns results for partial queries including h, he, lo, ll."""
+    user_id, workspace_id = _create_workspace(client)
+    note = _create_note(
+        client,
+        workspace_id,
+        user_id,
+        title="Hello World",
+        content="Quick brown fox jumps",
+    )
+    for q in ["h", "he", "lo", "ll"]:
+        res = client.get(f"/api/v1/workspaces/{workspace_id}/notes/search?q={q}")
+        assert res.status_code == 200
+        assert any(item["id"] == note["id"] for item in res.json()["items"]), (
+            f"Failed for query '{q}'"
+        )
+
+
 def test_note_links_validate_workspace_and_cascade(client: TestClient):
     user_id, workspace_id = _create_workspace(client)
     source = _create_note(client, workspace_id, user_id, title="Source")
