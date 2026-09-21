@@ -87,6 +87,7 @@ export const RAGPanel: React.FC<RAGPanelProps> = ({ workspaceId, onNavigateToNot
         <h2 className="flex items-center gap-2 text-blue-100">
           <Sparkles size={18} className="text-blue-400" />
           AI Assistant
+          <kbd className="ml-2 text-[10px] font-mono bg-surface1 px-1.5 py-0.5 rounded text-overlay0 border border-surface2">Mod+J</kbd>
         </h2>
         {onClose && (
           <button onClick={onClose} className="p-1.5 rounded-md hover:bg-surface1 text-overlay1 hover:text-text transition-colors">

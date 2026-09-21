@@ -81,6 +81,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ workspaceId, onNoteSel
         <h2 className="flex items-center gap-2">
           <Search size={18} className="text-blue-400" />
           Semantic Search
+          <kbd className="ml-2 text-[10px] font-mono bg-surface1 px-1.5 py-0.5 rounded text-overlay0 border border-surface2">Mod+Space</kbd>
         </h2>
         {onClose && (
           <button onClick={onClose} className="p-1.5 rounded-md hover:bg-surface1 text-overlay1 hover:text-text transition-colors">

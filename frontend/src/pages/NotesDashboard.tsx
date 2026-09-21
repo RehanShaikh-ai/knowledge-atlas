@@ -186,6 +186,13 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
       handler: () => setIsRagModalOpen(prev => !prev),
     },
     {
+      key: 'n',
+      modKey: true,
+      handler: () => {
+        if (!isEditorOpen) handleNewNote();
+      },
+    },
+    {
       key: 'Escape',
       handler: () => {
         if (isSearchModalOpen) setIsSearchModalOpen(false);
@@ -287,6 +294,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 onClick={handleNewNote}
                 icon={<Plus size={15} strokeWidth={2.5} aria-hidden="true" />}
                 className="px-3.5 py-1.5 text-xs font-semibold"
+                title="New Note (Mod+N)"
               >
                 New Note
               </FlowHoverButton>
