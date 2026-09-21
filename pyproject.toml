@@ -20,6 +20,11 @@ dependencies = [
     # Source ingestion
     "python-multipart>=0.0.20,<1.0",
     "pypdf>=5.0,<7.0",
+
+    # v0.3.1 — Vector store, job queue, embeddings (CONTRACT §4)
+    "qdrant-client>=1.9.0,<2.0",
+    "arq>=0.26.0,<1.0",
+    "redis>=5.0.0,<6.0",
 ]
 
 [dependency-groups]
