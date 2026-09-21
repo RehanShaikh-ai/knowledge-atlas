@@ -176,23 +176,13 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
 
   useKeyboardShortcuts([
     {
-      key: 'k',
-      metaKey: true,
-      handler: () => setIsSearchModalOpen(prev => !prev),
-    },
-    {
-      key: 'k',
-      ctrlKey: true,
+      key: 'space',
+      modKey: true,
       handler: () => setIsSearchModalOpen(prev => !prev),
     },
     {
       key: 'j',
-      metaKey: true,
-      handler: () => setIsRagModalOpen(prev => !prev),
-    },
-    {
-      key: 'j',
-      ctrlKey: true,
+      modKey: true,
       handler: () => setIsRagModalOpen(prev => !prev),
     },
     {
@@ -256,7 +246,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                   type="button"
                   onClick={() => setIsSearchModalOpen(true)}
                   className="btn-ghost-dark flex items-center gap-2 text-overlay1 hover:text-text"
-                  title="Semantic Search"
+                  title="Semantic Search (Mod+Space)"
                 >
                   <Search size={15} />
                   <span className="hidden lg:inline">Search</span>
@@ -265,7 +255,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                   type="button"
                   onClick={() => setIsRagModalOpen(true)}
                   className="btn-ghost-dark flex items-center gap-2 text-blue-400 hover:text-blue-300"
-                  title="AI Assistant (RAG)"
+                  title="AI Assistant (Mod+J)"
                 >
                   <Sparkles size={15} />
                   <span className="hidden lg:inline">Assistant</span>
