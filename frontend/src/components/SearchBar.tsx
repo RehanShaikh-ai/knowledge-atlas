@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Note } from '@/types/note';
-import { searchNotes } from '@/api/notes';
+import { searchNotes } from '@/api/search';
 import { Search, Loader2, X } from 'lucide-react';
 
 interface SearchBarProps {
@@ -39,8 +39,22 @@ export const SearchBar: React.FC<SearchBarProps> = ({ workspaceId, onNoteSelect,
     setError(null);
     setIsOpen(true);
     try {
-      const res = await searchNotes(workspaceId, searchQuery, { page_size: 10 });
-      setResults(res.items);
+      const res = await searchNotes(workspaceId, {
+        query: searchQuery,
+        mode: 'hybrid',
+        limit: 10
+      });
+      // Map SearchResultItem to Note structure expected by NoteLinks
+      setResults(res.results.map(r => ({
+        id: r.note_id,
+        title: r.title,
+        content: r.excerpt,
+        workspace_id: workspaceId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_archived: false,
+        is_pinned: false
+      } as Note)));
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Search failed'));
     } finally {

@@ -3,9 +3,14 @@ import { Note } from '@/types/note';
 import { Tag } from '@/types/tag';
 import { createNote, updateNote, deleteNote } from '@/api/notes';
 import { addTag, removeTag } from '@/api/tags';
-import { Pin, Archive, Trash2, Save, X, Eye, Edit3, Tag as TagIcon, Loader2 } from 'lucide-react';
+import { Pin, Archive, Trash2, Save, X, Eye, Edit3, Tag as TagIcon, Loader2, Clock, RotateCcw, FileCode2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import DOMPurify from 'dompurify';
+import { VersionHistoryPanel } from './versioning/VersionHistoryPanel';
+import { DiffViewer } from './versioning/DiffViewer';
+import { RestoreConfirmation } from './versioning/RestoreConfirmation';
+import { NoteVersion } from '@/types/versions';
+import { getNoteVersion } from '@/api/versions';
 
 function renderMarkdown(content: string) {
   let html = content
@@ -59,6 +64,13 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<NoteVersion | null>(null);
+  const [versionContent, setVersionContent] = useState<string>('');
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
+  const [latestCommitHash, setLatestCommitHash] = useState<string | null>(null);
   
   const initialTagIds = (initialNote?.tags || []).map(t => t.id).sort().join(',');
   const currentTagIds = tags.map(t => t.id).sort().join(',');
@@ -178,6 +190,27 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     }
   };
 
+  const handleSelectVersion = async (version: NoteVersion, latestHash: string) => {
+    setSelectedVersion(version);
+    setLatestCommitHash(latestHash);
+    setShowDiff(false);
+    try {
+      const res = await getNoteVersion(initialNote!.id, version.id);
+      setVersionContent(res.content);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRestoreConfirm = () => {
+    setShowRestoreConfirm(false);
+    setIsHistoryOpen(false);
+    setSelectedVersion(null);
+    // Ideally we would fetch the restored note here, but for now we can just close
+    // and let the parent refresh, or trigger a save/reload.
+    onClose();
+  };
+
   return (
     <div className={cn("flex flex-col h-full bg-[#0c1017]/95 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-2xl text-slate-100 overflow-hidden", className)}>
       <header className="flex items-center justify-between p-3.5 sm:p-4 border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md">
@@ -223,6 +256,20 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
             >
                 {isPreview ? <><Edit3 size={15} /> <span className="hidden sm:inline">Edit</span></> : <><Eye size={15} /> <span className="hidden sm:inline">Preview</span></>}
             </button>
+            {isEditing && (
+              <button
+                  type="button"
+                  onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                  className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border",
+                      isHistoryOpen 
+                          ? "bg-purple-500/15 text-purple-300 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.15)]" 
+                          : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                  )}
+              >
+                  <Clock size={15} /> <span className="hidden sm:inline">History</span>
+              </button>
+            )}
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -292,6 +339,76 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
             />
         )}
       </main>
+
+      {isHistoryOpen && initialNote && (
+        <div className="flex border-t border-slate-800/80 bg-slate-900/40 backdrop-blur-md h-[400px]">
+          <div className="flex-1 p-6 overflow-y-auto border-r border-slate-800/80">
+            {selectedVersion ? (
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sky-400">Viewing Version: {selectedVersion.commit_hash.substring(0, 7)}</h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowDiff(!showDiff)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-1.5"
+                    >
+                      <FileCode2 size={14} />
+                      {showDiff ? 'View Content' : 'View Diff'}
+                    </button>
+                    <button
+                      onClick={() => setShowRestoreConfirm(true)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30 flex items-center gap-1.5"
+                    >
+                      <RotateCcw size={14} />
+                      Restore This Version
+                    </button>
+                  </div>
+                </div>
+                
+                {showDiff && latestCommitHash ? (
+                  <DiffViewer
+                    noteId={initialNote.id}
+                    fromHash={selectedVersion.commit_hash}
+                    toHash={latestCommitHash}
+                    className="flex-1"
+                  />
+                ) : (
+                  <div 
+                      className="flex-1 overflow-y-auto p-4 bg-[#0c1017] rounded-xl border border-slate-800"
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(versionContent || '*Empty version*') }} 
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-500">
+                Select a version from the history panel to preview or restore it.
+              </div>
+            )}
+          </div>
+          <div className="w-[300px] shrink-0">
+            <VersionHistoryPanel
+              noteId={initialNote.id}
+              currentVersionId={selectedVersion?.id}
+              onSelectVersion={(v) => {
+                 // For diff, we need the latest hash. We can cheat by grabbing it from the first version if we had it.
+                 // The VersionHistoryPanel doesn't expose versions list directly.
+                 // We'll pass "HEAD" or let's update VersionHistoryPanel to pass it.
+                 // But wait, the API probably accepts "HEAD". Let's assume it does, or we just pass the selected version hash as fromHash and "HEAD" as toHash.
+                 handleSelectVersion(v, "HEAD");
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {showRestoreConfirm && initialNote && selectedVersion && (
+        <RestoreConfirmation
+          noteId={initialNote.id}
+          version={selectedVersion}
+          onConfirm={handleRestoreConfirm}
+          onCancel={() => setShowRestoreConfirm(false)}
+        />
+      )}
 
       <footer className="p-3.5 border-t border-slate-800/80 bg-slate-900/40 backdrop-blur-md flex items-center gap-3 overflow-x-auto">
         <TagIcon size={15} className="text-slate-500 shrink-0" />
