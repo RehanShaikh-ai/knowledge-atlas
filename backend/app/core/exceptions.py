@@ -83,3 +83,89 @@ class SourceNotFoundError(AppException):
 
     def __init__(self, message: str = "Source not found.") -> None:
         super().__init__(status.HTTP_404_NOT_FOUND, "SOURCE_NOT_FOUND", message)
+
+
+# ── v0.3.1 Exceptions (CONTRACT §14) ──────────────────────────────────────────
+
+
+class VersionNotFoundError(AppException):
+    """Raised when a version or commit is not found (404, VERSION_NOT_FOUND)."""
+
+    def __init__(self, message: str = "Note version not found.") -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, "VERSION_NOT_FOUND", message)
+
+
+class JobNotFoundError(AppException):
+    """Raised when an index job is not found (404, JOB_NOT_FOUND)."""
+
+    def __init__(self, message: str = "Job not found.") -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND", message)
+
+
+class RAGContextEmptyError(AppException):
+    """Raised when zero chunks are retrieved for RAG (422, RAG_CONTEXT_EMPTY)."""
+
+    def __init__(self, message: str = "No relevant context found to answer the query.") -> None:
+        super().__init__(status.HTTP_422_UNPROCESSABLE_CONTENT, "RAG_CONTEXT_EMPTY", message)
+
+
+class EmbeddingDimensionMismatchError(AppException):
+    """Raised when embedding dimension != collection dimension (422)."""
+
+    def __init__(
+        self, message: str = "Embedding dimension does not match collection dimension."
+    ) -> None:
+        super().__init__(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "EMBEDDING_DIMENSION_MISMATCH", message
+        )
+
+
+class UnsupportedSearchModeError(AppException):
+    """Raised when a requested search mode is unavailable (422, UNSUPPORTED_SEARCH_MODE)."""
+
+    def __init__(self, message: str = "The requested search mode is unavailable.") -> None:
+        super().__init__(status.HTTP_422_UNPROCESSABLE_CONTENT, "UNSUPPORTED_SEARCH_MODE", message)
+
+
+class VectorStoreUnavailableError(AppException):
+    """Raised when Qdrant is unreachable (500, VECTOR_STORE_UNAVAILABLE)."""
+
+    def __init__(self, message: str = "Vector store is currently unavailable.") -> None:
+        super().__init__(status.HTTP_500_INTERNAL_SERVER_ERROR, "VECTOR_STORE_UNAVAILABLE", message)
+
+
+class EmbeddingProviderUnavailableError(AppException):
+    """Raised when embedding provider is unreachable (500, EMBEDDING_PROVIDER_UNAVAILABLE)."""
+
+    def __init__(self, message: str = "Embedding provider is currently unavailable.") -> None:
+        super().__init__(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "EMBEDDING_PROVIDER_UNAVAILABLE", message
+        )
+
+
+class LLMProviderUnavailableError(AppException):
+    """Raised when LLM provider is unreachable (500, LLM_PROVIDER_UNAVAILABLE)."""
+
+    def __init__(self, message: str = "LLM provider is currently unavailable.") -> None:
+        super().__init__(status.HTTP_500_INTERNAL_SERVER_ERROR, "LLM_PROVIDER_UNAVAILABLE", message)
+
+
+class LLMTimeoutError(AppException):
+    """Raised when LLM call exceeds timeout (500, LLM_TIMEOUT)."""
+
+    def __init__(self, message: str = "LLM call timed out.") -> None:
+        super().__init__(status.HTTP_500_INTERNAL_SERVER_ERROR, "LLM_TIMEOUT", message)
+
+
+class GitRepositoryError(AppException):
+    """Raised when a Git operation fails (500, GIT_REPOSITORY_ERROR)."""
+
+    def __init__(self, message: str = "Git repository operation failed.") -> None:
+        super().__init__(status.HTTP_500_INTERNAL_SERVER_ERROR, "GIT_REPOSITORY_ERROR", message)
+
+
+class GitPathInvalidError(AppException):
+    """Raised when computed path fails traversal check (422, GIT_PATH_INVALID)."""
+
+    def __init__(self, message: str = "Invalid file path in Git repository.") -> None:
+        super().__init__(status.HTTP_422_UNPROCESSABLE_CONTENT, "GIT_PATH_INVALID", message)

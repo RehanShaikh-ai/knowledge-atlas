@@ -39,6 +39,27 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # v0.3.1 — Vector store & AI (Contract §15)
+    QDRANT_URL: str = "http://qdrant:6333"
+    QDRANT_COLLECTION_PREFIX: str = "ka"
+    REDIS_URL: str = "redis://redis:6379/0"
+    GIT_REPOSITORY_ROOT: str = "/data/workspaces"
+    EMBEDDING_PROVIDER: str = "fastembed"
+    EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
+    EMBEDDING_DIMENSION: int = 384
+    CHUNK_SIZE: int = 512
+    CHUNK_OVERLAP: int = 64
+    CHUNKING_STRATEGY: str = "markdown_heading"
+    LLM_PROVIDER: str = "ollama"
+    LLM_MODEL: str = "llama3.2"
+    OLLAMA_BASE_URL: str = "http://ollama:11434"
+    OMNIROUTE_BASE_URL: str = ""
+    FREELLMAPI_BASE_URL: str = ""
+    FREELLMAPI_API_KEY: str | None = None
+    JOB_MAX_RETRIES: int = 3
+    PROVIDER_TIMEOUT_SECONDS: int = 30
+    CONTEXT_TOKEN_LIMIT: int = 4096
+
     @property
     def database_url(self) -> str:
         """Construct the canonical PostgreSQL URL (contract §18).
