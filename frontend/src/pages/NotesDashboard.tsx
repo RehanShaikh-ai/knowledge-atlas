@@ -4,14 +4,17 @@ import { listNotes } from '@/api/notes';
 import { NoteList } from '@/components/NoteList';
 import { NoteEditor } from '@/components/NoteEditor';
 import { NoteLinks } from '@/components/NoteLinks';
-import { SearchBar } from '@/components/SearchBar';
+import { SearchPanel } from '@/components/search/SearchPanel';
+import { RAGPanel } from '@/components/rag/RAGPanel';
 import { TagFilter } from '@/components/TagFilter';
 import { FlowHoverButton } from '@/components/ui/flow-hover-button';
-import { Plus, Archive, ChevronLeft, AlertTriangle, UploadCloud, LayoutDashboard, Share2, FileText } from 'lucide-react';
+import { Plus, Archive, ChevronLeft, AlertTriangle, UploadCloud, LayoutDashboard, Share2, FileText, Search, Sparkles } from 'lucide-react';
 import { DashboardView } from './DashboardView';
 import { GraphView } from '@/components/GraphView';
 import { ImportWizard } from '@/components/ImportWizard';
 import { NoteDetailPanel } from '@/components/NoteDetailPanel';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 
 interface NotesDashboardProps {
@@ -46,6 +49,8 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
 }) => {
   const [currentTab, setCurrentTab] = useState<TabType>('notes');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isRagModalOpen, setIsRagModalOpen] = useState(false);
   const [graphSelectedNoteId, setGraphSelectedNoteId] = useState<string | null>(null);
 
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
@@ -169,7 +174,34 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const isBackendPending =
     error && (error.message.includes('404') || error.message.toLowerCase().includes('not found'));
 
-
+  useKeyboardShortcuts([
+    {
+      key: 'space',
+      modKey: true,
+      handler: () => setIsSearchModalOpen(prev => !prev),
+    },
+    {
+      key: 'j',
+      modKey: true,
+      handler: () => setIsRagModalOpen(prev => !prev),
+    },
+    {
+      key: 'n',
+      modKey: true,
+      handler: () => {
+        if (!isEditorOpen) handleNewNote();
+      },
+    },
+    {
+      key: 'Escape',
+      handler: () => {
+        if (isSearchModalOpen) setIsSearchModalOpen(false);
+        else if (isRagModalOpen) setIsRagModalOpen(false);
+        else if (isImportModalOpen) setIsImportModalOpen(false);
+        else if (isEditorOpen) closeEditor();
+      },
+    },
+  ]);
 
   return (
     <div className="notes-layout">
@@ -217,10 +249,24 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
           <div className="notes-topbar-right ml-auto">
             {currentTab === 'notes' && (
               <>
-                <SearchBar
-                  workspaceId={workspaceId}
-                  onNoteSelect={handleNoteSelect}
-                />
+                <button
+                  type="button"
+                  onClick={() => setIsSearchModalOpen(true)}
+                  className="btn-ghost-dark flex items-center gap-2 text-overlay1 hover:text-text"
+                  title="Semantic Search (Mod+Space)"
+                >
+                  <Search size={15} />
+                  <span className="hidden lg:inline">Search</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsRagModalOpen(true)}
+                  className="btn-ghost-dark flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                  title="AI Assistant (Mod+J)"
+                >
+                  <Sparkles size={15} />
+                  <span className="hidden lg:inline">Assistant</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setIsArchivedView(!isArchivedView)}
@@ -248,6 +294,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 onClick={handleNewNote}
                 icon={<Plus size={15} strokeWidth={2.5} aria-hidden="true" />}
                 className="px-3.5 py-1.5 text-xs font-semibold"
+                title="New Note (Mod+N)"
               >
                 New Note
               </FlowHoverButton>
@@ -432,19 +479,56 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
       )}
 
       {/* ── Import Modal ──────────────────────────────── */}
-      {isImportModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 modal-overlay">
-          <ImportWizard 
-            workspaceId={workspaceId}
-            userId={userId || '00000000-0000-0000-0000-000000000000'}
-            onClose={() => setIsImportModalOpen(false)}
-            onImportComplete={() => {
-              fetchDashboardData();
-              if (isArchivedView) fetchArchivedData();
-            }}
-          />
-        </div>
-      )}
+      <Modal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)}
+        width="full"
+        className="max-w-2xl bg-transparent border-none shadow-none"
+      >
+        <ImportWizard 
+          workspaceId={workspaceId}
+          userId={userId || '00000000-0000-0000-0000-000000000000'}
+          onClose={() => setIsImportModalOpen(false)}
+          onImportComplete={() => {
+            fetchDashboardData();
+            if (isArchivedView) fetchArchivedData();
+          }}
+        />
+      </Modal>
+
+      {/* ── Search Modal ──────────────────────────────── */}
+      <Modal 
+        isOpen={isSearchModalOpen} 
+        onClose={() => setIsSearchModalOpen(false)}
+        width="md"
+        className="h-[70vh]"
+      >
+        <SearchPanel
+          workspaceId={workspaceId}
+          onNoteSelect={(noteId) => {
+            setIsSearchModalOpen(false);
+            handleNavigateToNote(noteId);
+          }}
+          onClose={() => setIsSearchModalOpen(false)}
+        />
+      </Modal>
+
+      {/* ── RAG Modal ──────────────────────────────── */}
+      <Modal 
+        isOpen={isRagModalOpen} 
+        onClose={() => setIsRagModalOpen(false)}
+        width="lg"
+        className="h-[85vh]"
+      >
+        <RAGPanel
+          workspaceId={workspaceId}
+          onNavigateToNote={(noteId) => {
+            setIsRagModalOpen(false);
+            handleNavigateToNote(noteId);
+          }}
+          onClose={() => setIsRagModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 };
