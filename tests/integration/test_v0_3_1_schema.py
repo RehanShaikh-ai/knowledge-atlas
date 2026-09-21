@@ -437,7 +437,7 @@ def test_index_jobs_note_ids_jsonb_null_and_list(migrated_engine):
             text(
                 "INSERT INTO index_jobs "
                 "(id,workspace_id,job_type,status,note_ids,retry_count,max_retries,enqueued_at) "
-                "VALUES (:id,:w,'index_note','queued',:nids::jsonb,0,3,now())"
+                "VALUES (:id,:w,'index_note','queued',CAST(:nids AS jsonb),0,3,now())"
             ),
             {"id": str(j_list), "w": str(w), "nids": json.dumps(targets)},
         )
