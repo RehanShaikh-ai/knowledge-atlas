@@ -76,6 +76,18 @@ Knowledge Atlas is in active development under strict engineering contracts.
 - Typed graph relationships
 - Study tools, quizzes, and learning progress tracking
 - Multi-user collaboration and shared workspaces
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Mod + Space` | Open Semantic / Hybrid Search modal |
+| `Mod + J` | Open AI Assistant (RAG) modal |
+| `Mod + N` | Create a new note |
+| `Escape` | Close active modals and note editor |
+
+> **Note:** `Mod` refers to `Cmd` (⌘) on macOS and `Ctrl` on Windows/Linux.
+
 ---
 
 ## Why It's Different
