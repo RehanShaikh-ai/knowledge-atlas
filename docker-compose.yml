@@ -89,7 +89,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: knowledge_atlas_worker
-    command: uv run arq backend.app.jobs.worker.WorkerSettings
+    command: uv run arq app.jobs.worker.WorkerSettings
     restart: unless-stopped
     environment:
       APP_ENV: ${APP_ENV:-development}
