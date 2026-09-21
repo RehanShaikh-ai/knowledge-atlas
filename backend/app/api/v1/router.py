@@ -6,7 +6,22 @@ Aggregates all v1 sub-routers. main.py mounts only api_router under /api/v1.
 
 from fastapi import APIRouter
 
-from app.api.v1 import dashboard, graph, health, notes, search, sources, tags, users, workspaces
+from app.api.v1 import (
+    activity,
+    dashboard,
+    graph,
+    health,
+    jobs,
+    notes,
+    rag,
+    saved_searches,
+    search,
+    sources,
+    tags,
+    users,
+    versions,
+    workspaces,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -18,3 +33,8 @@ api_router.include_router(search.router)
 api_router.include_router(sources.router)
 api_router.include_router(graph.router)
 api_router.include_router(dashboard.router)
+api_router.include_router(rag.router)
+api_router.include_router(jobs.router)
+api_router.include_router(versions.router)
+api_router.include_router(activity.router)
+api_router.include_router(saved_searches.router)
