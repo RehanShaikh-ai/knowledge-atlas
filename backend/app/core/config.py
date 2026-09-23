@@ -50,11 +50,11 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 512
     CHUNK_OVERLAP: int = 64
     CHUNKING_STRATEGY: str = "markdown_heading"
-    LLM_PROVIDER: str = "ollama"
-    LLM_MODEL: str = "llama3.2"
+    LLM_PROVIDER: str = "freellmapi"
+    LLM_MODEL: str = "auto"
     OLLAMA_BASE_URL: str = "http://ollama:11434"
     OMNIROUTE_BASE_URL: str = ""
-    FREELLMAPI_BASE_URL: str = ""
+    FREELLMAPI_BASE_URL: str = "http://localhost:3001"
     FREELLMAPI_API_KEY: str | None = None
     JOB_MAX_RETRIES: int = 3
     PROVIDER_TIMEOUT_SECONDS: int = 30
