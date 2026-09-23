@@ -31,6 +31,11 @@ def _get_lock(workspace_id: uuid.UUID) -> threading.Lock:
 
 def _get_repo_dir(workspace_id: uuid.UUID) -> Path:
     base = Path(settings.GIT_REPOSITORY_ROOT).resolve()
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except (PermissionError, OSError):
+        base = (Path.home() / ".knowledge-atlas" / "workspaces").resolve()
+        base.mkdir(parents=True, exist_ok=True)
     repo_dir = (base / str(workspace_id) / "repository").resolve()
     return repo_dir
 

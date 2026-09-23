@@ -1,5 +1,4 @@
-"""Business logic for notes and note links."""
-
+import logging
 import uuid
 from collections.abc import Sequence
 
@@ -20,6 +19,8 @@ from app.schemas.note import NoteCreate, NoteUpdate
 from app.schemas.note_link import NoteLinkCreate
 from app.services import user_service, workspace_service
 
+logger = logging.getLogger("app.services.note_service")
+
 
 def _note_statement() -> Select[tuple[Note]]:
     return select(Note).options(selectinload(Note.tags), selectinload(Note.source))
@@ -39,7 +40,23 @@ def create_note(db: Session, workspace_id: uuid.UUID, note_in: NoteCreate) -> No
     note = Note(workspace_id=workspace_id, **note_in.model_dump())
     db.add(note)
     db.commit()
-    return get_note(db, note.id)
+
+    # Create initial NoteVersion snapshot and enqueue indexing
+    try:
+        from app.services import job_service, version_service
+
+        version_service.create_version(
+            db=db,
+            workspace_id=note.workspace_id,
+            note_id=note.id,
+            author_id=note.created_by,
+            message=f"Initial version of '{note.title}'",
+        )
+        job_service.enqueue_index_job(db, note.workspace_id, note_ids=[note.id])
+    except Exception as e:
+        logger.warning("Failed to process version or index job for note %s: %s", note.id, e)
+
+    return get_note_or_raise(db, note.id)
 
 
 def get_note(db: Session, note_id: uuid.UUID) -> Note | None:
@@ -94,15 +111,52 @@ def list_notes(
 def update_note(db: Session, note_id: uuid.UUID, note_in: NoteUpdate) -> Note:
     """Apply only explicitly supplied editable fields to a note."""
     note = get_note_or_raise(db, note_id)
-    for field, value in note_in.model_dump(exclude_unset=True).items():
+    updates = note_in.model_dump(exclude_unset=True)
+    for field, value in updates.items():
         setattr(note, field, value)
     db.commit()
+
+    # Create NoteVersion snapshot and re-index on edit if title or content changed
+    if "title" in updates or "content" in updates:
+        try:
+            from app.services import job_service, version_service
+
+            version_service.create_version(
+                db=db,
+                workspace_id=note.workspace_id,
+                note_id=note.id,
+                author_id=note.created_by,
+                message=f"Updated '{note.title}'",
+            )
+            job_service.enqueue_index_job(db, note.workspace_id, note_ids=[note.id])
+        except Exception as e:
+            logger.warning("Failed to process version or index job for note %s: %s", note.id, e)
+
     return get_note_or_raise(db, note_id)
 
 
 def delete_note(db: Session, note_id: uuid.UUID) -> None:
-    """Delete a note; database foreign-key cascades remove related links."""
-    db.delete(get_note_or_raise(db, note_id))
+    """Delete a note and clean up orphaned tags; FK cascades remove links."""
+    note = get_note_or_raise(db, note_id)
+    # Collect associated tag IDs before deletion
+    tag_ids = [t.id for t in note.tags] if note.tags else []
+
+    db.delete(note)
+    db.flush()
+
+    if tag_ids:
+        from app.models.note_tag import NoteTag
+        from app.models.tag import Tag
+
+        for tag_id in tag_ids:
+            remaining = (
+                db.scalar(select(func.count(NoteTag.note_id)).where(NoteTag.tag_id == tag_id)) or 0
+            )
+            if remaining == 0:
+                tag = db.get(Tag, tag_id)
+                if tag:
+                    db.delete(tag)
+
     db.commit()
 
 
