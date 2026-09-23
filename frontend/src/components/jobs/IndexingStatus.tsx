@@ -3,7 +3,7 @@ import { JobStatusResponse } from '@/types/jobs';
 import { getJobStatus, retryJob } from '@/api/jobs';
 import { indexWorkspace } from '@/api/index';
 import { JobStatusBadge } from './JobStatusBadge';
-import { Database, Play, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Database, Play, RefreshCw, AlertTriangle, HelpCircle, CheckCircle2 } from 'lucide-react';
 
 interface IndexingStatusProps {
   workspaceId: string;
@@ -15,6 +15,7 @@ export const IndexingStatus: React.FC<IndexingStatusProps> = ({ workspaceId, cla
   const [jobStatus, setJobStatus] = useState<JobStatusResponse | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isTriggering, setIsTriggering] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   
   const pollIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
@@ -33,7 +34,7 @@ export const IndexingStatus: React.FC<IndexingStatusProps> = ({ workspaceId, cla
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         console.error('Failed to poll job status', err);
       }
-    }, 2000); // poll every 2 seconds
+    }, 1500); // poll every 1.5 seconds
   };
 
   useEffect(() => {
@@ -88,16 +89,40 @@ export const IndexingStatus: React.FC<IndexingStatusProps> = ({ workspaceId, cla
     <div className={`flex flex-col gap-3 p-4 rounded-xl bg-surface0 border border-surface1 ${className}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-text text-sm font-semibold">
-          <Database size={16} className="text-blue-400" />
-          Workspace Index
+          <Database size={16} className="text-sky-400" />
+          <span>Vector & Semantic Index</span>
+          <div className="relative inline-block">
+            <button
+              type="button"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              onClick={() => setShowTooltip(!showTooltip)}
+              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+              aria-label="What is Workspace Index?"
+            >
+              <HelpCircle size={13} />
+            </button>
+            {showTooltip && (
+              <div className="absolute left-0 bottom-full mb-2 w-64 p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 shadow-xl z-20 leading-relaxed pointer-events-none">
+                <strong className="text-sky-300 block mb-1">What does this do?</strong>
+                Splits note markdown into semantic chunks and computes vector embeddings for AI Assistant RAG queries, Hybrid Search, and Semantic Search.
+              </div>
+            )}
+          </div>
         </div>
         
         {jobStatus ? (
           <JobStatusBadge status={jobStatus.status} />
         ) : (
-          <span className="text-[11px] font-mono text-overlay1">Ready</span>
+          <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+            <CheckCircle2 size={11} /> Ready
+          </span>
         )}
       </div>
+
+      <p className="text-xs text-[var(--subtext0)] leading-relaxed">
+        Re-indexes all workspace notes into vector embeddings for semantic search and AI retrieval.
+      </p>
 
       {jobStatus?.status === 'failed' && (
         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex flex-col gap-2">
@@ -129,18 +154,19 @@ export const IndexingStatus: React.FC<IndexingStatusProps> = ({ workspaceId, cla
         <button
           onClick={handleIndexWorkspace}
           disabled={isTriggering}
-          className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all text-sm font-medium"
+          className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 transition-all text-xs font-semibold hover:shadow-[0_0_12px_rgba(56,189,248,0.2)]"
         >
           {isTriggering ? (
-            <RefreshCw size={14} className="animate-spin" />
+            <RefreshCw size={13} className="animate-spin" />
           ) : (
-            <Play size={14} className="ml-0.5" />
+            <Play size={13} className="ml-0.5" />
           )}
-          Rebuild Index
+          Re-index Workspace
         </button>
       ) : (
-        <div className="text-xs text-overlay1 text-center py-1 font-mono">
-          {jobStatus.status === 'queued' ? 'Waiting in queue...' : 'Processing workspace nodes...'}
+        <div className="text-xs text-sky-300 bg-sky-950/40 border border-sky-500/20 rounded-lg text-center py-2 font-mono flex items-center justify-center gap-2">
+          <RefreshCw size={12} className="animate-spin text-sky-400" />
+          {jobStatus.status === 'queued' ? 'Queued in background...' : 'Processing notes & generating vectors...'}
         </div>
       )}
     </div>
