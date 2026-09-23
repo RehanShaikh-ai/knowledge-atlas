@@ -1,35 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Note } from '@/types/note';
 import { Tag } from '@/types/tag';
-import { createNote, updateNote, deleteNote } from '@/api/notes';
+import { createNote, updateNote, deleteNote, getNote } from '@/api/notes';
 import { addTag, removeTag } from '@/api/tags';
 import { Pin, Archive, Trash2, Save, X, Eye, Edit3, Tag as TagIcon, Loader2, Clock, RotateCcw, FileCode2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import DOMPurify from 'dompurify';
 import { VersionHistoryPanel } from './versioning/VersionHistoryPanel';
 import { DiffViewer } from './versioning/DiffViewer';
 import { RestoreConfirmation } from './versioning/RestoreConfirmation';
 import { NoteVersion } from '@/types/versions';
 import { getNoteVersion } from '@/api/versions';
-
-function renderMarkdown(content: string) {
-  let html = content
-    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-6 mb-3 text-slate-100">$1</h1>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-5 mb-2.5 text-slate-100">$1</h2>')
-    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2 text-slate-200">$1</h3>')
-    .replace(/\*\*(.*)\*\*/gim, '<strong class="text-slate-100 font-semibold">$1</strong>')
-    .replace(/\*(.*)\*/gim, '<em class="text-slate-300">$1</em>')
-    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-sky-400 hover:text-sky-300 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
-    .replace(/^> (.*$)/gim, '<blockquote class="border-l-2 border-sky-500/50 pl-4 italic my-3 text-slate-400 bg-sky-950/10 py-1 rounded-r">$1</blockquote>')
-    .replace(/\n\n/g, '</p><p class="my-3 text-slate-300 leading-relaxed">');
-  
-  html = `<div class="max-w-none text-slate-300 text-sm sm:text-base leading-relaxed">${html}</div>`;
-  
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'blockquote', 'div', 'span', 'br', 'hr', 'code', 'pre', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'u', 's', 'sub', 'sup', 'mark'],
-    ALLOWED_ATTR: ['href', 'class', 'target', 'rel', 'src', 'alt', 'title', 'style']
-  });
-}
+import { renderMarkdown } from '@/lib/markdown';
 
 interface NoteEditorProps {
   workspaceId: string;
@@ -50,7 +31,8 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   onDeleted,
   className 
 }) => {
-  const isEditing = !!initialNote;
+  const [currentNote, setCurrentNote] = useState<Note | null>(initialNote || null);
+  const isEditing = !!currentNote;
   
   const [title, setTitle] = useState(initialNote?.title || '');
   const [content, setContent] = useState(initialNote?.content || '');
@@ -66,21 +48,22 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   const [error, setError] = useState<Error | null>(null);
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [selectedVersion, setSelectedVersion] = useState<NoteVersion | null>(null);
   const [versionContent, setVersionContent] = useState<string>('');
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
   const [latestCommitHash, setLatestCommitHash] = useState<string | null>(null);
   
-  const initialTagIds = (initialNote?.tags || []).map(t => t.id).sort().join(',');
+  const initialTagIds = (currentNote?.tags || []).map(t => t.id).sort().join(',');
   const currentTagIds = tags.map(t => t.id).sort().join(',');
   const areTagsDirty = initialTagIds !== currentTagIds;
 
   const isDirty = 
-    title !== (initialNote?.title || '') || 
-    content !== (initialNote?.content || '') ||
-    isPinned !== (initialNote?.is_pinned || false) ||
-    isArchived !== (initialNote?.is_archived || false) ||
+    title !== (currentNote?.title || '') || 
+    content !== (currentNote?.content || '') ||
+    isPinned !== (currentNote?.is_pinned || false) ||
+    isArchived !== (currentNote?.is_archived || false) ||
     areTagsDirty;
 
   useEffect(() => {
@@ -115,8 +98,8 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     
     try {
       let savedNote: Note;
-      if (isEditing) {
-        savedNote = await updateNote(initialNote.id, {
+      if (currentNote) {
+        savedNote = await updateNote(currentNote.id, {
           title,
           content,
           is_pinned: isPinned,
@@ -134,6 +117,8 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         }
       }
       
+      setCurrentNote(savedNote);
+      setHistoryRefreshKey(k => k + 1);
       onSaved({ ...savedNote, tags });
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to save note"));
@@ -143,14 +128,14 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!isEditing) return;
+    if (!isEditing || !currentNote) return;
     
     if (window.confirm("Are you sure you want to delete this note? This cannot be undone.")) {
       setIsDeleting(true);
       setError(null);
       try {
-        await deleteNote(initialNote.id);
-        onDeleted(initialNote.id);
+        await deleteNote(currentNote.id);
+        onDeleted(currentNote.id);
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Failed to delete note"));
         setIsDeleting(false);
@@ -163,13 +148,13 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       e.preventDefault();
       const tagName = tagInput.trim().toLowerCase();
       
-      if (!isEditing) {
+      if (!isEditing || !currentNote) {
         setError(new Error("Please save the note first before adding tags."));
         return;
       }
 
       try {
-        const newTag = await addTag(initialNote.id, tagName);
+        const newTag = await addTag(currentNote.id, tagName);
         if (!tags.some(t => t.id === newTag.id)) {
             setTags([...tags, newTag]);
         }
@@ -181,38 +166,49 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   };
 
   const handleRemoveTag = async (tagId: string) => {
-    if (!isEditing) return;
+    if (!isEditing || !currentNote) return;
     try {
-      await removeTag(initialNote.id, tagId);
+      await removeTag(currentNote.id, tagId);
       setTags(tags.filter(t => t.id !== tagId));
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to remove tag"));
     }
   };
 
-  const handleSelectVersion = async (version: NoteVersion, latestHash: string) => {
+  const handleSelectVersion = async (version: NoteVersion, latestHash = "HEAD") => {
     setSelectedVersion(version);
     setLatestCommitHash(latestHash);
     setShowDiff(false);
     try {
-      const res = await getNoteVersion(initialNote!.id, version.id);
-      setVersionContent(res.content);
+      if (currentNote) {
+        const res = await getNoteVersion(currentNote.id, version.id);
+        setVersionContent(res.content || '');
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleRestoreConfirm = () => {
+  const handleRestoreConfirm = async () => {
     setShowRestoreConfirm(false);
     setIsHistoryOpen(false);
     setSelectedVersion(null);
-    // Ideally we would fetch the restored note here, but for now we can just close
-    // and let the parent refresh, or trigger a save/reload.
-    onClose();
+    if (currentNote) {
+      try {
+        const refreshed = await getNote(currentNote.id);
+        setCurrentNote(refreshed);
+        setContent(refreshed.content || '');
+        setTitle(refreshed.title);
+        setHistoryRefreshKey(k => k + 1);
+        onSaved(refreshed);
+      } catch (err) {
+        console.error("Failed to reload restored note", err);
+      }
+    }
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-[#0c1017]/95 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-2xl text-slate-100 overflow-hidden", className)}>
+    <div className={cn("flex flex-col h-full bg-[#0c1017]/95 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-md text-slate-100 overflow-hidden", className)}>
       <header className="flex items-center justify-between p-3.5 sm:p-4 border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md">
         <div className="flex items-center gap-1 sm:gap-2">
             <button 
@@ -327,7 +323,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         
         {isPreview ? (
             <div 
-                className="flex-1 overflow-y-auto"
+                className="flex-1 overflow-y-auto markdown-content"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(content || '*Empty note*') }} 
             />
         ) : (
@@ -365,16 +361,16 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                   </div>
                 </div>
                 
-                {showDiff && latestCommitHash ? (
+                {showDiff && latestCommitHash && currentNote ? (
                   <DiffViewer
-                    noteId={initialNote.id}
+                    noteId={currentNote.id}
                     fromHash={selectedVersion.commit_hash}
                     toHash={latestCommitHash}
                     className="flex-1"
                   />
                 ) : (
                   <div 
-                      className="flex-1 overflow-y-auto p-4 bg-[#0c1017] rounded-xl border border-slate-800"
+                      className="flex-1 overflow-y-auto p-4 bg-[#0c1017] rounded-xl border border-slate-800 markdown-content"
                       dangerouslySetInnerHTML={{ __html: renderMarkdown(versionContent || '*Empty version*') }} 
                   />
                 )}
@@ -386,24 +382,23 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
             )}
           </div>
           <div className="w-[300px] shrink-0">
-            <VersionHistoryPanel
-              noteId={initialNote.id}
-              currentVersionId={selectedVersion?.id}
-              onSelectVersion={(v) => {
-                 // For diff, we need the latest hash. We can cheat by grabbing it from the first version if we had it.
-                 // The VersionHistoryPanel doesn't expose versions list directly.
-                 // We'll pass "HEAD" or let's update VersionHistoryPanel to pass it.
-                 // But wait, the API probably accepts "HEAD". Let's assume it does, or we just pass the selected version hash as fromHash and "HEAD" as toHash.
-                 handleSelectVersion(v, "HEAD");
-              }}
-            />
+            {currentNote && (
+              <VersionHistoryPanel
+                noteId={currentNote.id}
+                refreshTrigger={historyRefreshKey}
+                currentVersionId={selectedVersion?.id}
+                onSelectVersion={(v) => {
+                   handleSelectVersion(v, "HEAD");
+                }}
+              />
+            )}
           </div>
         </div>
       )}
 
-      {showRestoreConfirm && initialNote && selectedVersion && (
+      {showRestoreConfirm && currentNote && selectedVersion && (
         <RestoreConfirmation
-          noteId={initialNote.id}
+          noteId={currentNote.id}
           version={selectedVersion}
           onConfirm={handleRestoreConfirm}
           onCancel={() => setShowRestoreConfirm(false)}
