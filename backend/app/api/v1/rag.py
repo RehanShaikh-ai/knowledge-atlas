@@ -20,44 +20,67 @@ from app.services import rag_service
 router = APIRouter()
 
 
+@router.get("/workspaces/{workspace_id}/rag/status")
+def get_rag_status(
+    workspace_id: uuid.UUID,
+):
+    """Return AI Provider status, reachability, active model, and recommended models."""
+    from app.core.config import settings
+    from app.services import llm_service
+
+    is_healthy = False
+    provider_name = settings.LLM_PROVIDER
+    active_model = settings.LLM_MODEL
+    base_url = settings.FREELLMAPI_BASE_URL
+
+    try:
+        provider = llm_service.get_llm_provider()
+        is_healthy = provider.health_check()
+        provider_name = provider.provider_name()
+        active_model = provider.model_name()
+    except Exception:
+        is_healthy = False
+
+    return {
+        "provider": provider_name,
+        "healthy": is_healthy,
+        "current_model": active_model,
+        "base_url": base_url,
+        "recommended_models": llm_service.RECOMMENDED_MODELS,
+    }
+
+
 @router.post("/workspaces/{workspace_id}/rag", response_model=RAGResponse)
 def execute_rag(
     workspace_id: uuid.UUID,
     request: RAGRequest,
     db: Annotated[Session, Depends(get_db)],
 ):
-    """Execute RAG pipeline with grounded citations and optional SSE streaming."""
+    """Execute RAG pipeline with grounded citations and optional real SSE streaming."""
     query = request.query.strip()
     if not query:
         raise ValidationError("Query must not be empty or whitespace only.")
 
     if request.stream:
-        # Streaming response via SSE per CONTRACT §10.4
+        # Real token streaming response via SSE per CONTRACT §10.4
         def event_stream():
             try:
-                # First run retrieval and validation
-                rag_res = rag_service.run_rag(db, workspace_id, request)
-                # Stream answer chunks
-                for word in rag_res.answer.split():
-                    chunk_data = json.dumps({"type": "chunk", "content": word + " "})
-                    yield f"data: {chunk_data}\n\n"
-
-                done_data = json.dumps(
-                    {
-                        "type": "done",
-                        "citations": [c.model_dump(mode="json") for c in rag_res.citations],
-                        "provider": rag_res.provider,
-                        "model": rag_res.model,
-                        "latency_ms": rag_res.latency_ms,
-                    }
-                )
-                yield f"data: {done_data}\n\n"
+                for event in rag_service.stream_rag(db, workspace_id, request):
+                    yield f"data: {json.dumps(event)}\n\n"
             except Exception as e:
                 err_data = json.dumps(
-                    {"type": "error", "code": "LLM_PROVIDER_UNAVAILABLE", "message": str(e)}
+                    {"type": "error", "code": "LLM_STREAM_ERROR", "message": str(e)}
                 )
                 yield f"data: {err_data}\n\n"
 
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     return rag_service.run_rag(db, workspace_id, request)

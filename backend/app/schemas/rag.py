@@ -17,6 +17,8 @@ class RAGRequest(BaseModel):
     rerank: bool = True
     context_limit: int = Field(default=5, ge=1, le=20)
     stream: bool = False
+    model: str | None = None
+    history: list[dict[str, str]] | None = None
 
 
 class CitedSource(BaseModel):
@@ -42,3 +44,4 @@ class RAGResponse(BaseModel):
     latency_ms: int
     reranking_applied: bool = False
     pending_ai_edit: str | None = None
+    ai_unavailable: bool = False
