@@ -44,10 +44,11 @@ def search_semantic(
     points = vector_service.search_vectors(
         workspace_id=workspace_id,
         query_vector=query_vector,
-        limit=limit,
+        limit=max(limit * 3, 20),
         excluded_note_ids=excluded_note_ids,
     )
 
+    seen_notes: set[uuid.UUID] = set()
     results: list[SearchResultItem] = []
     for pt in points:
         payload = pt.get("payload", {})
@@ -57,9 +58,14 @@ def search_semantic(
             continue
 
         n_id = uuid.UUID(note_id_str)
+        if n_id in seen_notes:
+            continue
+
         note = db.get(Note, n_id)
         if not note or (note.is_archived and not include_archived):
             continue
+
+        seen_notes.add(n_id)
 
         excerpt = ""
         c_id: uuid.UUID | None = None
@@ -87,8 +93,10 @@ def search_semantic(
                 is_archived=note.is_archived,
             )
         )
+        if len(results) >= limit:
+            break
 
-    return results[:limit]
+    return results
 
 
 def search_lexical(
