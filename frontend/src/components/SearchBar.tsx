@@ -45,7 +45,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ workspaceId, onNoteSelect,
         limit: 10
       });
       // Map SearchResultItem to Note structure expected by NoteLinks
-      setResults(res.results.map(r => ({
+      const itemsList = res.items || res.results || [];
+      setResults(itemsList.map(r => ({
         id: r.note_id,
         title: r.title,
         content: r.excerpt,
