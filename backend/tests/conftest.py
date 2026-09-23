@@ -3,7 +3,9 @@
 Provides an in-memory SQLite database and test client fixtures.
 """
 
+import os
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,9 +13,13 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
+
+os.environ["APP_ENV"] = "testing"
+settings.APP_ENV = "testing"
 
 # Create in-memory SQLite engine for tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -38,6 +44,18 @@ TestingSessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+@pytest.fixture(autouse=True)
+def setup_test_env(tmp_path: Path) -> Generator[None, None, None]:
+    """Ensure test environment and temporary Git repository root are set."""
+    old_env = settings.APP_ENV
+    old_git_root = settings.GIT_REPOSITORY_ROOT
+    settings.APP_ENV = "testing"
+    settings.GIT_REPOSITORY_ROOT = str(tmp_path / "git_repos")
+    yield
+    settings.APP_ENV = old_env
+    settings.GIT_REPOSITORY_ROOT = old_git_root
 
 
 @pytest.fixture(autouse=True)
