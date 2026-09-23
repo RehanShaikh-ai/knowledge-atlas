@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { getWorkspaceDashboard } from '@/api/dashboard';
 import { DashboardStats } from '@/types/dashboard';
 import { DashboardMetricCard } from '@/components/DashboardMetricCard';
+import { IndexingStatus } from '@/components/jobs/IndexingStatus';
+import { ActivityTimeline } from '@/components/activity/ActivityTimeline';
 import { FileText, Link as LinkIcon, Tag as TagIcon, UploadCloud, Activity, Zap, Loader2, AlertTriangle } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -93,32 +95,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="dashboard-card p-5">
-            <h3 className="dashboard-metric-label flex items-center gap-2 mb-4">
-              <Zap size={16} className="text-amber-400" />
-              Most Connected Notes
-            </h3>
-            <div className="space-y-2">
-              {stats.most_connected_notes.length === 0 ? (
-                <p className="text-sm text-slate-500 italic">No relationships formed yet.</p>
-              ) : (
-                stats.most_connected_notes.map((note, idx) => (
-                  <button 
-                    key={note.id}
-                    onClick={() => onNavigateToNote?.(note.id)}
-                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700/50 group text-left"
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <span className="text-xs font-mono text-slate-500 w-4">{idx + 1}.</span>
-                      <span className="text-sm font-medium text-slate-200 truncate group-hover:text-sky-300 transition-colors">{note.title}</span>
-                    </div>
-                    <span className="text-xs font-mono bg-sky-950/50 text-sky-400 px-2 py-1 rounded-md border border-sky-500/20 whitespace-nowrap">
-                      degree: {note.degree}
-                    </span>
-                  </button>
-                ))
-              )}
+          <div className="space-y-6">
+            <div className="dashboard-card p-5">
+              <h3 className="dashboard-metric-label flex items-center gap-2 mb-4">
+                <Zap size={16} className="text-amber-400" />
+                Most Connected Notes
+              </h3>
+              <div className="space-y-2">
+                {stats.most_connected_notes.length === 0 ? (
+                  <p className="text-sm text-slate-500 italic">No relationships formed yet.</p>
+                ) : (
+                  stats.most_connected_notes.map((note, idx) => (
+                    <button 
+                      key={note.id}
+                      onClick={() => onNavigateToNote?.(note.id)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700/50 group text-left"
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <span className="text-xs font-mono text-slate-500 w-4">{idx + 1}.</span>
+                        <span className="text-sm font-medium text-slate-200 truncate group-hover:text-sky-300 transition-colors">{note.title}</span>
+                      </div>
+                      <span className="text-xs font-mono bg-sky-950/50 text-sky-400 px-2 py-1 rounded-md border border-sky-500/20 whitespace-nowrap">
+                        degree: {note.degree}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
+
+            <ActivityTimeline workspaceId={workspaceId} onNavigateToNote={onNavigateToNote} className="dashboard-card p-5" />
           </div>
 
           <div className="space-y-6">
@@ -140,6 +146,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
                 )}
               </div>
             </div>
+
+            <IndexingStatus workspaceId={workspaceId} />
 
             <div className="dashboard-card p-5 flex items-center justify-between">
               <div>

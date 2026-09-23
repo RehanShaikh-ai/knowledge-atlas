@@ -1,9 +1,9 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SearchBar } from './SearchBar';
-import * as notesApi from '@/api/notes';
+import * as searchApi from '@/api/search';
 
-vi.mock('@/api/notes', () => ({
+vi.mock('@/api/search', () => ({
   searchNotes: vi.fn(),
 }));
 
@@ -13,11 +13,10 @@ describe('SearchBar', () => {
   });
 
   it('calls search API and displays results after typing', async () => {
-    vi.mocked(notesApi.searchNotes).mockResolvedValue({
-      items: [
-        { id: '1', workspace_id: 'ws-1', title: 'Found Note', content: '...', is_pinned: false, is_archived: false, tags: [], created_at: '', updated_at: '', created_by: '' }
-      ],
-      total: 1, page: 1, page_size: 10, query: 'Found'
+    vi.mocked(searchApi.searchNotes).mockResolvedValue({
+      results: [
+        { note_id: '1', chunk_id: 'c1', title: 'Found Note', excerpt: '...', score: 0.9, score_meaning: 'hybrid', search_mode: 'hybrid', is_archived: false }
+      ]
     });
 
     render(<SearchBar workspaceId="ws-1" />);
@@ -26,15 +25,14 @@ describe('SearchBar', () => {
     fireEvent.change(input, { target: { value: 'Found' } });
     
     await waitFor(() => {
-      expect(notesApi.searchNotes).toHaveBeenCalledWith('ws-1', 'Found', { page_size: 10 });
+      expect(searchApi.searchNotes).toHaveBeenCalledWith('ws-1', { query: 'Found', mode: 'hybrid', limit: 10 });
       expect(screen.getByText('Found Note')).toBeInTheDocument();
     }, { timeout: 1500 });
   });
 
   it('shows empty state when no results', async () => {
-    vi.mocked(notesApi.searchNotes).mockResolvedValue({
-      items: [],
-      total: 0, page: 1, page_size: 10, query: 'Nope'
+    vi.mocked(searchApi.searchNotes).mockResolvedValue({
+      results: []
     });
 
     render(<SearchBar workspaceId="ws-1" />);
@@ -48,7 +46,7 @@ describe('SearchBar', () => {
   });
 
   it('shows error state on failure', async () => {
-    vi.mocked(notesApi.searchNotes).mockRejectedValue(new Error('API failure'));
+    vi.mocked(searchApi.searchNotes).mockRejectedValue(new Error('API failure'));
 
     render(<SearchBar workspaceId="ws-1" />);
     
@@ -61,11 +59,10 @@ describe('SearchBar', () => {
   });
 
   it('handles note selection', async () => {
-    vi.mocked(notesApi.searchNotes).mockResolvedValue({
-      items: [
-        { id: '1', workspace_id: 'ws-1', title: 'Click Me', content: '...', is_pinned: false, is_archived: false, tags: [], created_at: '', updated_at: '', created_by: '' }
-      ],
-      total: 1, page: 1, page_size: 10, query: 'Click'
+    vi.mocked(searchApi.searchNotes).mockResolvedValue({
+      results: [
+        { note_id: '1', chunk_id: 'c2', title: 'Click Me', excerpt: '...', score: 0.8, score_meaning: 'hybrid', search_mode: 'hybrid', is_archived: false }
+      ]
     });
 
     const handleSelect = vi.fn();
@@ -85,11 +82,10 @@ describe('SearchBar', () => {
   });
 
   it('searches with partial substring and returns matching results', async () => {
-    vi.mocked(notesApi.searchNotes).mockResolvedValue({
-      items: [
-        { id: '1', workspace_id: 'ws-1', title: 'hellow world', content: 'some content', is_pinned: false, is_archived: false, tags: [], created_at: '', updated_at: '', created_by: '' }
-      ],
-      total: 1, page: 1, page_size: 10, query: 'ell'
+    vi.mocked(searchApi.searchNotes).mockResolvedValue({
+      results: [
+        { note_id: '1', chunk_id: 'c3', title: 'hellow world', excerpt: 'some content', score: 0.7, score_meaning: 'hybrid', search_mode: 'hybrid', is_archived: false }
+      ]
     });
 
     render(<SearchBar workspaceId="ws-1" />);
@@ -98,17 +94,16 @@ describe('SearchBar', () => {
     fireEvent.change(input, { target: { value: 'ell' } });
 
     await waitFor(() => {
-      expect(notesApi.searchNotes).toHaveBeenCalledWith('ws-1', 'ell', { page_size: 10 });
+      expect(searchApi.searchNotes).toHaveBeenCalledWith('ws-1', { query: 'ell', mode: 'hybrid', limit: 10 });
       expect(screen.getByText('hellow world')).toBeInTheDocument();
     }, { timeout: 1500 });
   });
 
   it('searches case-insensitively and displays results', async () => {
-    vi.mocked(notesApi.searchNotes).mockResolvedValue({
-      items: [
-        { id: '2', workspace_id: 'ws-1', title: 'UPPERCASE Title', content: 'body text', is_pinned: false, is_archived: false, tags: [], created_at: '', updated_at: '', created_by: '' }
-      ],
-      total: 1, page: 1, page_size: 10, query: 'uppercase'
+    vi.mocked(searchApi.searchNotes).mockResolvedValue({
+      results: [
+        { note_id: '2', chunk_id: 'c4', title: 'UPPERCASE Title', excerpt: 'body text', score: 0.6, score_meaning: 'hybrid', search_mode: 'hybrid', is_archived: false }
+      ]
     });
 
     render(<SearchBar workspaceId="ws-1" />);
@@ -117,17 +112,16 @@ describe('SearchBar', () => {
     fireEvent.change(input, { target: { value: 'uppercase' } });
 
     await waitFor(() => {
-      expect(notesApi.searchNotes).toHaveBeenCalledWith('ws-1', 'uppercase', { page_size: 10 });
+      expect(searchApi.searchNotes).toHaveBeenCalledWith('ws-1', { query: 'uppercase', mode: 'hybrid', limit: 10 });
       expect(screen.getByText('UPPERCASE Title')).toBeInTheDocument();
     }, { timeout: 1500 });
   });
 
   it('matches notes by content substring', async () => {
-    vi.mocked(notesApi.searchNotes).mockResolvedValue({
-      items: [
-        { id: '3', workspace_id: 'ws-1', title: 'My Note', content: 'initialization complete', is_pinned: false, is_archived: false, tags: [], created_at: '', updated_at: '', created_by: '' }
-      ],
-      total: 1, page: 1, page_size: 10, query: 'init'
+    vi.mocked(searchApi.searchNotes).mockResolvedValue({
+      results: [
+        { note_id: '3', chunk_id: 'c5', title: 'My Note', excerpt: 'initialization complete', score: 0.9, score_meaning: 'hybrid', search_mode: 'hybrid', is_archived: false }
+      ]
     });
 
     render(<SearchBar workspaceId="ws-1" />);
@@ -136,7 +130,7 @@ describe('SearchBar', () => {
     fireEvent.change(input, { target: { value: 'init' } });
 
     await waitFor(() => {
-      expect(notesApi.searchNotes).toHaveBeenCalledWith('ws-1', 'init', { page_size: 10 });
+      expect(searchApi.searchNotes).toHaveBeenCalledWith('ws-1', { query: 'init', mode: 'hybrid', limit: 10 });
       expect(screen.getByText('My Note')).toBeInTheDocument();
     }, { timeout: 1500 });
   });

@@ -1,36 +1,25 @@
 import React from 'react';
 import { ApiError } from '@/types/api';
+import { AlertTriangle } from 'lucide-react';
 
 interface ErrorStateProps {
   error: ApiError | string;
+  className?: string;
 }
 
-export const ErrorState: React.FC<ErrorStateProps> = ({ error }) => {
+export const ErrorState: React.FC<ErrorStateProps> = ({ error, className = '' }) => {
   const message = typeof error === 'string' ? error : error.error.message;
   const code = typeof error === 'string' ? undefined : error.error.code;
 
   return (
-    <div data-testid="error-state" style={styles.container}>
-      {code && <span style={styles.code}>[{code}] </span>}
-      <span style={styles.message}>{message}</span>
+    <div data-testid="error-state" className={`p-4 bg-red-500/10 border border-red-500/20 text-red-300 rounded-xl flex items-start gap-3 ${className}`}>
+      <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-400" />
+      <div>
+        <span className="block text-sm font-medium">
+          {code && <span className="font-bold mr-1">[{code}] </span>}
+          {message}
+        </span>
+      </div>
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    padding: '12px 16px',
-    background: '#451a1a',
-    border: '1px solid #7f1d1d',
-    borderRadius: '6px',
-    color: '#fca5a5',
-    fontSize: '14px',
-    margin: '8px 0',
-  },
-  code: {
-    fontWeight: 700,
-  },
-  message: {
-    margin: 0,
-  },
 };

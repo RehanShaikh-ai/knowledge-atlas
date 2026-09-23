@@ -56,23 +56,37 @@ The goal isn't to replace thinking. It's to make thinking more reliable.
 
 ## Current State
 
-Knowledge Atlas is in active early development. The foundation is being built methodically — each layer is tested, contracted, and integrated before the next one begins.
+Knowledge Atlas is in active development under strict engineering contracts.
 
-**What exists now:**
+**What exists now (v0.3.1 Semantic Retrieval & AI Foundation):**
 
-- ✅ Users and workspaces
-- ✅ Full-stack infrastructure (FastAPI, React, PostgreSQL, Docker)
-- ✅ Notes with Markdown, workspace tags, full-text search (`tsvector`), and note-to-note linking (v0.2.1 Knowledge Foundation)
+- ✅ **Users and Workspaces** — Isolated knowledge contexts with ownership tracking
+- ✅ **Structured Notes** — Markdown editor, note linking (`NoteLink`), workspace tags, and full-text search (`tsvector`)
+- ✅ **Source Ingestion & Graph** — Provenance tracking for imports (Markdown, text, PDF), interactive knowledge graph, and dashboard overview
+- ✅ **Semantic, Lexical & Hybrid Search** — Vector similarity (Qdrant), Reciprocal Rank Fusion (RRF), exact match highlighting, and saved searches
+- ✅ **Grounded RAG Pipeline** — AI assistant with token-by-token streaming responses and cited source cards linked to note chunks
+- ✅ **Git-Based Note Versioning** — Git-backed note history, side-by-side/unified visual diff viewer, and safe rollback restore flow
+- ✅ **Background Indexing Queue** — Non-blocking indexing via ARQ + Redis, with real-time job status tracking and retry support
+- ✅ **Activity Timeline & Keyboard Shortcuts** — Workspace event feed and global shortcuts (`Mod+Space`, `Mod+J`, `Mod+N`, `Escape`)
 
-**What's coming:**
+**What's coming (v0.3.2+):**
 
-- Source import endpoints for Markdown, text, PDFs, and Obsidian vaults
-- Knowledge graph and dashboard endpoints/UI
-- Semantic search and AI-powered retrieval
-- AI assistant grounded in your actual knowledge base
+- GraphRAG and graph-native retrieval
+- Automatic entity and relationship extraction
+- Typed graph relationships
 - Study tools, quizzes, and learning progress tracking
-- Collaboration and shared workspaces
-- And more — the roadmap is ambitious and long-term
+- Multi-user collaboration and shared workspaces
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Mod + Space` | Open Semantic / Hybrid Search modal |
+| `Mod + J` | Open AI Assistant (RAG) modal |
+| `Mod + N` | Create a new note |
+| `Escape` | Close active modals and note editor |
+
+> **Note:** `Mod` refers to `Cmd` (⌘) on macOS and `Ctrl` on Windows/Linux.
 
 ---
 
@@ -98,11 +112,11 @@ Strict engineering contracts, clean migrations, replaceable infrastructure. This
 
 | Layer | Technology |
 |---|---|
-| Frontend | React, TypeScript, Vite |
-| Backend | Python, FastAPI, SQLAlchemy |
-| Database | PostgreSQL, Alembic |
+| Frontend | React 18, TypeScript, Tailwind CSS, Vite, Lucide Icons |
+| Backend | Python 3.12, FastAPI, SQLAlchemy, Alembic, ARQ |
+| Database & Storage | PostgreSQL 16, Qdrant (Vector DB), Redis (Job Queue), Git (Note Revisions) |
+| AI & Embeddings | FastEmbed (default local), Ollama, OmniRoute, FreeLLMAPI |
 | Infrastructure | Docker Compose, GitHub Actions |
-| AI (planned) | Configurable — Ollama, OpenAI-compatible, others |
 
 The AI layer is designed to be provider-agnostic from the start. No hard dependency on any single model or service.
 
@@ -198,7 +212,23 @@ POST   /api/v1/notes/{note_id}/links
 DELETE /api/v1/notes/{note_id}/links/{target_note_id}
 GET    /api/v1/notes/{note_id}/links
 
-GET    /api/v1/workspaces/{workspace_id}/notes/search?q={query}
+POST   /api/v1/workspaces/{workspace_id}/search
+GET    /api/v1/workspaces/{workspace_id}/saved-searches
+POST   /api/v1/workspaces/{workspace_id}/saved-searches
+DELETE /api/v1/workspaces/{workspace_id}/saved-searches/{id}
+
+POST   /api/v1/workspaces/{workspace_id}/rag
+
+GET    /api/v1/workspaces/{workspace_id}/jobs
+POST   /api/v1/jobs/{job_id}/retry
+
+GET    /api/v1/notes/{note_id}/versions
+GET    /api/v1/notes/{note_id}/versions/{version_id}/diff
+POST   /api/v1/notes/{note_id}/versions/{version_id}/restore
+
+GET    /api/v1/workspaces/{workspace_id}/activity
+GET    /api/v1/workspaces/{workspace_id}/dashboard
+GET    /api/v1/workspaces/{workspace_id}/graph
 ```
 
 Full API documentation is generated automatically at `http://localhost:8080/docs` when the backend is running.
