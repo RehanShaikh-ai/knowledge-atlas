@@ -13,8 +13,17 @@ export async function getNoteDiff(noteId: string, fromHash: string, toHash: stri
   return apiClient.get<DiffResponse>(`/notes/${noteId}/diff?from=${fromHash}&to=${toHash}`);
 }
 
-export async function restoreNoteVersion(noteId: string, versionId: string): Promise<void> {
-  return apiClient.post(`/notes/${noteId}/restore`, { version_id: versionId });
+export async function restoreNoteVersion(
+  noteId: string,
+  versionId: string,
+  commitHash?: string,
+  authorId?: string
+): Promise<NoteVersionResponse> {
+  return apiClient.post<NoteVersionResponse>(`/notes/${noteId}/restore`, {
+    version_id: versionId,
+    commit_hash: commitHash,
+    author_id: authorId,
+  });
 }
 
 export async function approveAIEdit(noteId: string): Promise<void> {

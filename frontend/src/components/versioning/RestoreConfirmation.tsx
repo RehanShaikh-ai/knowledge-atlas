@@ -23,7 +23,7 @@ export const RestoreConfirmation: React.FC<RestoreConfirmationProps> = ({
     setIsRestoring(true);
     setError(null);
     try {
-      await restoreNoteVersion(noteId, version.id);
+      await restoreNoteVersion(noteId, version.id, version.commit_hash, version.author_id);
       onConfirm();
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to restore version'));
