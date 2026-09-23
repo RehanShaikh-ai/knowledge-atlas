@@ -20,6 +20,7 @@ class NoteVersionResponse(BaseModel):
     message: str | None = None
     is_ai_edit: bool = False
     created_at: datetime
+    content: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,8 +44,9 @@ class DiffResponse(BaseModel):
 class RestoreRequest(BaseModel):
     """Restore version request body."""
 
-    commit_hash: str = Field(min_length=40, max_length=40)
-    author_id: uuid.UUID
+    commit_hash: str | None = Field(default=None, min_length=1, max_length=64)
+    version_id: uuid.UUID | None = None
+    author_id: uuid.UUID | None = None
 
 
 class AIEditApproveRequest(BaseModel):
