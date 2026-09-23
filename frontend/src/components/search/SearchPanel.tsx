@@ -38,7 +38,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ workspaceId, onNoteSel
         mode: searchMode,
         limit: 20
       });
-      setResults(res.results || []);
+      setResults(res.items || res.results || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Search failed'));
     } finally {
@@ -169,7 +169,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ workspaceId, onNoteSel
           <div className="flex flex-col gap-3">
             {results.map((result) => (
               <SearchResultCard 
-                key={result.chunk_id} 
+                key={result.chunk_id || result.note_id} 
                 result={result} 
                 onClick={onNoteSelect} 
               />

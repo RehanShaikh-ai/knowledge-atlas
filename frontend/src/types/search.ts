@@ -19,5 +19,9 @@ export interface SearchResultItem {
 }
 
 export interface SearchResponse {
-  results: SearchResultItem[];
+  items?: SearchResultItem[];
+  results?: SearchResultItem[];
+  query?: string;
+  mode?: string;
+  total?: number;
 }
