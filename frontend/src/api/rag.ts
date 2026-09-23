@@ -1,5 +1,12 @@
 import { apiClient } from './client';
-import { RAGRequest, RAGResponse, RAGStreamEvent } from '../types/rag';
+import { RAGRequest, RAGResponse, RAGStreamEvent, RAGStatusResponse } from '../types/rag';
+
+/**
+ * Fetches the current AI/RAG status and recommended models for a workspace.
+ */
+export async function getRAGStatus(workspaceId: string): Promise<RAGStatusResponse> {
+  return apiClient.get<RAGStatusResponse>(`/workspaces/${workspaceId}/rag/status`);
+}
 
 /**
  * Runs the RAG pipeline for a workspace. Non-streaming by default.

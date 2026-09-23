@@ -12,6 +12,8 @@ export interface RAGRequest {
   rerank?: boolean;
   context_limit?: number; // max 20
   stream?: boolean;
+  model?: string;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }
 
 export interface RAGResponse {
@@ -22,14 +24,30 @@ export interface RAGResponse {
   model: string;
   latency_ms: number;
   reranking_applied: boolean;
-  // Included from §11.4 AI-Edit Approval Flow
   pending_ai_edit?: {
     content: string;
     message?: string;
   };
+  ai_unavailable?: boolean;
+}
+
+export interface RecommendedModel {
+  id: string;
+  name: string;
+  description: string;
+  context_window?: number;
+}
+
+export interface RAGStatusResponse {
+  provider: string;
+  healthy: boolean;
+  current_model: string;
+  base_url?: string;
+  recommended_models: RecommendedModel[];
 }
 
 export type RAGStreamEvent = 
   | { type: 'chunk'; content: string }
   | { type: 'done'; citations: CitedSource[]; provider: string; model: string; latency_ms?: number }
+  | { type: 'ai_unavailable'; note_count: number; citations: CitedSource[]; message: string }
   | { type: 'error'; code: string; message: string };
