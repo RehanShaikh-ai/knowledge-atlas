@@ -12,13 +12,15 @@ interface VersionHistoryPanelProps {
   onSelectVersion: (version: NoteVersion) => void;
   currentVersionId?: string;
   className?: string;
+  refreshTrigger?: number;
 }
 
 export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   noteId,
   onSelectVersion,
   currentVersionId,
-  className = ''
+  className = '',
+  refreshTrigger = 0
 }) => {
   const [versions, setVersions] = useState<NoteVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +42,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       });
       
     return () => { mounted = false; };
-  }, [noteId]);
+  }, [noteId, refreshTrigger]);
 
   if (isLoading) {
     return <LoadingState message="Loading history..." className={className} />;
