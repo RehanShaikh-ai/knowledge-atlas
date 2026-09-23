@@ -26,6 +26,8 @@ export const StarField: React.FC = () => {
 
     let animFrame: number;
     let stars: Star[] = [];
+    let lastDrawTime = 0;
+    const fpsInterval = 1000 / 30; // Cap at 30 FPS for massive CPU/GPU savings
     
     // Optical & mouse tracking
     let targetFocalX = window.innerWidth / 2;
@@ -37,7 +39,7 @@ export const StarField: React.FC = () => {
     let time = 0;
 
     const initStars = () => {
-      const density = 9000;
+      const density = 14000;
       const count = Math.floor((canvas.width * canvas.height) / density);
       stars = Array.from({ length: count }, () => ({
         x: Math.random() * canvas.width,
@@ -71,7 +73,15 @@ export const StarField: React.FC = () => {
       };
     };
 
-    const draw = () => {
+    const draw = (now: number) => {
+      animFrame = requestAnimationFrame(draw);
+
+      if (document.hidden) return;
+
+      const elapsed = now - lastDrawTime;
+      if (elapsed < fpsInterval) return;
+      lastDrawTime = now - (elapsed % fpsInterval);
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       time += 1;
 
@@ -86,8 +96,8 @@ export const StarField: React.FC = () => {
       // ======================================================================
       // 1. Large Fisheye Lens Grid
       // ======================================================================
-      const gridSize = 100; // Large, prominent grid size
-      const step = 20;      // Step size along curve for smooth arcs
+      const gridSize = 120; // Optimized grid spacing
+      const step = 40;      // Step size along curve for smooth arcs with half calculation overhead
 
       // Create radial lens gradient for subtle, high-end visibility
       const gridGradient = ctx.createRadialGradient(focalX, focalY, 40, focalX, focalY, maxRadius);
@@ -187,8 +197,6 @@ export const StarField: React.FC = () => {
           ctx.fill();
         }
       }
-
-      animFrame = requestAnimationFrame(draw);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -200,7 +208,7 @@ export const StarField: React.FC = () => {
     };
 
     resize();
-    draw();
+    animFrame = requestAnimationFrame(draw);
 
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', handleMouseMove);

@@ -318,10 +318,9 @@ textarea:focus-visible {
 .setup-container {
   flex: 1;
   width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 44px 40px;
+  padding: 40px 48px;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .setup-breadcrumb {
@@ -1484,3 +1483,209 @@ textarea:focus-visible {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+/* ==========================================================================
+   SVG Icon Display & Accessibility
+   ========================================================================== */
+svg[aria-hidden="true"] {
+  display: inline-block;
+  vertical-align: middle;
+  pointer-events: none;
+  user-select: none;
+  speak: none;
+}
+
+/* ==========================================================================
+   Markdown Content Styling (Assistant / Notes / Previews)
+   ========================================================================== */
+.markdown-content {
+  color: #e2e8f0;
+  line-height: 1.68;
+  font-size: 0.875rem;
+  word-break: break-word;
+}
+
+.markdown-content > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.68;
+}
+
+.markdown-content h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: -0.015em;
+}
+
+.markdown-content h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-top: 1.1rem;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  letter-spacing: -0.01em;
+}
+
+.markdown-content h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-top: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: #cbd5e1;
+}
+
+.markdown-content del {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+  padding-left: 1.4rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+  padding-left: 1.4rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  line-height: 1.55;
+  color: #e2e8f0;
+}
+
+.markdown-content li > p {
+  margin: 0;
+  display: inline;
+}
+
+.markdown-content li > ul,
+.markdown-content li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content code:not(pre code) {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8125rem;
+  background: rgba(30, 41, 59, 0.85);
+  color: #38bdf8;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.markdown-content pre {
+  background: #090d14;
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content pre code {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8125rem;
+  background: transparent;
+  padding: 0;
+  border: none;
+  color: #cbd5e1;
+  display: block;
+  line-height: 1.5;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid rgba(56, 189, 248, 0.6);
+  padding: 0.35rem 0.875rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+  background: rgba(56, 189, 248, 0.05);
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.markdown-content blockquote p {
+  margin: 0;
+}
+
+.markdown-content a {
+  color: #38bdf8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.markdown-content a:hover {
+  color: #7dd3fc;
+}
+
+.markdown-content hr {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 1.25rem 0;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.8125rem;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 0.45rem 0.75rem;
+  text-align: left;
+}
+
+.markdown-content th {
+  background: rgba(30, 41, 59, 0.6);
+  font-weight: 600;
+  color: #f8fafc;
+}
+
