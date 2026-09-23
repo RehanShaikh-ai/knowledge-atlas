@@ -59,6 +59,7 @@ class NoteVersion(Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"),
         nullable=False,
     )
+    # Git SHA-1 is always exactly 40 hex characters.
     commit_hash: Mapped[str] = mapped_column(
         String(40),
         nullable=False,
@@ -68,10 +69,13 @@ class NoteVersion(Base):
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    # Optional human-readable commit message (e.g. "Saved from editor").
     message: Mapped[str | None] = mapped_column(
         String(500),
         nullable=True,
     )
+    # True when the snapshot was created via the AI-edit approval flow (§11.4).
+    # False for all human-originated saves.
     is_ai_edit: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

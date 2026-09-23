@@ -55,15 +55,18 @@ class IndexJob(Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"),
         nullable=False,
     )
+    # "index_workspace" for full-workspace reindex; "index_note" for targeted reindex.
     job_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
     )
+    # Job lifecycle status — see valid transitions above.
     status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
         default="queued",
     )
+    # Optional list of note UUIDs to index. Null means reindex the entire workspace.
     note_ids: Mapped[list[str] | None] = mapped_column(
         JSONB().with_variant(SQLITE_JSON(), "sqlite"),
         nullable=True,
@@ -85,14 +88,18 @@ class IndexJob(Base):
         server_default=func.now(),
         nullable=False,
     )
+    # Set to current time when worker picks up the job.
     started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
+    # Set to current time on terminal state (completed or failed after max retries).
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
+    # Sanitized error description — internal paths and stack traces must never
+    # be written here (§12.4, §14 error contract).
     error_message: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,

@@ -1,7 +1,11 @@
 """Models package.
 
-Canonical module per contract §8.1.
-Exports all domain models so they are registered on Base.metadata.
+Canonical module per contract §8.1 (v0.2.1) and CONTRACT v0.3.1 §5.1.
+Exports all domain models so they are registered on Base.metadata
+and Alembic can auto-generate accurate migration diffs.
+
+v0.2.x models: Note, NoteLink, NoteTag, Source, Tag, User, Workspace
+v0.3.1 models: IndexJob, NoteChunk, NoteVersion, SavedSearch
 """
 
 from app.models.index_job import IndexJob

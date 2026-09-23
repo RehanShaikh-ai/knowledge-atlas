@@ -19,7 +19,7 @@ services:
       start_period: 5s
 
   # One-shot migration runner — runs alembic upgrade head then exits.
-  # Contract §21: postgres → migrate → backend → frontend dependency chain.
+  # Contract v0.3.1 §16: postgres → migrate → backend → frontend dependency chain.
   # Migrations must not run inside the backend container's own entrypoint.
   migrate:
     build:
@@ -57,9 +57,87 @@ services:
       DATABASE_USER: ${DATABASE_USER:-knowledge_atlas}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-change_me}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      # v0.3.1 additions — vector store, job queue, Git versioning
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_COLLECTION_PREFIX: ${QDRANT_COLLECTION_PREFIX:-ka}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      GIT_REPOSITORY_ROOT: ${GIT_REPOSITORY_ROOT:-/data/workspaces}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-fastembed}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-384}
+      CHUNK_SIZE: ${CHUNK_SIZE:-512}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-64}
+      CHUNKING_STRATEGY: ${CHUNKING_STRATEGY:-markdown_heading}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-llama3.2}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      JOB_MAX_RETRIES: ${JOB_MAX_RETRIES:-3}
+      PROVIDER_TIMEOUT_SECONDS: ${PROVIDER_TIMEOUT_SECONDS:-30}
+      CONTEXT_TOKEN_LIMIT: ${CONTEXT_TOKEN_LIMIT:-4096}
+    volumes:
+      - git_repositories:/data/workspaces
     depends_on:
       migrate:
         condition: service_completed_successfully
+
+  # ARQ background worker — processes indexing jobs from Redis queue.
+  # Contract v0.3.1 §16.3: worker is separate from the HTTP backend service.
+  # Backend and worker both depend on Redis and Postgres; Qdrant is handled via
+  # retry-with-backoff in the application code (§16.4) rather than Compose health.
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: knowledge_atlas_worker
+    command: uv run arq backend.app.jobs.worker.WorkerSettings
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-knowledge_atlas}
+      DATABASE_USER: ${DATABASE_USER:-knowledge_atlas}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_COLLECTION_PREFIX: ${QDRANT_COLLECTION_PREFIX:-ka}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      GIT_REPOSITORY_ROOT: ${GIT_REPOSITORY_ROOT:-/data/workspaces}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-fastembed}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-384}
+      CHUNK_SIZE: ${CHUNK_SIZE:-512}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-64}
+      CHUNKING_STRATEGY: ${CHUNKING_STRATEGY:-markdown_heading}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-llama3.2}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      JOB_MAX_RETRIES: ${JOB_MAX_RETRIES:-3}
+      PROVIDER_TIMEOUT_SECONDS: ${PROVIDER_TIMEOUT_SECONDS:-30}
+    volumes:
+      - git_repositories:/data/workspaces
+    depends_on:
+      - redis
+      - postgres
+
+  # Qdrant vector store — Contract v0.3.1 §16.1
+  # Version pinned per contract §16.1: qdrant/qdrant:v1.9.1
+  qdrant:
+    image: qdrant/qdrant:v1.9.1
+    container_name: knowledge_atlas_qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # Redis — ARQ job queue transport only. Contract v0.3.1 §16.1.
+  # No persistent application data stored in Redis (§4 data boundaries).
+  redis:
+    image: redis:7-alpine
+    container_name: knowledge_atlas_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
 
   frontend:
     build:
@@ -77,3 +155,11 @@ services:
 volumes:
   postgres_data:
     name: knowledge_atlas_postgres_data
+  # Qdrant vector index storage — Contract v0.3.1 §16.1
+  qdrant_data:
+    name: knowledge_atlas_qdrant_data
+  # Git-versioned note content — Contract v0.3.1 §16.2
+  # Mounted at /data/workspaces inside backend and worker containers.
+  # GIT_REPOSITORY_ROOT must equal /data/workspaces in .env.
+  git_repositories:
+    name: knowledge_atlas_git_repositories
