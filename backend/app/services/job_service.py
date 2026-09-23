@@ -49,10 +49,13 @@ def enqueue_index_job(
     db.commit()
     db.refresh(job)
 
-    # In local testing or synchronous execution, process immediately or via ARQ
-    if settings.APP_ENV == "testing":
-        process_index_job(db, job.id)
-        db.refresh(job)
+    # In testing or development mode, process immediately to ensure Qdrant & chunks update
+    if settings.APP_ENV in ("testing", "development"):
+        try:
+            process_index_job(db, job.id)
+            db.refresh(job)
+        except Exception as e:
+            logger.warning("Inline processing failed for index job %s: %s", job.id, e)
 
     return job
 
@@ -143,9 +146,14 @@ def process_index_job(db: Session, job_id: uuid.UUID) -> None:
             if not raw_chunks:
                 continue
 
-            # Remove previous chunks for this version if re-running
+            # Remove all previous vector points and chunks for this note
+            try:
+                vector_service.delete_note_vectors(note_id=note.id, workspace_id=note.workspace_id)
+            except Exception as e:
+                logger.warning("Failed deleting old vectors for note %s: %s", note.id, e)
+
             existing_chunks = list(
-                db.scalars(select(NoteChunk).where(NoteChunk.version_id == latest_version.id)).all()
+                db.scalars(select(NoteChunk).where(NoteChunk.note_id == note.id)).all()
             )
             for ec in existing_chunks:
                 db.delete(ec)

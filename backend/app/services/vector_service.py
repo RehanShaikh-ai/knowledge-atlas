@@ -8,6 +8,7 @@ import logging
 import uuid
 from typing import Any
 
+import httpx
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 
@@ -219,21 +220,43 @@ def search_vectors(
                 )
 
         qfilter = qmodels.Filter(must=must_filters, must_not=must_not_filters)
-        if hasattr(client, "query_points"):
-            query_res = client.query_points(
-                collection_name=c_name,
-                query=query_vector,
-                query_filter=qfilter,
-                limit=limit,
+        try:
+            url = f"{settings.QDRANT_URL.rstrip('/')}/collections/{c_name}/points/search"
+            payload_filter = (
+                qfilter.model_dump(exclude_none=True)
+                if hasattr(qfilter, "model_dump")
+                else qfilter.dict(exclude_none=True)
             )
-            points_list = query_res.points
-        else:
-            points_list = client.search(
-                collection_name=c_name,
-                query_vector=query_vector,
-                query_filter=qfilter,
-                limit=limit,
+            res = httpx.post(
+                url,
+                json={
+                    "vector": query_vector,
+                    "filter": payload_filter,
+                    "limit": limit,
+                    "with_payload": True,
+                },
+                timeout=10.0,
             )
+            if res.status_code == 200:
+                raw_pts = res.json().get("result", [])
+                return [
+                    {
+                        "id": str(pt["id"]),
+                        "score": float(pt["score"]),
+                        "payload": pt.get("payload") or {},
+                    }
+                    for pt in raw_pts
+                ]
+        except Exception as e:
+            logger.warning("Direct Qdrant search HTTP request failed: %s", e)
+
+        query_res = client.query_points(
+            collection_name=c_name,
+            query=query_vector,
+            query_filter=qfilter,
+            limit=limit,
+        )
+        points_list = query_res.points
         return [
             {
                 "id": str(r.id),

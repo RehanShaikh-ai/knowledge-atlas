@@ -107,7 +107,11 @@ class DeterministicTestEmbeddingProvider:
         return results
 
 
+_fastembed_instance: FastEmbedProvider | None = None
+
+
 def _get_provider() -> EmbeddingProvider:
+    global _fastembed_instance
     provider_name = settings.EMBEDDING_PROVIDER.lower()
     if settings.APP_ENV == "testing" or provider_name == "test":
         return DeterministicTestEmbeddingProvider()
@@ -116,7 +120,9 @@ def _get_provider() -> EmbeddingProvider:
     try:
         import fastembed  # noqa: F401
 
-        return FastEmbedProvider()
+        if _fastembed_instance is None:
+            _fastembed_instance = FastEmbedProvider()
+        return _fastembed_instance
     except (ImportError, Exception):
         return DeterministicTestEmbeddingProvider()
 
