@@ -848,6 +848,7 @@ textarea:focus-visible {
 
 .note-card-title {
   color: var(--text);
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   margin: 0 0 8px;
@@ -861,6 +862,7 @@ textarea:focus-visible {
 
 .note-card-preview {
   color: var(--subtext0);
+  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   flex: 1;
@@ -1494,7 +1496,6 @@ svg[aria-hidden="true"] {
   vertical-align: middle;
   pointer-events: none;
   user-select: none;
-  speak: none;
 }
 
 /* ==========================================================================
