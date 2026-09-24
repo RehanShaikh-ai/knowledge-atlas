@@ -21,3 +21,8 @@ export interface JobStatusResponse {
   completed_at: string | null;
   error_message: string | null;
 }
+
+export interface ExtractionJobResponse {
+  job_id: string;
+  status: JobStatus | string;
+}

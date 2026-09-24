@@ -89,7 +89,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
   // Format data for ForceGraph2D
   const data = {
     nodes: graphData.nodes.map(n => ({ ...n })),
-    links: graphData.edges.map(e => ({ source: e.source_note_id, target: e.target_note_id }))
+    links: graphData.edges.map(e => ({ source: e.source_entity_id, target: e.target_entity_id }))
   };
 
   return (
@@ -113,7 +113,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
       {graphData.stats.truncated && (
         <div className="absolute top-4 left-4 z-10 bg-amber-950/80 border border-amber-500/50 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur-sm flex items-center gap-2">
           <AlertTriangle size={14} />
-          Graph Truncated (Showing 1000 max)
+          Graph Truncated (Showing max nodes)
         </div>
       )}
       
@@ -127,10 +127,10 @@ export const GraphView: React.FC<GraphViewProps> = ({ workspaceId, onNodeClick, 
           width={dimensions.width}
           height={dimensions.height}
           graphData={data}
-          nodeLabel="title"
-          nodeColor={(node: { degree?: number, is_pinned?: boolean } | unknown) => {
-            const n = node as { degree?: number, is_pinned?: boolean };
-            return n.degree === 0 ? '#475569' : (n.is_pinned ? '#fbbf24' : '#38bdf8');
+          nodeLabel="name"
+          nodeColor={(node: { degree?: number, is_manual?: boolean } | unknown) => {
+            const n = node as { degree?: number, is_manual?: boolean };
+            return n.degree === 0 ? '#475569' : (n.is_manual ? '#fbbf24' : '#38bdf8');
           }}
           nodeRelSize={5}
           linkColor={() => 'rgba(148, 163, 184, 0.2)'}
