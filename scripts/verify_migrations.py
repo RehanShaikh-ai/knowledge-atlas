@@ -45,18 +45,20 @@ def verify_alembic_heads() -> None:
         print(f"ERROR: Multiple heads detected! {heads}")
         sys.exit(1)
 
-    expected_head = "0004"
+    expected_head = "0005"
     if heads[0] != expected_head:
         print(f"ERROR: Current head {heads[0]} does not match expected {expected_head}")
         sys.exit(1)
 
-    print(f"SUCCESS: Migration head verified at {expected_head} (v0.3.1 Semantic Retrieval)")
+    print(
+        f"SUCCESS: Migration head verified at {expected_head} (v0.3.2 Knowledge Graph & GraphRAG)"
+    )
 
     # Also verify the full chain is intact
     all_revisions = list(scr.walk_revisions())
     print(f"Total revisions: {len(all_revisions)}")
     for rev in reversed(all_revisions):
-        print(f"  {rev.revision} ← {rev.down_revision or '(base)'}")
+        print(f"  {rev.revision} <- {rev.down_revision or '(base)'}")
 
 
 if __name__ == "__main__":
