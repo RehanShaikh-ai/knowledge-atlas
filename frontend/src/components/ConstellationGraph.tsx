@@ -210,7 +210,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
 
       // Label rendering at readable zoom levels
       if (globalScale > 0.8 || isSelected || isHighlighted) {
-        const label = n.name;
+        const label = n.name || n.title || 'Entity';
         const fontSize = Math.max(10 / globalScale, 11);
         ctx.font = `${isSelected ? '600' : '400'} ${fontSize}px Inter, sans-serif`;
         ctx.textAlign = 'center';

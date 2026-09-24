@@ -1,6 +1,7 @@
 export interface GraphNodeResponse {
   id: string;
   name: string;
+  title?: string;
   entity_type: string;
   cluster_id?: string | null;
   is_manual: boolean;
