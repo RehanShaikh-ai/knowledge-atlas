@@ -98,7 +98,7 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
         <div className="form-group mb-5">
           <label htmlFor="workspace-owner-select">Owner</label>
           {selectedUser ? (
-            <div data-testid="selected-workspace-owner" className="px-3.5 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-lg text-xs font-mono flex items-center justify-between gap-3">
+            <div data-testid="selected-workspace-owner" className="px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs font-mono flex items-center justify-between gap-3">
               <span className="font-semibold text-slate-200">{selectedUser.display_name}</span>
               <span className="text-slate-500 text-[11px] truncate max-w-[220px]">{selectedUser.id}</span>
             </div>
@@ -110,7 +110,7 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
                 value={ownerId || users[0]?.id || ''}
                 onChange={(e) => setOwnerId(e.target.value)}
                 disabled={loading}
-                className="flex-1 bg-slate-950/60 border border-slate-800 text-slate-100 px-3.5 py-2.5 rounded-lg outline-none font-mono text-xs focus:border-sky-500/60"
+                className="flex-1 bg-slate-900 border border-white/[0.1] text-slate-100 px-3.5 py-2.5 rounded-xl outline-none font-mono text-xs focus:border-sky-500/60"
               >
                 {users.map((u) => (
                   <option key={u.id} value={u.id} className="bg-slate-900 text-slate-100">
@@ -121,7 +121,7 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
               <button
                 type="button"
                 onClick={() => setIsManualOwner(true)}
-                className="px-3 py-2 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 rounded-lg text-xs font-mono whitespace-nowrap transition-colors"
+                className="px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] rounded-xl text-xs font-mono whitespace-nowrap transition-colors"
               >
                 Manual UUID
               </button>
@@ -136,13 +136,13 @@ export const WorkspaceCreateForm: React.FC<WorkspaceCreateFormProps> = ({
                 onChange={(e) => setCustomOwnerId(e.target.value)}
                 placeholder="Enter owner UUID (e.g. 123e4567-e89b...)"
                 disabled={loading}
-                className="flex-1 bg-slate-950/60 border border-slate-800 text-slate-100 px-3.5 py-2.5 rounded-lg font-mono text-xs outline-none focus:border-sky-500/60"
+                className="flex-1 bg-white/[0.03] border border-white/[0.1] text-slate-100 px-3.5 py-2.5 rounded-xl font-mono text-xs outline-none focus:border-sky-500/60"
               />
               {users.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setIsManualOwner(false)}
-                  className="px-3 py-2 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 rounded-lg text-xs font-mono whitespace-nowrap transition-colors"
+                  className="px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] rounded-xl text-xs font-mono whitespace-nowrap transition-colors"
                 >
                   Select User
                 </button>

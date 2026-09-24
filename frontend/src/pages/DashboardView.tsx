@@ -45,7 +45,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
   if (error) {
     return (
       <div className="flex-1 p-8">
-        <div className="bg-rose-950/40 border border-rose-800/50 text-rose-300 p-4 rounded-xl flex items-start gap-3">
+        <div className="bg-rose-500/10 border border-rose-500/25 text-rose-300 p-4 rounded-xl flex items-start gap-3">
           <AlertTriangle size={20} className="mt-0.5 shrink-0" />
           <div>
             <h3 className="font-semibold">Failed to load dashboard</h3>
@@ -109,13 +109,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
                     <button 
                       key={note.id}
                       onClick={() => onNavigateToNote?.(note.id)}
-                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700/50 group text-left"
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] transition-colors border border-transparent hover:border-white/[0.08] group text-left"
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         <span className="text-xs font-mono text-slate-500 w-4">{idx + 1}.</span>
                         <span className="text-sm font-medium text-slate-200 truncate group-hover:text-sky-300 transition-colors">{note.title}</span>
                       </div>
-                      <span className="text-xs font-mono bg-sky-950/50 text-sky-400 px-2 py-1 rounded-md border border-sky-500/20 whitespace-nowrap">
+                      <span className="text-xs font-mono bg-sky-500/10 text-sky-400 px-2 py-1 rounded-md border border-sky-500/25 whitespace-nowrap">
                         degree: {note.degree}
                       </span>
                     </button>
@@ -138,9 +138,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
                   <p className="text-sm text-slate-500 italic">No tags used yet.</p>
                 ) : (
                   stats.tag_distribution.map(td => (
-                    <div key={td.tag} className="flex items-center bg-slate-900 border border-slate-700 rounded-md overflow-hidden">
-                      <span className="px-2.5 py-1 text-xs text-slate-300 bg-slate-800/50">{td.tag}</span>
-                      <span className="px-2 py-1 text-xs font-mono font-semibold bg-sky-950/40 text-sky-400 border-l border-slate-700">{td.note_count}</span>
+                    <div key={td.tag} className="flex items-center bg-white/[0.03] border border-white/[0.08] rounded-lg overflow-hidden">
+                      <span className="px-2.5 py-1 text-xs text-slate-300 bg-white/[0.03]">{td.tag}</span>
+                      <span className="px-2 py-1 text-xs font-mono font-semibold bg-sky-500/10 text-sky-400 border-l border-white/[0.08]">{td.note_count}</span>
                     </div>
                   ))
                 )}
@@ -154,7 +154,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ workspaceId, onNav
                 <h3 className="text-sm font-medium text-[var(--text)]">Isolated Notes</h3>
                 <p className="text-xs text-[var(--subtext0)] mt-0.5">Notes without any connections</p>
               </div>
-              <span className="text-2xl font-mono text-slate-400 bg-slate-800/50 px-3 py-1 rounded-lg border border-slate-700/50">
+              <span className="text-2xl font-mono text-slate-300 bg-white/[0.04] px-3.5 py-1.5 rounded-xl border border-white/[0.08]">
                 {stats.isolated_notes_count}
               </span>
             </div>

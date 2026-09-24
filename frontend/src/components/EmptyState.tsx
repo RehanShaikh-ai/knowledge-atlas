@@ -15,7 +15,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   className = ''
 }) => {
   return (
-    <div data-testid="empty-state" className={`flex flex-col items-center justify-center p-8 text-center bg-base border border-surface1 border-dashed rounded-xl text-overlay1 ${className}`}>
+    <div data-testid="empty-state" className={`flex flex-col items-center justify-center p-8 text-center bg-white/[0.02] border border-white/[0.08] backdrop-blur-xl rounded-2xl text-overlay1 ${className}`}>
       {icon ? (
         <div className="mb-4 opacity-50">{icon}</div>
       ) : (

@@ -394,7 +394,7 @@ export const KnowledgeExplorer: React.FC<KnowledgeExplorerProps> = ({
                       </button>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-400 line-clamp-3 bg-slate-900/60 p-2 rounded-lg border border-slate-800/50 font-serif leading-relaxed">
+                  <p className="text-[11px] text-slate-400 line-clamp-3 bg-white/[0.02] p-2 rounded-lg border border-white/[0.06] font-serif leading-relaxed">
                     &ldquo;{src.excerpt}&rdquo;
                   </p>
                   <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-0.5">

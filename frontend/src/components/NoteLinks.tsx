@@ -113,8 +113,8 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col border border-slate-700/60 rounded-2xl bg-[#0c1017]/95 shadow-2xl backdrop-blur-2xl text-slate-100 overflow-hidden", className)}>
-      <div className="flex items-center justify-between p-4 border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md">
+    <div className={cn("flex flex-col border border-white/[0.08] rounded-2xl bg-slate-950/80 shadow-2xl backdrop-blur-2xl text-slate-100 overflow-hidden", className)}>
+      <div className="flex items-center justify-between p-4 border-b border-white/[0.06] bg-white/[0.02]">
         <div className="flex items-center gap-2 text-slate-200 font-bold text-sm tracking-tight">
           <Link2 size={16} className="text-sky-400" />
           Note Links
@@ -131,13 +131,13 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
       
       <div className="p-4">
         {error && (
-          <div className="mb-4 text-xs text-rose-300 bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-lg font-medium">
+          <div className="mb-4 text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 p-2.5 rounded-lg font-medium">
             {error.message}
           </div>
         )}
         
         {isLinking && (
-          <div className="mb-5 p-3.5 bg-sky-950/25 rounded-xl border border-sky-500/30 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="mb-5 p-3.5 bg-sky-500/[0.06] rounded-xl border border-sky-500/25 animate-in fade-in slide-in-from-top-2 duration-200">
             <p className="text-[11px] font-semibold text-sky-300 uppercase tracking-wider mb-2.5">Search to link note</p>
             <SearchBar 
               workspaceId={workspaceId} 
@@ -165,7 +165,7 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
                 </h4>
                 <ul className="space-y-1">
                   {incoming.map(item => (
-                    <li key={item.noteId} className="flex items-center justify-between group px-2.5 py-1.5 rounded-lg hover:bg-slate-800/50 border border-transparent hover:border-slate-700/50 transition-colors">
+                    <li key={item.noteId} className="flex items-center justify-between group px-2.5 py-1.5 rounded-lg hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08] transition-colors">
                       <button 
                         type="button"
                         onClick={() => onNavigateToNote?.(item.noteId)}
@@ -194,7 +194,7 @@ export const NoteLinks: React.FC<NoteLinksProps> = ({
                 </h4>
                 <ul className="space-y-1">
                   {outgoing.map(item => (
-                    <li key={item.noteId} className="flex items-center justify-between group px-2.5 py-1.5 rounded-lg hover:bg-slate-800/50 border border-transparent hover:border-slate-700/50 transition-colors">
+                    <li key={item.noteId} className="flex items-center justify-between group px-2.5 py-1.5 rounded-lg hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08] transition-colors">
                       <button 
                         type="button"
                         onClick={() => onNavigateToNote?.(item.noteId)}

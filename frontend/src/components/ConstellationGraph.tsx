@@ -232,7 +232,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
       ref={containerRef}
       data-testid="constellation-graph"
       className={cn(
-        'relative bg-[#030712] border border-slate-800/80 rounded-2xl overflow-hidden flex flex-col',
+        'relative bg-[#030712] border border-white/[0.08] rounded-2xl overflow-hidden flex flex-col',
         isFullscreen ? 'fixed inset-4 z-50 shadow-2xl' : className || 'flex-1 min-h-[500px]'
       )}
     >
@@ -240,7 +240,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
       {graphData?.stats?.truncated && (
         <div
           data-testid="graph-truncation-indicator"
-          className="absolute top-4 left-4 z-20 bg-amber-950/80 border border-amber-500/40 text-amber-200 px-3.5 py-2 rounded-xl text-xs font-medium backdrop-blur-xl flex items-center gap-2.5 shadow-xl shadow-black/40 animate-fade-in"
+          className="absolute top-4 left-4 z-20 bg-amber-500/10 border border-amber-500/25 text-amber-200 px-3.5 py-2 rounded-xl text-xs font-medium backdrop-blur-xl flex items-center gap-2.5 shadow-xl shadow-black/40 animate-fade-in"
         >
           <AlertTriangle size={15} className="text-amber-400 shrink-0" />
           <div>

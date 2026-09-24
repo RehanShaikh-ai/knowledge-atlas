@@ -32,7 +32,7 @@ export const UserList: React.FC<UserListProps> = ({
             type="button"
             data-testid="refresh-users-button"
             onClick={onRefresh}
-            className="px-2.5 py-1 text-xs font-mono text-slate-400 hover:text-slate-200 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 rounded transition-colors"
+            className="px-2.5 py-1 text-xs font-mono text-slate-400 hover:text-slate-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-lg transition-colors"
           >
             Refresh
           </button>
@@ -56,8 +56,8 @@ export const UserList: React.FC<UserListProps> = ({
                 data-testid="user-item"
                 className={`flex justify-between items-center p-3 sm:p-3.5 rounded-xl border backdrop-blur-md transition-all ${
                   isSelected 
-                    ? 'bg-sky-500/10 border-sky-500/50 shadow-[0_0_15px_rgba(56,189,248,0.2)]' 
-                    : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/70'
+                    ? 'bg-sky-500/10 border-sky-500/40 shadow-[0_0_15px_rgba(56,189,248,0.2)]' 
+                    : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.05]'
                 }`}
               >
                 <div className="flex flex-col gap-1 min-w-0 pr-3">
@@ -82,7 +82,7 @@ export const UserList: React.FC<UserListProps> = ({
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-mono transition-all border ${
                         isSelected
                           ? 'bg-sky-500/15 text-sky-300 border-sky-500/40'
-                          : 'bg-slate-800/60 hover:bg-slate-700/80 text-slate-300 border-slate-700/80 hover:border-slate-600'
+                          : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border-white/[0.08] hover:border-white/[0.15]'
                       }`}
                       aria-pressed={isSelected}
                       data-testid={`select-user-${user.id}`}

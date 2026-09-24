@@ -208,8 +208,8 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-[#0c1017]/95 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-md text-slate-100 overflow-hidden", className)}>
-      <header className="flex items-center justify-between p-3.5 sm:p-4 border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md">
+    <div className={cn("flex flex-col h-full bg-slate-950/80 rounded-2xl shadow-2xl border border-white/[0.08] backdrop-blur-2xl text-slate-100 overflow-hidden", className)}>
+      <header className="flex items-center justify-between p-3.5 sm:p-4 border-b border-white/[0.06] bg-white/[0.02] backdrop-blur-md">
         <div className="flex items-center gap-1 sm:gap-2">
             <button 
                 type="button"
@@ -218,7 +218,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                     "p-2 rounded-lg transition-colors border text-xs font-medium flex items-center gap-1.5",
                     isPinned 
                         ? "bg-amber-400/15 text-amber-300 border-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.15)]" 
-                        : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                        : "border-transparent text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
                 )}
                 title={isPinned ? "Unpin note" : "Pin note"}
             >
@@ -231,14 +231,14 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                     "p-2 rounded-lg transition-colors border text-xs font-medium flex items-center gap-1.5",
                     isArchived 
                         ? "bg-purple-400/15 text-purple-300 border-purple-400/30 shadow-[0_0_10px_rgba(192,132,252,0.15)]" 
-                        : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                        : "border-transparent text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
                 )}
                 title={isArchived ? "Unarchive note" : "Archive note"}
             >
                 <Archive size={16} />
             </button>
             
-            <div className="w-px h-5 bg-slate-800 mx-1 sm:mx-2" />
+            <div className="w-px h-5 bg-white/[0.08] mx-1 sm:mx-2" />
             
             <button
                 type="button"
@@ -247,7 +247,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                     "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border",
                     isPreview 
                         ? "bg-sky-500/15 text-sky-300 border-sky-500/30 shadow-[0_0_10px_rgba(56,189,248,0.15)]" 
-                        : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                        : "border-transparent text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
                 )}
             >
                 {isPreview ? <><Edit3 size={15} /> <span className="hidden sm:inline">Edit</span></> : <><Eye size={15} /> <span className="hidden sm:inline">Preview</span></>}
@@ -260,7 +260,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                       "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border",
                       isHistoryOpen 
                           ? "bg-purple-500/15 text-purple-300 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.15)]" 
-                          : "border-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                          : "border-transparent text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
                   )}
               >
                   <Clock size={15} /> <span className="hidden sm:inline">History</span>
@@ -288,7 +288,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                     "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all border",
                     isDirty 
                         ? "bg-sky-500 hover:bg-sky-400 text-slate-950 border-sky-400 shadow-[0_0_14px_rgba(56,189,248,0.35)] hover:-translate-y-0.5" 
-                        : "bg-slate-800/40 text-slate-500 border-slate-700/40 cursor-not-allowed"
+                        : "bg-white/[0.02] text-slate-500 border-white/[0.06] cursor-not-allowed"
                 )}
             >
                 {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
@@ -298,7 +298,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                 type="button"
                 onClick={handleClose} 
                 aria-label="Close" 
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg transition-colors ml-1"
+                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] rounded-lg transition-colors ml-1"
             >
                 <X size={18} />
             </button>
@@ -306,7 +306,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       </header>
 
       {error && (
-        <div className="m-4 p-3 bg-rose-950/40 border border-rose-800/50 text-rose-300 rounded-lg text-xs font-medium">
+        <div className="m-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-lg text-xs font-medium">
             {error.message}
         </div>
       )}
@@ -337,8 +337,8 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       </main>
 
       {isHistoryOpen && initialNote && (
-        <div className="flex border-t border-slate-800/80 bg-slate-900/40 backdrop-blur-md h-[400px]">
-          <div className="flex-1 p-6 overflow-y-auto border-r border-slate-800/80">
+        <div className="flex border-t border-white/[0.06] bg-slate-950/60 backdrop-blur-md h-[400px]">
+          <div className="flex-1 p-6 overflow-y-auto border-r border-white/[0.06]">
             {selectedVersion ? (
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-4">
@@ -346,7 +346,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowDiff(!showDiff)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.06] text-slate-300 hover:bg-white/[0.1] border border-white/[0.08] flex items-center gap-1.5 transition-colors"
                     >
                       <FileCode2 size={14} />
                       {showDiff ? 'View Content' : 'View Diff'}
@@ -370,7 +370,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
                   />
                 ) : (
                   <div 
-                      className="flex-1 overflow-y-auto p-4 bg-[#0c1017] rounded-xl border border-slate-800 markdown-content"
+                      className="flex-1 overflow-y-auto p-4 bg-slate-950/70 rounded-xl border border-white/[0.08] markdown-content"
                       dangerouslySetInnerHTML={{ __html: renderMarkdown(versionContent || '*Empty version*') }} 
                   />
                 )}
@@ -405,11 +405,11 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         />
       )}
 
-      <footer className="p-3.5 border-t border-slate-800/80 bg-slate-900/40 backdrop-blur-md flex items-center gap-3 overflow-x-auto">
+      <footer className="p-3.5 border-t border-white/[0.06] bg-white/[0.02] backdrop-blur-md flex items-center gap-3 overflow-x-auto">
         <TagIcon size={15} className="text-slate-500 shrink-0" />
         <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-1 sm:pb-0">
             {tags.map(tag => (
-                <span key={tag.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-medium tracking-wide bg-sky-950/50 border border-sky-500/30 text-sky-300 whitespace-nowrap lowercase">
+                <span key={tag.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-medium tracking-wide bg-sky-500/10 border border-sky-500/25 text-sky-300 whitespace-nowrap lowercase">
                     {tag.name}
                     {isEditing && (
                         <button 
