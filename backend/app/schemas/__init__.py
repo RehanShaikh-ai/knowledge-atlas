@@ -4,11 +4,58 @@ Exports canonical schemas per contract §5.2.
 """
 
 from app.schemas.activity import ActivityItem, ActivityResponse
+from app.schemas.cluster import (
+    ClusterListResponse,
+    ClusterMemberResponse,
+    ClusterResponse,
+)
 from app.schemas.dashboard import DashboardResponse
 from app.schemas.errors import ErrorDetail, ErrorResponse
-from app.schemas.graph import GraphEdge, GraphNode, GraphResponse, GraphStats
+from app.schemas.graph import (
+    EntityNeighborhoodResponse,
+    EntityProvenanceResponse,
+    EntitySourceResponse,
+    GraphClusterSummary,
+    GraphEdge,
+    GraphEdgeResponse,
+    GraphNode,
+    GraphNodeResponse,
+    GraphResponse,
+    GraphSearchEntityMatch,
+    GraphSearchNoteMatch,
+    GraphSearchResponse,
+    GraphStats,
+    NoteGraphResponse,
+)
+from app.schemas.graph_entity import (
+    GraphEntityCreate,
+    GraphEntityResponse,
+    GraphEntityUpdate,
+)
+from app.schemas.graph_rag import (
+    GraphRAGContext,
+    GraphRAGRequest,
+    GraphRAGResponse,
+    GraphTraversedEntity,
+    GraphUsedRelationship,
+)
+from app.schemas.graph_relationship import (
+    GraphRelationshipCreate,
+    GraphRelationshipResponse,
+    GraphRelationshipUpdate,
+)
 from app.schemas.health import HealthResponse
-from app.schemas.job import IndexJobRequest, IndexJobResponse, JobStatusResponse
+from app.schemas.job import (
+    ExtractionJobResponse,
+    IndexJobRequest,
+    IndexJobResponse,
+    JobStatusResponse,
+)
+from app.schemas.link_suggestion import (
+    LinkSuggestionDecisionRequest,
+    LinkSuggestionListResponse,
+    LinkSuggestionResponse,
+)
 from app.schemas.note import (
     NoteCreate,
     NoteListResponse,
@@ -100,4 +147,33 @@ __all__ = [
     "SearchRequest",
     "SearchResponse",
     "SearchResultItem",
+    # v0.3.2 (CONTRACT §5.2)
+    "ClusterListResponse",
+    "ClusterMemberResponse",
+    "ClusterResponse",
+    "EntityNeighborhoodResponse",
+    "EntityProvenanceResponse",
+    "EntitySourceResponse",
+    "ExtractionJobResponse",
+    "GraphClusterSummary",
+    "GraphEdgeResponse",
+    "GraphEntityCreate",
+    "GraphEntityResponse",
+    "GraphEntityUpdate",
+    "GraphNodeResponse",
+    "GraphRAGContext",
+    "GraphRAGRequest",
+    "GraphRAGResponse",
+    "GraphRelationshipCreate",
+    "GraphRelationshipResponse",
+    "GraphRelationshipUpdate",
+    "GraphSearchEntityMatch",
+    "GraphSearchNoteMatch",
+    "GraphSearchResponse",
+    "GraphTraversedEntity",
+    "GraphUsedRelationship",
+    "LinkSuggestionDecisionRequest",
+    "LinkSuggestionListResponse",
+    "LinkSuggestionResponse",
+    "NoteGraphResponse",
 ]

@@ -1,6 +1,6 @@
 """Index job schemas.
 
-Canonical schemas per CONTRACT v0.3.1 §5.2, §12.1, §12.2.
+Canonical schemas per CONTRACT v0.3.1 §5.2, §12.1, §12.2 and CONTRACT v0.3.2 §5.2, §9.4.
 """
 
 import uuid
@@ -17,6 +17,13 @@ class IndexJobRequest(BaseModel):
 
 class IndexJobResponse(BaseModel):
     """Index job enqueue response per CONTRACT §12.1."""
+
+    job_id: uuid.UUID
+    status: str = "queued"
+
+
+class ExtractionJobResponse(BaseModel):
+    """Extraction job enqueue response per CONTRACT v0.3.2 §5.2, §9.4."""
 
     job_id: uuid.UUID
     status: str = "queued"
