@@ -4,10 +4,8 @@ Canonical schemas per CONTRACT v0.3.2 §5.2, §9.1, §9.2.
 """
 
 import uuid
-from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 # ── v0.3.2 Entity-Level Graph Schemas ─────────────────────────────────────────
 

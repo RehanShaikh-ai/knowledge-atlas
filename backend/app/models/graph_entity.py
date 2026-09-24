@@ -8,7 +8,17 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -38,7 +48,8 @@ class GraphEntity(Base):
     __table_args__ = (
         UniqueConstraint("workspace_id", "name", name="uq_graph_entities_workspace_name"),
         CheckConstraint(
-            "entity_type IN ('concept', 'person', 'technology', 'project', 'place', 'event', 'unknown')",
+            "entity_type IN ('concept', 'person', 'technology', 'project', "
+            "'place', 'event', 'unknown')",
             name="ck_graph_entities_entity_type",
         ),
         Index("idx_entities_workspace_name", "workspace_id", "name"),

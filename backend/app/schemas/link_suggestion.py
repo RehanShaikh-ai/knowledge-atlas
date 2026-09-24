@@ -38,6 +38,6 @@ class LinkSuggestionListResponse(BaseModel):
 
 
 class LinkSuggestionDecisionRequest(BaseModel):
-    """Optional payload for suggestion decision (not strictly required if endpoints are separate)."""
+    """Optional payload for suggestion decision."""
 
     decision: str | None = None

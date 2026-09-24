@@ -6,7 +6,8 @@ and Alembic can auto-generate accurate migration diffs.
 
 v0.2.x models: Note, NoteLink, NoteTag, Source, Tag, User, Workspace
 v0.3.1 models: IndexJob, NoteChunk, NoteVersion, SavedSearch
-v0.3.2 models: GraphEntity, GraphRelationship, EntityChunk, NoteCluster, NoteClusterMember, LinkSuggestion
+v0.3.2 models: GraphEntity, GraphRelationship, EntityChunk,
+               NoteCluster, NoteClusterMember, LinkSuggestion
 """
 
 from app.models.entity_chunk import EntityChunk

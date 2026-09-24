@@ -7,7 +7,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas.rag import Citation
+from app.schemas.rag import CitedSource
 
 
 class GraphRAGRequest(BaseModel):
@@ -53,7 +53,7 @@ class GraphRAGResponse(BaseModel):
     """Response payload for GraphRAG."""
 
     answer: str
-    citations: list[Citation] = Field(default_factory=list)
+    citations: list[CitedSource] = Field(default_factory=list)
     graph_context: GraphRAGContext = Field(default_factory=GraphRAGContext)
     provider: str
     model: str

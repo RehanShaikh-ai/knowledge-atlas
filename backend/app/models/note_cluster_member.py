@@ -22,9 +22,7 @@ class NoteClusterMember(Base):
     """Association table linking a note to a NoteCluster."""
 
     __tablename__ = "note_cluster_members"
-    __table_args__ = (
-        Index("idx_cluster_members_note", "note_id"),
-    )
+    __table_args__ = (Index("idx_cluster_members_note", "note_id"),)
 
     cluster_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

@@ -203,7 +203,10 @@ class SuggestionNotFoundError(AppException):
 
 
 class SuggestionAlreadyDecidedError(AppException):
-    """Raised when accept/reject is called on a non-pending suggestion (422, SUGGESTION_ALREADY_DECIDED)."""
+    """Raised when accept/reject is called on a non-pending suggestion.
+
+    HTTP 422, SUGGESTION_ALREADY_DECIDED.
+    """
 
     def __init__(self, message: str = "Link suggestion has already been decided.") -> None:
         super().__init__(
@@ -223,4 +226,3 @@ class GraphIndexError(AppException):
 
     def __init__(self, message: str = "Graph indexing error.") -> None:
         super().__init__(status.HTTP_500_INTERNAL_SERVER_ERROR, "GRAPH_INDEX_ERROR", message)
-
