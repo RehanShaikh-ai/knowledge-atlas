@@ -77,12 +77,12 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
     <div
       data-testid="graph-rag-panel"
       className={cn(
-        'bg-slate-900/95 border border-slate-800 rounded-2xl p-5 backdrop-blur-xl shadow-2xl flex flex-col text-slate-200',
+        'bg-slate-950/80 border border-white/[0.08] rounded-2xl p-5 backdrop-blur-2xl shadow-2xl flex flex-col text-slate-200',
         className
       )}
     >
       {/* Panel Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">
             <GitFork size={18} />
@@ -99,7 +99,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
         {response && (
           <button
             onClick={handleClear}
-            className="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-1"
+            className="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1 rounded-lg hover:bg-white/[0.06] transition-colors flex items-center gap-1"
           >
             <RotateCcw size={12} />
             <span>New Query</span>
@@ -116,7 +116,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ask a multi-hop question across your knowledge graph..."
-            className="w-full bg-slate-950/80 border border-slate-750 focus:border-sky-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all resize-none shadow-inner leading-relaxed pr-12"
+            className="w-full bg-white/[0.04] border border-white/[0.1] focus:border-sky-500/60 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all resize-none leading-relaxed pr-12"
           />
           <button
             type="submit"
@@ -131,7 +131,6 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
 
         {/* Options Row */}
         <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400 pt-0.5">
-          {/* Max Hops Selector */}
           <div className="flex items-center gap-2">
             <label htmlFor="max-hops-select" className="text-[11px] font-medium text-slate-400">
               Max Hops:
@@ -141,7 +140,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
               data-testid="max-hops-select"
               value={maxHops}
               onChange={(e) => setMaxHops(parseInt(e.target.value, 10))}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+              className="bg-slate-900 border border-white/[0.1] rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-sky-500/60 focus:outline-none"
             >
               <option value={1}>1 Hop (Direct connections)</option>
               <option value={2}>2 Hops (Default multi-hop)</option>
@@ -149,18 +148,16 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
             </select>
           </div>
 
-          {/* Rerank Toggle */}
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input
               type="checkbox"
               checked={rerank}
               onChange={(e) => setRerank(e.target.checked)}
-              className="rounded bg-slate-950 border-slate-800 text-sky-500 focus:ring-0 accent-sky-500"
+              className="rounded bg-slate-950 border-white/[0.15] text-sky-500 focus:ring-0 accent-sky-500"
             />
             <span className="text-[11px]">RRF Reranking</span>
           </label>
 
-          {/* Context Limit */}
           <div className="flex items-center gap-1.5">
             <label htmlFor="context-limit-select" className="text-[11px] font-medium text-slate-400">
               Context:
@@ -170,7 +167,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
               data-testid="context-limit-select"
               value={contextLimit}
               onChange={(e) => setContextLimit(parseInt(e.target.value, 10))}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+              className="bg-slate-900 border border-white/[0.1] rounded-lg px-2 py-1 text-xs text-slate-200 focus:border-sky-500/60 focus:outline-none"
             >
               <option value={5}>5 chunks</option>
               <option value={10}>10 chunks</option>
@@ -185,7 +182,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
       {error && (
         <div
           data-testid="graph-rag-error"
-          className="mt-3 p-3 bg-rose-950/80 border border-rose-800/80 text-rose-300 rounded-xl text-xs flex items-start gap-2 animate-fade-in"
+          className="mt-3 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-xl text-xs flex items-start gap-2 animate-fade-in"
         >
           <AlertTriangle size={15} className="mt-0.5 shrink-0 text-rose-400" />
           <span className="flex-1">{error}</span>
@@ -196,7 +193,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
       {isLoading && (
         <div
           data-testid="graph-rag-loading"
-          className="my-6 p-6 bg-slate-950/40 border border-slate-800/60 rounded-2xl flex flex-col items-center justify-center text-center space-y-2 animate-pulse"
+          className="my-6 p-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl flex flex-col items-center justify-center text-center space-y-2 animate-pulse"
         >
           <Loader2 size={28} className="animate-spin text-sky-400" />
           <p className="text-xs font-medium text-slate-300">
@@ -212,7 +209,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
       {response && !isLoading && (
         <div data-testid="graph-rag-results" className="mt-4 space-y-4">
           {/* Answer Section */}
-          <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-xl space-y-2">
+          <div className="p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl space-y-2">
             <div className="flex items-center justify-between text-[11px] font-semibold text-sky-400 uppercase tracking-wider">
               <span className="flex items-center gap-1.5">
                 <Sparkles size={13} />
@@ -233,7 +230,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
           {response.graph_context && (
             <div
               data-testid="graph-context-box"
-              className="p-3.5 bg-slate-950/50 border border-sky-500/30 rounded-xl space-y-2.5 shadow-sm"
+              className="p-3.5 bg-sky-500/[0.04] border border-sky-500/20 rounded-xl space-y-2.5"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-300">
@@ -242,7 +239,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
                 </div>
                 <span
                   data-testid="graph-context-hops"
-                  className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-950/80 text-sky-300 border border-sky-600/40"
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/30"
                 >
                   {response.graph_context.hops} {response.graph_context.hops === 1 ? 'Hop' : 'Hops'} Traversed
                 </span>
@@ -260,7 +257,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
                         key={ent.id}
                         type="button"
                         onClick={() => onSelectEntity && onSelectEntity(ent.id)}
-                        className="px-2 py-0.5 rounded-md text-[11px] bg-slate-900 border border-slate-750 hover:border-sky-500/60 transition-colors flex items-center gap-1.5 text-slate-200"
+                        className="px-2 py-0.5 rounded-md text-[11px] bg-white/[0.04] border border-white/[0.08] hover:border-sky-500/40 transition-colors flex items-center gap-1.5 text-slate-200"
                         title={`Entity type: ${ent.entity_type}`}
                       >
                         <span
@@ -276,7 +273,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
 
               {/* Relationships Used */}
               {response.graph_context.relationships_used?.length > 0 && (
-                <div className="space-y-1 pt-1 border-t border-slate-850">
+                <div className="space-y-1 pt-1 border-t border-white/[0.06]">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
                     Relationships Traversed ({response.graph_context.relationships_used.length})
                   </span>
@@ -284,11 +281,11 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
                     {response.graph_context.relationships_used.map((rel) => (
                       <div
                         key={rel.id}
-                        className="text-[11px] font-mono text-slate-300 bg-slate-900/60 px-2 py-1 rounded flex items-center gap-1.5 border border-slate-800/60"
+                        className="text-[11px] font-mono text-slate-300 bg-white/[0.03] px-2 py-1 rounded flex items-center gap-1.5 border border-white/[0.06]"
                       >
                         <span className="text-slate-200 font-semibold">{rel.source}</span>
                         <ArrowRight size={10} className="text-slate-500 shrink-0" />
-                        <span className="text-sky-300 bg-sky-950/80 px-1 rounded text-[10px]">
+                        <span className="text-sky-300 bg-sky-500/15 px-1 rounded text-[10px]">
                           {rel.relationship_type}
                         </span>
                         <ArrowRight size={10} className="text-slate-500 shrink-0" />
@@ -321,7 +318,7 @@ export const GraphRAGPanel: React.FC<GraphRAGPanelProps> = ({
           )}
 
           {/* Metadata Footer */}
-          <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-800">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-2 border-t border-white/[0.06]">
             <span className="flex items-center gap-1">
               <Cpu size={10} /> Provider: {response.provider} ({response.model})
             </span>

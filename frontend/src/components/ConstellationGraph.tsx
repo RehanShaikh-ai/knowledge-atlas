@@ -240,7 +240,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
       {graphData?.stats?.truncated && (
         <div
           data-testid="graph-truncation-indicator"
-          className="absolute top-4 left-4 z-20 bg-amber-950/90 border border-amber-500/60 text-amber-300 px-3.5 py-2 rounded-xl text-xs font-medium backdrop-blur-md flex items-center gap-2.5 shadow-lg shadow-amber-950/40 animate-fade-in"
+          className="absolute top-4 left-4 z-20 bg-amber-950/80 border border-amber-500/40 text-amber-200 px-3.5 py-2 rounded-xl text-xs font-medium backdrop-blur-xl flex items-center gap-2.5 shadow-xl shadow-black/40 animate-fade-in"
         >
           <AlertTriangle size={15} className="text-amber-400 shrink-0" />
           <div>
@@ -251,10 +251,10 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
       )}
 
       {/* ── Control Action Buttons ── */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-slate-900/80 border border-slate-800/80 p-1 rounded-xl backdrop-blur-md shadow-lg">
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-slate-950/70 border border-white/[0.08] p-1 rounded-xl backdrop-blur-xl shadow-xl shadow-black/40">
         <button
           onClick={handleZoomIn}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
           title="Zoom In"
           aria-label="Zoom in"
         >
@@ -262,7 +262,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
         </button>
         <button
           onClick={handleZoomOut}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
           title="Zoom Out"
           aria-label="Zoom out"
         >
@@ -270,7 +270,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
         </button>
         <button
           onClick={handleResetZoom}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
           title="Reset View"
           aria-label="Reset zoom"
         >
@@ -279,17 +279,17 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
         {(onRefresh || !isControlled) && (
           <button
             onClick={onRefresh || fetchGraph}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
             title="Refresh Graph"
             aria-label="Refresh graph"
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin text-sky-400' : ''} />
           </button>
         )}
-        <div className="w-[1px] h-4 bg-slate-800 mx-0.5" />
+        <div className="w-[1px] h-4 bg-white/[0.08] mx-0.5" />
         <button
           onClick={toggleFullscreen}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
           title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
         >
@@ -301,7 +301,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
       {graphData?.stats && (
         <div
           data-testid="graph-stats-indicator"
-          className="absolute bottom-4 left-4 z-20 text-xs font-mono text-slate-400 bg-slate-900/80 border border-slate-800/80 px-3 py-1.5 rounded-xl backdrop-blur-md flex items-center gap-3 pointer-events-none shadow-md"
+          className="absolute bottom-4 left-4 z-20 text-xs font-mono text-slate-400 bg-slate-950/70 border border-white/[0.08] px-3 py-1.5 rounded-xl backdrop-blur-xl flex items-center gap-3 pointer-events-none shadow-xl shadow-black/40"
         >
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
@@ -326,12 +326,12 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
       <div className="absolute bottom-4 right-4 z-20">
         <button
           onClick={() => setShowLegend((v) => !v)}
-          className="text-[11px] text-slate-400 bg-slate-900/80 hover:bg-slate-850 border border-slate-800/80 px-2.5 py-1 rounded-lg backdrop-blur-md mb-2 flex items-center gap-1.5 ml-auto"
+          className="text-[11px] text-slate-400 bg-slate-950/70 hover:bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 rounded-lg backdrop-blur-xl mb-2 flex items-center gap-1.5 ml-auto transition-colors"
         >
           <span>{showLegend ? 'Hide' : 'Show'} Legend</span>
         </button>
         {showLegend && (
-          <div className="bg-slate-900/90 border border-slate-800/80 p-3 rounded-xl backdrop-blur-md shadow-xl text-xs space-y-1.5 min-w-[140px] animate-fade-in">
+          <div className="bg-slate-950/90 border border-white/[0.08] p-3 rounded-xl backdrop-blur-2xl shadow-2xl text-xs space-y-1.5 min-w-[140px] animate-fade-in">
             <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
               Entity Types
             </div>
@@ -344,7 +344,7 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
                 <span>{type}</span>
               </div>
             ))}
-            <div className="pt-2 border-t border-slate-800/60 flex items-center gap-2 text-[10px] text-slate-400">
+            <div className="pt-2 border-t border-white/[0.06] flex items-center gap-2 text-[10px] text-slate-400">
               <span className="w-2 h-2 rounded-full border border-amber-400" />
               <span>Manual Entity</span>
             </div>

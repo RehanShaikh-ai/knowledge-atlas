@@ -121,13 +121,13 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
-      <div className="flex items-center justify-between p-4 border-b border-slate-800">
+      <div className="flex items-center justify-between p-4 border-b border-white/[0.08]">
         <h3 className="font-semibold text-sm text-slate-200">
           {isEditing ? 'Edit Relationship' : 'Create Graph Relationship'}
         </h3>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors"
+          className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-white/[0.06] transition-colors"
           aria-label="Close"
         >
           <X size={16} />
@@ -137,7 +137,7 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
         {error && (
           <div
             data-testid="relationship-editor-error"
-            className="p-3 bg-rose-950/80 border border-rose-800/80 rounded-xl text-rose-300 text-xs flex items-start gap-2"
+            className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-start gap-2"
           >
             <AlertTriangle size={15} className="mt-0.5 shrink-0" />
             <span>{error}</span>
@@ -146,7 +146,7 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
 
         {/* Source and Target Entities (Immutable in edit mode) */}
         {!isEditing ? (
-          <div className="space-y-3 p-3 bg-slate-950/60 border border-slate-800 rounded-xl">
+          <div className="space-y-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
             <div className="space-y-1">
               <label
                 htmlFor="rel-source-select"
@@ -159,7 +159,7 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
                 data-testid="rel-source-select"
                 value={sourceId}
                 onChange={(e) => setSourceId(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-750 focus:border-sky-500 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none"
+                className="w-full bg-slate-900 border border-white/[0.1] focus:border-sky-500/60 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none"
               >
                 <option value="" disabled>Select source entity</option>
                 {availableEntities.map((e) => (
@@ -186,7 +186,7 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
                 data-testid="rel-target-select"
                 value={targetId}
                 onChange={(e) => setTargetId(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-750 focus:border-sky-500 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none"
+                className="w-full bg-slate-900 border border-white/[0.1] focus:border-sky-500/60 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none"
               >
                 <option value="" disabled>Select target entity</option>
                 {availableEntities.map((e) => (
@@ -198,7 +198,7 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
             </div>
           </div>
         ) : (
-          <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-400">
+          <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-xs text-slate-400">
             <span className="font-semibold text-slate-300">Note:</span> Source and target entities are immutable for an existing relationship.
           </div>
         )}
@@ -220,7 +220,7 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
             value={relationshipType}
             onChange={(e) => setRelationshipType(e.target.value)}
             placeholder="e.g. prerequisite_of, part_of, contradicts"
-            className="w-full bg-slate-900 border border-slate-700/80 focus:border-sky-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none font-mono transition-all shadow-inner"
+            className="w-full bg-white/[0.04] border border-white/[0.1] focus:border-sky-500/60 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none font-mono transition-all"
           />
 
           {/* Quick presets */}
@@ -232,8 +232,8 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
                 onClick={() => setRelationshipType(type)}
                 className={`px-1.5 py-0.5 rounded text-[10px] font-mono border transition-colors ${
                   relationshipType === type
-                    ? 'bg-sky-950 border-sky-500/60 text-sky-300'
-                    : 'bg-slate-950/40 border-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                    ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
+                    : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:text-slate-200 hover:bg-white/[0.06]'
                 }`}
               >
                 {type}
@@ -257,17 +257,17 @@ export const RelationshipEditor: React.FC<RelationshipEditorProps> = ({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Explain the nature of this connection..."
-            className="w-full bg-slate-900 border border-slate-700/80 focus:border-sky-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all resize-none shadow-inner leading-relaxed"
+            className="w-full bg-white/[0.04] border border-white/[0.1] focus:border-sky-500/60 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all resize-none leading-relaxed"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
           >
             Cancel
           </button>

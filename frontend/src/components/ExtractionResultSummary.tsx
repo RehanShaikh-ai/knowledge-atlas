@@ -31,15 +31,14 @@ export const ExtractionResultSummary: React.FC<ExtractionResultSummaryProps> = (
     <div
       data-testid="extraction-result-summary"
       className={cn(
-        'p-4 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all',
+        'p-5 rounded-2xl border backdrop-blur-2xl shadow-2xl transition-all',
         isSuccess
-          ? 'bg-slate-900/95 border-emerald-500/40 text-slate-200'
-          : 'bg-slate-900/95 border-rose-500/40 text-slate-200',
+          ? 'bg-slate-950/80 border-emerald-500/30 text-slate-200'
+          : 'bg-slate-950/80 border-rose-500/30 text-slate-200',
         className
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
           {isSuccess ? (
             <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-400">
@@ -60,7 +59,7 @@ export const ExtractionResultSummary: React.FC<ExtractionResultSummaryProps> = (
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-white/[0.06] transition-colors"
             aria-label="Dismiss extraction summary"
           >
             <X size={15} />
@@ -68,10 +67,9 @@ export const ExtractionResultSummary: React.FC<ExtractionResultSummaryProps> = (
         )}
       </div>
 
-      {/* Metrics Row if successful */}
       {isSuccess ? (
-        <div className="py-3 grid grid-cols-3 gap-2 text-center">
-          <div className="p-2 bg-slate-950/60 border border-slate-800/80 rounded-xl">
+        <div className="py-3 grid grid-cols-3 gap-2.5 text-center">
+          <div className="p-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl">
             <div
               data-testid="metric-entity-count"
               className="font-bold text-base text-sky-400 font-mono"
@@ -82,7 +80,7 @@ export const ExtractionResultSummary: React.FC<ExtractionResultSummaryProps> = (
               <Sparkles size={10} className="text-sky-400" /> Entities
             </div>
           </div>
-          <div className="p-2 bg-slate-950/60 border border-slate-800/80 rounded-xl">
+          <div className="p-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl">
             <div
               data-testid="metric-relationship-count"
               className="font-bold text-base text-indigo-400 font-mono"
@@ -93,7 +91,7 @@ export const ExtractionResultSummary: React.FC<ExtractionResultSummaryProps> = (
               <LinkIcon size={10} className="text-indigo-400" /> Links
             </div>
           </div>
-          <div className="p-2 bg-slate-950/60 border border-slate-800/80 rounded-xl">
+          <div className="p-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl">
             <div
               data-testid="metric-notes-count"
               className="font-bold text-base text-amber-400 font-mono"
@@ -111,7 +109,6 @@ export const ExtractionResultSummary: React.FC<ExtractionResultSummaryProps> = (
         </div>
       )}
 
-      {/* Report detail message if provided */}
       {isSuccess && message && (
         <p
           data-testid="extraction-summary-message"
@@ -121,8 +118,7 @@ export const ExtractionResultSummary: React.FC<ExtractionResultSummaryProps> = (
         </p>
       )}
 
-      {/* Action Footer */}
-      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/60">
+      <div className="flex items-center justify-end gap-2 pt-2.5 border-t border-white/[0.06]">
         {!isSuccess && onRetry && (
           <button
             onClick={onRetry}

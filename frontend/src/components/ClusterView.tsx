@@ -111,12 +111,12 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
     <aside
       data-testid="cluster-view"
       className={cn(
-        'w-[420px] bg-slate-900/95 border border-slate-800 rounded-2xl p-5 backdrop-blur-xl shadow-2xl flex flex-col text-slate-200 z-30',
+        'w-[420px] bg-slate-950/80 border border-white/[0.08] rounded-2xl p-5 backdrop-blur-2xl shadow-2xl shadow-black/60 flex flex-col text-slate-200 z-30',
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">
             <Layers size={16} />
@@ -134,7 +134,7 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
           <button
             onClick={handleGenerate}
             disabled={isGenerating || isLoading}
-            className="text-[11px] text-sky-400 hover:text-sky-300 bg-sky-950/60 hover:bg-sky-900/60 px-2 py-1 rounded-lg border border-sky-800/50 transition-colors flex items-center gap-1 disabled:opacity-50"
+            className="text-[11px] text-sky-400 hover:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 px-2.5 py-1 rounded-lg border border-sky-500/25 transition-colors flex items-center gap-1.5 disabled:opacity-50"
             title="Regenerate clusters via AI analysis"
           >
             <Sparkles size={11} className={isGenerating ? 'animate-spin' : ''} />
@@ -143,7 +143,7 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
           <button
             onClick={fetchClusters}
             disabled={isLoading}
-            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800/60 transition-colors"
+            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-white/[0.06] transition-colors"
             title="Refresh"
             aria-label="Refresh clusters"
           >
@@ -151,7 +151,7 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
           </button>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800/60 transition-colors"
+            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-white/[0.06] transition-colors"
             aria-label="Close clusters"
           >
             <X size={15} />
@@ -161,14 +161,14 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
 
       {/* Notices */}
       {jobNotice && (
-        <div className="mt-3 p-2 bg-sky-950/80 border border-sky-800/60 text-sky-300 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
+        <div className="mt-3 p-2 bg-sky-950/60 border border-sky-500/30 text-sky-300 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
           <Sparkles size={13} />
           <span>{jobNotice}</span>
         </div>
       )}
 
       {error && (
-        <div className="mt-3 p-2.5 bg-rose-950/80 border border-rose-800/60 text-rose-300 rounded-xl text-xs flex items-start gap-2">
+        <div className="mt-3 p-2.5 bg-rose-950/60 border border-rose-500/30 text-rose-300 rounded-xl text-xs flex items-start gap-2">
           <AlertTriangle size={15} className="mt-0.5 shrink-0" />
           <span className="flex-1">{error}</span>
         </div>
@@ -217,11 +217,11 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
                     'px-2.5 py-1 rounded-xl text-xs font-medium whitespace-nowrap transition-colors border flex items-center gap-1.5',
                     isSelected
                       ? 'bg-sky-500/15 border-sky-500/50 text-sky-300 shadow-sm'
-                      : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                      : 'bg-white/[0.03] border-white/[0.06] text-slate-400 hover:text-slate-200 hover:bg-white/[0.06]'
                   )}
                 >
                   <span>{c.label}</span>
-                  <span className="text-[10px] font-mono text-slate-500 bg-slate-900 px-1 rounded-full">
+                  <span className="text-[10px] font-mono text-slate-500 bg-black/40 px-1 rounded-full">
                     {c.member_count ?? c.members?.length ?? 0}
                   </span>
                 </button>
@@ -233,7 +233,7 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
           {selectedClusterDetail && (
             <div
               data-testid="cluster-detail-panel"
-              className="flex-1 flex flex-col bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 space-y-3 overflow-hidden"
+              className="flex-1 flex flex-col bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5 space-y-3 overflow-hidden"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -255,7 +255,7 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
                 {onSelectCluster && (
                   <button
                     onClick={() => handleFilterGraph(selectedClusterDetail.id)}
-                    className="text-[10px] font-medium bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2 py-1 rounded-lg transition-colors flex items-center gap-1 shrink-0"
+                    className="text-[10px] font-medium bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/25 px-2 py-1 rounded-lg transition-colors flex items-center gap-1 shrink-0"
                     title="Filter constellation to this cluster"
                   >
                     <span>View in Graph</span>
@@ -283,7 +283,7 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
                     <div
                       key={member.note_id}
                       data-testid={`cluster-member-${member.note_id}`}
-                      className="p-2 bg-slate-900/80 border border-slate-800 rounded-lg flex items-center justify-between text-xs"
+                      className="p-2.5 bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-xl flex items-center justify-between text-xs transition-all"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <FileText size={13} className="text-amber-400 shrink-0" />
@@ -302,7 +302,7 @@ export const ClusterView: React.FC<ClusterViewProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 shrink-0">
+                      <span className="text-[10px] font-mono text-slate-400 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06] shrink-0">
                         {Math.round(member.score * 100)}% fit
                       </span>
                     </div>

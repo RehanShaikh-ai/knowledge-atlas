@@ -28,31 +28,31 @@ export const GraphJobIndicator: React.FC<GraphJobIndicatorProps> = ({
         return {
           icon: <Clock size={12} className="animate-pulse" />,
           label: 'Extraction Queued',
-          classes: 'bg-amber-950/70 border-amber-600/50 text-amber-300',
+          classes: 'bg-amber-500/10 border-amber-500/25 text-amber-300',
         };
       case 'running':
         return {
           icon: <Loader2 size={12} className="animate-spin text-sky-400" />,
           label: 'Extracting Knowledge...',
-          classes: 'bg-sky-950/70 border-sky-500/50 text-sky-300',
+          classes: 'bg-sky-500/10 border-sky-500/25 text-sky-300',
         };
       case 'completed':
         return {
           icon: <CheckCircle2 size={12} className="text-emerald-400" />,
           label: 'Graph Up to Date',
-          classes: 'bg-emerald-950/70 border-emerald-600/50 text-emerald-300',
+          classes: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300',
         };
       case 'failed':
         return {
           icon: <AlertTriangle size={12} className="text-rose-400" />,
           label: 'Extraction Failed',
-          classes: 'bg-rose-950/70 border-rose-600/50 text-rose-300',
+          classes: 'bg-rose-500/10 border-rose-500/25 text-rose-300',
         };
       default:
         return {
           icon: <Clock size={12} />,
           label: status,
-          classes: 'bg-slate-900 border-slate-700 text-slate-300',
+          classes: 'bg-white/[0.04] border-white/[0.08] text-slate-300',
         };
     }
   };

@@ -66,12 +66,12 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
     <div
       data-testid="graph-filter-panel"
       className={cn(
-        'bg-slate-900/95 border border-slate-800 rounded-2xl p-4 backdrop-blur-xl shadow-2xl text-slate-200 w-80 space-y-4.5',
+        'bg-slate-950/80 border border-white/[0.08] rounded-2xl p-4 backdrop-blur-2xl shadow-2xl shadow-black/60 text-slate-200 w-80 space-y-4',
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
           <div className="p-1 rounded-lg bg-sky-500/10 text-sky-400">
             <SlidersHorizontal size={15} />
@@ -92,7 +92,7 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
           {activeFilterCount > 0 && (
             <button
               onClick={handleReset}
-              className="text-[11px] text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-slate-800/60 transition-colors flex items-center gap-1"
+              className="text-[11px] text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-white/[0.06] transition-colors flex items-center gap-1"
               title="Reset all filters"
               aria-label="Reset filters"
             >
@@ -103,7 +103,7 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
           {onClose && (
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-slate-800/60 transition-colors"
+              className="text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-white/[0.06] transition-colors"
               aria-label="Close filters"
             >
               <X size={15} />
@@ -125,7 +125,7 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
           data-testid="filter-entity-type"
           value={localFilters.entity_type || ''}
           onChange={(e) => handleChange('entity_type', e.target.value)}
-          className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+          className="w-full bg-slate-900/60 border border-white/[0.08] focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none transition-all"
         >
           <option value="">All Entity Types</option>
           {ENTITY_TYPES.map((type) => (
@@ -146,10 +146,10 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
                 type="button"
                 onClick={() => handleChange('entity_type', isSelected ? undefined : type)}
                 className={cn(
-                  'px-2 py-0.5 rounded-md text-[10px] capitalize transition-colors flex items-center gap-1 border',
+                  'px-2 py-0.5 rounded-lg text-[10px] capitalize transition-colors flex items-center gap-1 border',
                   isSelected
-                    ? 'bg-sky-950 border-sky-500/60 text-sky-200'
-                    : 'bg-slate-950/40 border-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                    ? 'bg-sky-500/15 border-sky-500/50 text-sky-200'
+                    : 'bg-white/[0.03] border-white/[0.06] text-slate-400 hover:text-slate-200 hover:bg-white/[0.06]'
                 )}
               >
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
@@ -175,7 +175,7 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
           placeholder="e.g. prerequisite_of, part_of"
           value={localFilters.relationship_type || ''}
           onChange={(e) => handleChange('relationship_type', e.target.value)}
-          className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:border-sky-500 focus:outline-none"
+          className="w-full bg-slate-900/60 border border-white/[0.08] focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 rounded-xl px-2.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition-all"
         />
         <div className="flex flex-wrap gap-1 pt-0.5">
           {COMMON_RELATIONSHIP_TYPES.slice(0, 4).map((rel) => (
@@ -191,8 +191,8 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
               className={cn(
                 'px-1.5 py-0.5 rounded text-[9px] font-mono border transition-colors',
                 localFilters.relationship_type === rel
-                  ? 'bg-sky-950/80 border-sky-500/60 text-sky-300'
-                  : 'bg-slate-950/40 border-slate-800/60 text-slate-500 hover:text-slate-300'
+                  ? 'bg-sky-500/15 border-sky-500/50 text-sky-300'
+                  : 'bg-white/[0.03] border-white/[0.06] text-slate-400 hover:text-slate-200'
               )}
             >
               {rel}
@@ -215,7 +215,7 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
             data-testid="filter-cluster-id"
             value={localFilters.cluster_id || ''}
             onChange={(e) => handleChange('cluster_id', e.target.value)}
-            className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+            className="w-full bg-slate-900/60 border border-white/[0.08] focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none transition-all"
           >
             <option value="">All Clusters</option>
             {clusters.map((c) => (
@@ -274,7 +274,7 @@ export const GraphFilterPanel: React.FC<GraphFilterPanelProps> = ({
           data-testid="filter-limit"
           value={localFilters.limit || 500}
           onChange={(e) => handleChange('limit', parseInt(e.target.value, 10))}
-          className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+          className="w-full bg-slate-900/60 border border-white/[0.08] focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none transition-all"
         >
           <option value={100}>100 nodes</option>
           <option value={250}>250 nodes</option>

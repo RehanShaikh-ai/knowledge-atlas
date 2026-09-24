@@ -106,14 +106,13 @@ export const LinkSuggestionPanel: React.FC<LinkSuggestionPanelProps> = ({
     <aside
       data-testid="link-suggestion-panel"
       className={cn(
-        'w-96 bg-slate-900/95 border border-slate-800 rounded-2xl p-4 backdrop-blur-xl shadow-2xl flex flex-col text-slate-200 z-30',
+        'w-96 bg-slate-950/80 border border-white/[0.08] rounded-2xl p-4 backdrop-blur-2xl shadow-2xl flex flex-col text-slate-200 z-30',
         className
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
-          <div className="p-1 rounded-lg bg-amber-500/10 text-amber-400">
+          <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
             <Sparkles size={16} />
           </div>
           <div>
@@ -129,7 +128,7 @@ export const LinkSuggestionPanel: React.FC<LinkSuggestionPanelProps> = ({
           <button
             onClick={fetchSuggestions}
             disabled={isLoading}
-            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
+            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
             title="Refresh suggestions"
             aria-label="Refresh suggestions"
           >
@@ -137,7 +136,7 @@ export const LinkSuggestionPanel: React.FC<LinkSuggestionPanelProps> = ({
           </button>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
+            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
             aria-label="Close suggestions panel"
           >
             <X size={16} />
@@ -145,23 +144,20 @@ export const LinkSuggestionPanel: React.FC<LinkSuggestionPanelProps> = ({
         </div>
       </div>
 
-      {/* Action Notification */}
       {actionNotice && (
-        <div className="mt-3 p-2 bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
+        <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
           <CheckCircle2 size={14} className="shrink-0" />
           <span>{actionNotice}</span>
         </div>
       )}
 
-      {/* Error Alert */}
       {error && (
-        <div className="mt-3 p-2.5 bg-rose-950/80 border border-rose-800/60 text-rose-300 rounded-xl text-xs flex items-start gap-2">
+        <div className="mt-3 p-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-xl text-xs flex items-start gap-2">
           <AlertTriangle size={15} className="mt-0.5 shrink-0" />
           <span className="flex-1">{error}</span>
         </div>
       )}
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto py-3 space-y-3 max-h-[460px] pr-1 mt-1">
         {isLoading && suggestions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">
@@ -173,7 +169,7 @@ export const LinkSuggestionPanel: React.FC<LinkSuggestionPanelProps> = ({
             data-testid="no-suggestions-state"
             className="flex flex-col items-center justify-center py-10 text-center px-4"
           >
-            <div className="w-10 h-10 rounded-xl bg-slate-800/60 flex items-center justify-center text-slate-500 mb-2.5">
+            <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-400 mb-2.5">
               <Sparkles size={20} />
             </div>
             <h4 className="font-semibold text-xs text-slate-300">No Pending Suggestions</h4>

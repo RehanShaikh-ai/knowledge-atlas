@@ -47,7 +47,7 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
     <div
       data-testid="graph-edit-toolbar"
       className={cn(
-        'flex items-center gap-1.5 bg-slate-900/90 border border-slate-800/90 p-1.5 rounded-2xl backdrop-blur-xl shadow-2xl text-slate-300',
+        'flex items-center gap-1.5 bg-slate-950/70 border border-white/[0.08] p-1.5 rounded-2xl backdrop-blur-2xl shadow-2xl shadow-black/50 text-slate-300',
         className
       )}
     >
@@ -56,7 +56,7 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
         type="button"
         onClick={onAddEntity}
         data-testid="toolbar-add-entity-btn"
-        className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-slate-950 transition-colors flex items-center gap-1.5 shadow-sm shadow-sky-500/20"
+        className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white transition-all flex items-center gap-1.5 shadow-md shadow-sky-500/25 hover:-translate-y-0.5"
         title="Create new entity"
       >
         <Plus size={14} />
@@ -68,14 +68,14 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
         type="button"
         onClick={onAddRelationship}
         data-testid="toolbar-add-relationship-btn"
-        className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700/80 transition-colors flex items-center gap-1.5"
+        className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] hover:border-white/[0.16] transition-all flex items-center gap-1.5 hover:-translate-y-0.5"
         title="Connect two entities"
       >
         <LinkIcon size={13} />
         <span>Connect</span>
       </button>
 
-      <div className="w-[1px] h-4 bg-slate-800 mx-1" />
+      <div className="w-[1px] h-4 bg-white/[0.08] mx-1" />
 
       {/* Toggle Filters */}
       <button
@@ -83,10 +83,10 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
         onClick={onToggleFilters}
         data-testid="toolbar-toggle-filters-btn"
         className={cn(
-          'px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 border',
+          'px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border',
           isFiltersOpen
-            ? 'bg-sky-950/80 border-sky-500/60 text-sky-300'
-            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            ? 'bg-sky-500/15 border-sky-500/40 text-sky-300 shadow-sm'
+            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
         )}
         title="Filter graph nodes & relationships"
       >
@@ -105,10 +105,10 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
         onClick={onToggleClusters}
         data-testid="toolbar-toggle-clusters-btn"
         className={cn(
-          'px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 border',
+          'px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border',
           isClustersOpen
-            ? 'bg-sky-950/80 border-sky-500/60 text-sky-300'
-            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            ? 'bg-sky-500/15 border-sky-500/40 text-sky-300 shadow-sm'
+            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
         )}
         title="View semantic concept clusters"
       >
@@ -122,10 +122,10 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
         onClick={onToggleSuggestions}
         data-testid="toolbar-toggle-suggestions-btn"
         className={cn(
-          'px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 border',
+          'px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border',
           isSuggestionsOpen
-            ? 'bg-amber-950/80 border-amber-500/60 text-amber-300'
-            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-sm'
+            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
         )}
         title="Review AI note link suggestions"
       >
@@ -140,7 +140,7 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
 
       {(onExtractGraph || onReindexGraph) && (
         <>
-          <div className="w-[1px] h-4 bg-slate-800 mx-1" />
+          <div className="w-[1px] h-4 bg-white/[0.08] mx-1" />
 
           {onExtractGraph && (
             <button
@@ -148,7 +148,7 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
               onClick={onExtractGraph}
               disabled={isJobInProgress}
               data-testid="toolbar-extract-btn"
-              className="px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              className="px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 disabled:opacity-50"
               title="Run entity & relationship extraction on notes"
             >
               <Cpu size={13} />
@@ -162,7 +162,7 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
               onClick={onReindexGraph}
               disabled={isJobInProgress}
               data-testid="toolbar-reindex-btn"
-              className="px-2 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors flex items-center gap-1 disabled:opacity-50"
+              className="px-2 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] transition-colors flex items-center gap-1 disabled:opacity-50"
               title="Reindex full workspace knowledge graph"
             >
               <RefreshCw size={13} className={isJobInProgress ? 'animate-spin text-sky-400' : ''} />

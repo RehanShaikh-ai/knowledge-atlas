@@ -87,13 +87,13 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} width="sm">
-      <div className="flex items-center justify-between p-4 border-b border-slate-800">
+      <div className="flex items-center justify-between p-4 border-b border-white/[0.08]">
         <h3 className="font-semibold text-sm text-slate-200">
           {isEditing ? `Edit Entity: ${entity?.name}` : 'Create Graph Entity'}
         </h3>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors"
+          className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-white/[0.06] transition-colors"
           aria-label="Close"
         >
           <X size={16} />
@@ -103,7 +103,7 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({
         {error && (
           <div
             data-testid="entity-editor-error"
-            className="p-3 bg-rose-950/80 border border-rose-800/80 rounded-xl text-rose-300 text-xs flex items-start gap-2"
+            className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-start gap-2"
           >
             <AlertTriangle size={15} className="mt-0.5 shrink-0" />
             <span>{error}</span>
@@ -127,7 +127,7 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Gradient Descent, Transformer"
-            className="w-full bg-slate-900 border border-slate-700/80 focus:border-sky-500 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-all shadow-inner"
+            className="w-full bg-white/[0.04] border border-white/[0.1] focus:border-sky-500/60 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-all"
           />
         </div>
 
@@ -144,7 +144,7 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({
             data-testid="entity-type-select"
             value={entityType}
             onChange={(e) => setEntityType(e.target.value as EntityType)}
-            className="w-full bg-slate-900 border border-slate-700/80 focus:border-sky-500 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none transition-all shadow-inner capitalize"
+            className="w-full bg-slate-900 border border-white/[0.1] focus:border-sky-500/60 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none transition-all capitalize"
           >
             {ENTITY_TYPES.map((type) => (
               <option key={type} value={type}>
@@ -153,7 +153,6 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({
             ))}
           </select>
 
-          {/* Type color preview badge */}
           <div className="flex items-center gap-2 pt-1 text-xs text-slate-400">
             <span
               className="w-2.5 h-2.5 rounded-full"
@@ -178,17 +177,17 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Concise summary or definition of this entity in your knowledge atlas..."
-            className="w-full bg-slate-900 border border-slate-700/80 focus:border-sky-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all resize-none shadow-inner leading-relaxed"
+            className="w-full bg-white/[0.04] border border-white/[0.1] focus:border-sky-500/60 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all resize-none leading-relaxed"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
           >
             Cancel
           </button>

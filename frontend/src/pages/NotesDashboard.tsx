@@ -15,7 +15,6 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 
-// Canonical Knowledge Graph Components & Types (v0.3.2)
 import { ConstellationGraph } from '@/components/ConstellationGraph';
 import { KnowledgeExplorer } from '@/components/KnowledgeExplorer';
 import { EntityEditor } from '@/components/EntityEditor';
@@ -73,7 +72,6 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isRagModalOpen, setIsRagModalOpen] = useState(false);
 
-  // Knowledge Graph State (v0.3.2)
   const [graphFilters, setGraphFilters] = useState<GraphQueryParams>({});
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [highlightEntityIds, setHighlightEntityIds] = useState<string[]>([]);
@@ -618,7 +616,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
             </div>
 
             {/* Main Graph Canvas Area */}
-            <div className="flex-1 relative rounded-2xl overflow-hidden border border-slate-800/80 bg-slate-950/60 flex min-h-0">
+            <div className="flex-1 relative rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950/40 backdrop-blur-sm flex min-h-0">
               {/* Left Drawer: Filter Panel */}
               {isFiltersOpen && (
                 <div className="absolute top-3 left-3 z-20 w-80 max-h-[calc(100%-24px)] overflow-y-auto">
@@ -774,7 +772,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
         isOpen={isSearchModalOpen} 
         onClose={() => setIsSearchModalOpen(false)}
         width="md"
-        className="h-[70vh]"
+        className="h-[70vh] bg-transparent border-none shadow-none"
       >
         <SearchPanel
           workspaceId={workspaceId}
@@ -791,7 +789,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
         isOpen={isRagModalOpen} 
         onClose={() => setIsRagModalOpen(false)}
         width="lg"
-        className="h-[85vh]"
+        className="h-[85vh] bg-transparent border-none shadow-none"
       >
         <RAGPanel
           workspaceId={workspaceId}
@@ -846,10 +844,11 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
         isOpen={isGraphRAGModalOpen}
         onClose={() => setIsGraphRAGModalOpen(false)}
         width="lg"
-        className="h-[85vh]"
+        className="h-[85vh] bg-transparent border-none shadow-none"
       >
         <GraphRAGPanel
           workspaceId={workspaceId}
+          className="h-full overflow-y-auto"
           onNavigateToNote={(noteId) => {
             setIsGraphRAGModalOpen(false);
             handleNavigateToNote(noteId);
@@ -868,6 +867,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
           isOpen={showResultSummary}
           onClose={() => setShowResultSummary(false)}
           width="md"
+          className="bg-transparent border-none shadow-none"
         >
           <ExtractionResultSummary
             status={activeJob.status}

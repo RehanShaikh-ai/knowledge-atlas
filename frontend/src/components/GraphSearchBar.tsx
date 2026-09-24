@@ -137,12 +137,12 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results && setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full bg-slate-900/90 border border-slate-800 focus:border-sky-500/80 rounded-xl pl-9 pr-8 py-2 text-xs placeholder-slate-500 focus:outline-none backdrop-blur-md transition-all shadow-inner"
+          className="w-full bg-slate-950/60 border border-white/[0.08] focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 rounded-xl pl-9 pr-8 py-2 text-xs placeholder-slate-500 focus:outline-none backdrop-blur-xl transition-all shadow-inner text-slate-100"
         />
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-2.5 text-slate-500 hover:text-slate-300 p-0.5 rounded-full hover:bg-slate-800 transition-colors"
+            className="absolute right-2.5 text-slate-500 hover:text-slate-300 p-0.5 rounded-full hover:bg-white/[0.08] transition-colors"
             aria-label="Clear search"
           >
             <X size={14} />
@@ -154,10 +154,10 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
       {isOpen && results && (
         <div
           data-testid="graph-search-dropdown"
-          className="absolute left-0 right-0 mt-2 bg-slate-900/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden z-40 max-h-80 overflow-y-auto animate-fade-in"
+          className="absolute left-0 right-0 mt-2 bg-slate-950/90 border border-white/[0.08] rounded-xl shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden z-40 max-h-80 overflow-y-auto animate-fade-in"
         >
           {error && (
-            <div className="p-3 text-xs text-rose-400 bg-rose-950/40 border-b border-rose-900/40">
+            <div className="p-3 text-xs text-rose-300 bg-rose-950/40 border-b border-rose-900/30">
               {error}
             </div>
           )}
@@ -167,7 +167,7 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
               No matching entities or notes found.
             </div>
           ) : (
-            <div className="divide-y divide-slate-800/60">
+            <div className="divide-y divide-white/[0.06]">
               {/* Entities Section */}
               {results.entities.length > 0 && (
                 <div className="p-2">
@@ -182,7 +182,7 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
                         type="button"
                         data-testid={`search-result-entity-${entity.id}`}
                         onClick={() => handleEntityClick(entity)}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800/80 flex items-center justify-between transition-colors group"
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/[0.05] flex items-center justify-between transition-colors group"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span
@@ -193,7 +193,7 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
                             {entity.name}
                           </span>
                         </div>
-                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700/50 shrink-0">
+                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06] shrink-0">
                           {entity.entity_type}
                         </span>
                       </button>
@@ -216,7 +216,7 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
                         type="button"
                         data-testid={`search-result-note-${note.id}`}
                         onClick={() => handleNoteClick(note)}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800/80 flex flex-col transition-colors group"
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/[0.05] flex flex-col transition-colors group"
                       >
                         <span className="text-xs font-medium text-slate-200 group-hover:text-amber-300 truncate">
                           {note.title}

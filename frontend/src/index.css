@@ -29,10 +29,10 @@
   --crust: #030407;
 
   /* App specific tokens */
-  --card-bg: rgba(15, 23, 42, 0.45);
-  --card-border: rgba(148, 163, 184, 0.15);
-  --card-hover-bg: rgba(15, 23, 42, 0.75);
-  --card-hover-border: rgba(56, 189, 248, 0.4);
+  --card-bg: rgba(13, 17, 28, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover-bg: rgba(20, 27, 45, 0.8);
+  --card-hover-border: rgba(56, 189, 248, 0.35);
   --card-glow: rgba(56, 189, 248, 0.15);
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -790,12 +790,12 @@ textarea:focus-visible {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   cursor: pointer;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-radius: 10px;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-radius: 14px;
   flex-direction: column;
   padding: 18px 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   display: flex;
   position: relative;
@@ -816,10 +816,10 @@ textarea:focus-visible {
 
 .note-card:hover {
   background: var(--card-hover-bg);
-  border-color: var(--blue);
+  border-color: rgba(56, 189, 248, 0.4);
   box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(56, 189, 248, 0.35);
+    0 12px 32px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(56, 189, 248, 0.15);
   transform: translateY(-2px);
 }
 
@@ -829,8 +829,8 @@ textarea:focus-visible {
 }
 
 .note-card.pinned {
-  background: rgba(252, 211, 77, 0.05);
-  border-color: rgba(252, 211, 77, 0.35);
+  background: rgba(252, 211, 77, 0.04);
+  border-color: rgba(252, 211, 77, 0.22);
 }
 
 .note-card.pinned:before {
@@ -1009,31 +1009,33 @@ textarea:focus-visible {
 
 .btn-ghost-dark {
   color: var(--subtext0);
-  border: 1px solid var(--card-border);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   white-space: nowrap;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
   justify-content: center;
   align-items: center;
   gap: 7px;
   padding: 7px 14px;
   font-size: 13px;
   font-weight: 500;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
 }
 
 .btn-ghost-dark:hover {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-0.5px);
 }
 
 .btn-ghost-dark.active {
   color: var(--blue);
   border-color: rgba(56, 189, 248, 0.4);
-  background: rgba(56, 189, 248, 0.1);
+  background: rgba(56, 189, 248, 0.12);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.15);
 }
 
 .btn-back {
@@ -1453,19 +1455,19 @@ textarea:focus-visible {
 }
 
 .modal-overlay {
-  background: rgba(7, 9, 14, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(4, 6, 12, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 50;
 }
 
 .modal-panel {
-  background: var(--mantle);
-  border: 1px solid var(--card-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 16px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  background: rgba(10, 14, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .dashboard-metric-value {
@@ -1687,5 +1689,14 @@ svg[aria-hidden="true"] {
   background: rgba(30, 41, 59, 0.6);
   font-weight: 600;
   color: #f8fafc;
+}
+
+/* Modal embedded panel resets to eliminate duplicate borders */
+.modal-overlay .workflow-panel {
+  border: none !important;
+  border-radius: 0 !important;
+  margin-bottom: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
