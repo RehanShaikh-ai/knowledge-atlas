@@ -1,6 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import userEvent from '@testing-library/user-event';
 import { NotesDashboard } from './NotesDashboard';
 import * as notesApi from '@/api/notes';
 
@@ -11,6 +10,44 @@ vi.mock('@/api/notes', () => ({
 
 vi.mock('@/api/tags', () => ({
   listWorkspaceTags: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+}));
+
+vi.mock('@/api/graph', () => ({
+  getWorkspaceGraph: vi.fn().mockResolvedValue({
+    nodes: [
+      { id: 'e1', name: 'Neural Networks', entity_type: 'concept', degree: 2, is_manual: false, note_count: 3 },
+      { id: 'e2', name: 'Backpropagation', entity_type: 'concept', degree: 1, is_manual: false, note_count: 2 },
+    ],
+    edges: [
+      { id: 'r1', source_entity_id: 'e1', target_entity_id: 'e2', relationship_type: 'uses', confidence: 0.95, is_manual: false },
+    ],
+    clusters: [],
+    stats: { node_count: 2, edge_count: 1, cluster_count: 0, manual_node_count: 0, manual_edge_count: 0, truncated: false },
+    truncated: false,
+  }),
+  searchGraph: vi.fn().mockResolvedValue({ entities: [], notes: [], total_matches: 0, query: '' }),
+  getEntityNeighborhood: vi.fn().mockResolvedValue({
+    nodes: [],
+    edges: [],
+    clusters: [],
+    stats: { node_count: 0, edge_count: 0, cluster_count: 0, manual_node_count: 0, manual_edge_count: 0, truncated: false },
+    truncated: false,
+  }),
+}));
+
+vi.mock('@/api/clusters', () => ({
+  listClusters: vi.fn().mockResolvedValue([]),
+  getCluster: vi.fn().mockResolvedValue({ id: 'c1', name: 'ML', summary: 'ML cluster', member_count: 0, members: [] }),
+}));
+
+vi.mock('@/api/entities', () => ({
+  listEntities: vi.fn().mockResolvedValue([]),
+  getEntity: vi.fn().mockResolvedValue({ id: 'e1', name: 'Neural Networks', entity_type: 'concept', workspace_id: 'ws-1', created_at: '', updated_at: '' }),
+  getEntityProvenance: vi.fn().mockResolvedValue({ entity_id: 'e1', sources: [] }),
+}));
+
+vi.mock('@/api/link_suggestions', () => ({
+  getLinkSuggestions: vi.fn().mockResolvedValue({ items: [], total: 0 }),
 }));
 
 const mockNote = {
@@ -56,6 +93,9 @@ describe('NotesDashboard', () => {
     render(<NotesDashboard workspaceId="ws-1" workspaceName="My Workspace" />);
 
     expect(screen.getByTestId('active-workspace-badge')).toHaveTextContent('My Workspace');
+    await waitFor(() => {
+      expect(notesApi.listNotes).toHaveBeenCalled();
+    });
   });
 
   it('toggles archived view', async () => {
@@ -68,13 +108,58 @@ describe('NotesDashboard', () => {
 
     render(<NotesDashboard workspaceId="ws-1" />);
 
+    await waitFor(() => {
+      expect(notesApi.listNotes).toHaveBeenCalled();
+    });
+
     // Click archived toggle (button with text "Archived")
     const archiveBtn = screen.getByRole('button', { name: /Archived/i });
-    await userEvent.click(archiveBtn);
+    fireEvent.click(archiveBtn);
 
     await waitFor(() => {
       expect(screen.getByText('Archived Notes')).toBeInTheDocument();
       expect(screen.getByText('Archived Note')).toBeInTheDocument();
     });
   });
+
+  it('switches to graph tab and renders constellation graph, toolbar, and search bar', async () => {
+    vi.mocked(notesApi.listNotes).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 100 });
+
+    render(<NotesDashboard workspaceId="ws-1" />);
+
+    const graphTabBtn = screen.getByRole('button', { name: /^Graph$/i });
+    fireEvent.click(graphTabBtn);
+
+    expect(await screen.findByTestId('graph-edit-toolbar')).toBeInTheDocument();
+    expect(await screen.findByTestId('graph-search-bar')).toBeInTheDocument();
+  });
+
+  it('opens GraphRAG modal when clicking GraphRAG button on graph tab', async () => {
+    vi.mocked(notesApi.listNotes).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 100 });
+
+    render(<NotesDashboard workspaceId="ws-1" />);
+
+    const graphTabBtn = screen.getByRole('button', { name: /^Graph$/i });
+    fireEvent.click(graphTabBtn);
+
+    const ragTriggerBtn = await screen.findByTestId('graph-rag-trigger-btn');
+    fireEvent.click(ragTriggerBtn);
+
+    expect(await screen.findByTestId('graph-rag-panel')).toBeInTheDocument();
+  });
+
+  it('toggles filters panel from graph toolbar', async () => {
+    vi.mocked(notesApi.listNotes).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 100 });
+
+    render(<NotesDashboard workspaceId="ws-1" />);
+
+    const graphTabBtn = screen.getByRole('button', { name: /^Graph$/i });
+    fireEvent.click(graphTabBtn);
+
+    const filterBtn = await screen.findByTestId('toolbar-toggle-filters-btn');
+    fireEvent.click(filterBtn);
+
+    expect(await screen.findByTestId('graph-filter-panel')).toBeInTheDocument();
+  });
 });
+

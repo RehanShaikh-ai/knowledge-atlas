@@ -30,6 +30,7 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasHighlightedRef = useRef(false);
 
   // Debounced search effect
   useEffect(() => {
@@ -43,7 +44,8 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
       setIsSearching(false);
       setIsOpen(false);
       setError(null);
-      if (onHighlightEntities) {
+      if (hasHighlightedRef.current && onHighlightEntities) {
+        hasHighlightedRef.current = false;
         onHighlightEntities([]);
       }
       return;
@@ -59,6 +61,7 @@ export const GraphSearchBar: React.FC<GraphSearchBarProps> = ({
         setIsOpen(true);
         if (onHighlightEntities) {
           const ids = res.entities.map((e) => e.id);
+          hasHighlightedRef.current = ids.length > 0;
           onHighlightEntities(ids);
         }
       } catch (err) {
