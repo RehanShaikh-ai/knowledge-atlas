@@ -1,7 +1,8 @@
-"""Job management service for background indexing.
+"""Job management service for background indexing and graph extraction.
 
-Canonical service per CONTRACT v0.3.1 §5.3, §12.1-§12.4.
-Provides enqueue_index_job, get_job, retry_job, process_index_job.
+Canonical service per CONTRACT v0.3.1 §5.3, §12.1-§12.4 and CONTRACT v0.3.2 §5.3, §5.4, §12.1-§12.4.
+Provides enqueue_index_job, enqueue_extract_job, enqueue_reindex_graph_job,
+enqueue_cluster_job, get_job, retry_job, process_index_job.
 """
 
 import logging
@@ -18,7 +19,14 @@ from app.models.note import Note
 from app.models.note_chunk import NoteChunk
 from app.models.note_version import NoteVersion
 from app.models.workspace import Workspace
-from app.services import chunking_service, embedding_service, vector_service, version_service
+from app.services import (
+    chunking_service,
+    cluster_service,
+    embedding_service,
+    graph_index_service,
+    vector_service,
+    version_service,
+)
 
 logger = logging.getLogger("app.services.job_service")
 
@@ -60,6 +68,105 @@ def enqueue_index_job(
     return job
 
 
+def enqueue_extract_job(
+    db: Session,
+    workspace_id: uuid.UUID,
+    note_ids: list[uuid.UUID] | None = None,
+) -> IndexJob:
+    """Enqueue an entity/relationship extraction job per CONTRACT v0.3.2 §9.4, §12.1."""
+    ws = db.get(Workspace, workspace_id)
+    if not ws:
+        raise WorkspaceNotFoundError("Workspace not found.")
+
+    n_ids_str = [str(nid) for nid in note_ids] if note_ids else None
+
+    job = IndexJob(
+        workspace_id=workspace_id,
+        job_type="extract_entities",
+        status="queued",
+        note_ids=n_ids_str,
+        retry_count=0,
+        max_retries=settings.JOB_MAX_RETRIES,
+        enqueued_at=datetime.now(UTC),
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+
+    if settings.APP_ENV in ("testing", "development"):
+        try:
+            process_index_job(db, job.id)
+            db.refresh(job)
+        except Exception as e:
+            logger.warning("Inline processing failed for extraction job %s: %s", job.id, e)
+
+    return job
+
+
+def enqueue_reindex_graph_job(
+    db: Session,
+    workspace_id: uuid.UUID,
+) -> IndexJob:
+    """Enqueue a full workspace graph reindexing job per CONTRACT v0.3.2 §9.4, §12.2."""
+    ws = db.get(Workspace, workspace_id)
+    if not ws:
+        raise WorkspaceNotFoundError("Workspace not found.")
+
+    job = IndexJob(
+        workspace_id=workspace_id,
+        job_type="reindex_graph",
+        status="queued",
+        note_ids=None,
+        retry_count=0,
+        max_retries=settings.JOB_MAX_RETRIES,
+        enqueued_at=datetime.now(UTC),
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+
+    if settings.APP_ENV in ("testing", "development"):
+        try:
+            process_index_job(db, job.id)
+            db.refresh(job)
+        except Exception as e:
+            logger.warning("Inline processing failed for reindex job %s: %s", job.id, e)
+
+    return job
+
+
+def enqueue_cluster_job(
+    db: Session,
+    workspace_id: uuid.UUID,
+) -> IndexJob:
+    """Enqueue a workspace clustering job per CONTRACT v0.3.2 §9.6."""
+    ws = db.get(Workspace, workspace_id)
+    if not ws:
+        raise WorkspaceNotFoundError("Workspace not found.")
+
+    job = IndexJob(
+        workspace_id=workspace_id,
+        job_type="cluster_notes",
+        status="queued",
+        note_ids=None,
+        retry_count=0,
+        max_retries=settings.JOB_MAX_RETRIES,
+        enqueued_at=datetime.now(UTC),
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+
+    if settings.APP_ENV in ("testing", "development"):
+        try:
+            process_index_job(db, job.id)
+            db.refresh(job)
+        except Exception as e:
+            logger.warning("Inline processing failed for cluster job %s: %s", job.id, e)
+
+    return job
+
+
 def get_job(db: Session, job_id: uuid.UUID) -> IndexJob:
     """Retrieve IndexJob status per CONTRACT §12.2."""
     job = db.get(IndexJob, job_id)
@@ -95,7 +202,7 @@ def retry_job(db: Session, job_id: uuid.UUID) -> IndexJob:
 
 
 def process_index_job(db: Session, job_id: uuid.UUID) -> None:
-    """Execute the indexing job: chunk notes, persist NoteChunks, embed, and upsert to Qdrant."""
+    """Execute the job based on job_type per CONTRACT v0.3.1 §12 & CONTRACT v0.3.2 §8, §12."""
     job = db.get(IndexJob, job_id)
     if not job:
         return
@@ -105,7 +212,48 @@ def process_index_job(db: Session, job_id: uuid.UUID) -> None:
     db.commit()
 
     try:
-        # Determine notes to index
+        if job.job_type == "cluster_notes":
+            cluster_service.cluster_workspace(db, job.workspace_id)
+            job.status = "completed"
+            job.completed_at = datetime.now(UTC)
+            job.error_message = None
+            db.commit()
+            return
+
+        if job.job_type == "reindex_graph":
+            summary = graph_index_service.reindex_workspace_graph(db, job.workspace_id)
+            job.status = "completed"
+            job.completed_at = datetime.now(UTC)
+            job.error_message = (
+                f"Extracted {summary['extracted_entities']} entities, "
+                f"{summary['extracted_relationships']} relationships from "
+                f"{summary['notes_processed']} notes"
+            )
+            db.commit()
+            return
+
+        if job.job_type in ("extract_entities", "extract_relationships"):
+            if job.note_ids:
+                target_ids = [uuid.UUID(nid) for nid in job.note_ids]
+            else:
+                target_ids = list(
+                    db.scalars(
+                        select(Note.id).where(
+                            Note.workspace_id == job.workspace_id, Note.is_archived.is_(False)
+                        )
+                    ).all()
+                )
+
+            for nid in target_ids:
+                graph_index_service.index_note_graph(db, nid)
+
+            job.status = "completed"
+            job.completed_at = datetime.now(UTC)
+            job.error_message = None
+            db.commit()
+            return
+
+        # Default text index job: index_workspace / index_note
         if job.note_ids:
             target_ids = [uuid.UUID(nid) for nid in job.note_ids]
             notes = list(
@@ -189,17 +337,21 @@ def process_index_job(db: Session, job_id: uuid.UUID) -> None:
                 embeddings=embeddings,
             )
 
+            # Trigger graph indexing for this note per CONTRACT v0.3.2 §8.1
+            try:
+                graph_index_service.index_note_graph(db, note.id)
+            except Exception as e:
+                logger.warning("Graph indexing step failed for note %s: %s", note.id, e)
+
         job.status = "completed"
         job.completed_at = datetime.now(UTC)
         job.error_message = None
         db.commit()
 
     except Exception as e:
-        logger.exception("Index job %s failed: %s", job_id, e)
-        # Sanitized error per CONTRACT §12.4
+        logger.exception("Job %s failed: %s", job_id, e)
         job.status = "failed"
         job.completed_at = datetime.now(UTC)
-        # Strip paths or sensitive details
         clean_msg = str(e).split("\n")[0][:200]
-        job.error_message = f"Indexing failed: {clean_msg}"
+        job.error_message = f"Job failed: {clean_msg}"
         db.commit()

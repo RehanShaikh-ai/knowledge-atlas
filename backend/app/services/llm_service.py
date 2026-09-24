@@ -49,7 +49,73 @@ class DeterministicTestProvider(BaseLLMProvider):
         return self._model
 
     def generate(self, messages: list[dict[str, Any]], **kwargs) -> str:
+        all_text = " ".join(m.get("content", "") for m in messages)
         last_msg = messages[-1]["content"] if messages else ""
+
+        # Check if this is entity extraction
+        if "entity extraction" in all_text.lower() or "extract entities" in all_text.lower():
+            # Find candidate capitalized phrases or keywords from text
+            text_to_extract = (
+                last_msg.split("Extract entities from this text:\n\n")[-1]
+                if "Extract entities from this text:\n\n" in last_msg
+                else last_msg
+            )
+            candidates = []
+            # Find capitalized word sequences
+            import re
+
+            caps = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b", text_to_extract)
+            for c in caps:
+                if (
+                    c.lower()
+                    not in {"extract", "entities", "text", "the", "this", "short", "only", "json"}
+                    and len(c) > 2
+                ):
+                    if c not in candidates:
+                        candidates.append(c)
+            if not candidates:
+                # Default concepts
+                words = [w.strip() for w in text_to_extract.split() if len(w) > 4][:3]
+                candidates = [w.capitalize() for w in words] or ["Concept"]
+
+            entities = [
+                {
+                    "name": name,
+                    "type": "concept",
+                    "description": f"Extracted concept of {name}",
+                }
+                for name in candidates[:5]
+            ]
+            return json.dumps({"entities": entities})
+
+        # Check if this is relationship extraction
+        if (
+            "relationship extraction" in all_text.lower()
+            or "extract relationships" in all_text.lower()
+        ):
+            import re
+
+            entities_match = re.search(r"Entities identified:\s*\[(.*?)\]", all_text)
+            entity_names = []
+            if entities_match:
+                entity_names = [
+                    e.strip(" '\"") for e in entities_match.group(1).split(",") if e.strip(" '\"")
+                ]
+
+            relationships = []
+            if len(entity_names) >= 2:
+                for i in range(len(entity_names) - 1):
+                    relationships.append(
+                        {
+                            "source": entity_names[i],
+                            "target": entity_names[i + 1],
+                            "type": "related_to",
+                            "description": f"{entity_names[i]} relates to {entity_names[i + 1]}",
+                            "confidence": 0.85,
+                        }
+                    )
+            return json.dumps({"relationships": relationships})
+
         preview = last_msg[:80]
         return f"Based on your knowledge base: Verified answer regarding: {preview}"
 
