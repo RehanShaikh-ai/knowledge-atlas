@@ -15,3 +15,13 @@ export function getEntityTypeColor(type?: string): string {
   const key = type.toLowerCase() as EntityType;
   return ENTITY_TYPE_COLORS[key] || ENTITY_TYPE_COLORS.unknown;
 }
+
+export const COMMON_RELATIONSHIP_TYPES = [
+  'related_to',
+  'part_of',
+  'prerequisite_of',
+  'used_in',
+  'contradicts',
+  'causes',
+  'mentions',
+];
