@@ -42,3 +42,17 @@ class GraphEntityResponse(BaseModel):
     cluster_id: uuid.UUID | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class ExtractedEntityItem(BaseModel):
+    """Schema for a single extracted entity from LLM."""
+
+    name: str = Field(min_length=1, max_length=200)
+    type: EntityType = "concept"
+    description: str | None = Field(default=None, max_length=5000)
+
+
+class ExtractedEntitiesPayload(BaseModel):
+    """Schema for LLM extracted entities payload."""
+
+    entities: list[ExtractedEntityItem] = Field(default_factory=list)

@@ -41,3 +41,19 @@ class GraphRelationshipResponse(BaseModel):
     is_manual: bool = False
     created_at: datetime
     updated_at: datetime
+
+
+class ExtractedRelationshipItem(BaseModel):
+    """Schema for a single extracted relationship from LLM."""
+
+    source: str = Field(min_length=1, max_length=200)
+    target: str = Field(min_length=1, max_length=200)
+    type: str = Field(default="related_to", min_length=1, max_length=100)
+    description: str | None = Field(default=None, max_length=5000)
+    confidence: float = Field(default=0.8, ge=0.0, le=1.0)
+
+
+class ExtractedRelationshipsPayload(BaseModel):
+    """Schema for LLM extracted relationships payload."""
+
+    relationships: list[ExtractedRelationshipItem] = Field(default_factory=list)

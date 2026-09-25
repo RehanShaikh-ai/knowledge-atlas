@@ -24,6 +24,7 @@ def search_semantic(
     query: str,
     limit: int = 10,
     include_archived: bool = False,
+    min_score: float | None = None,
 ) -> list[SearchResultItem]:
     """Semantic vector search against Qdrant per CONTRACT §9.1, §9.2."""
     if not query.strip():
@@ -48,9 +49,14 @@ def search_semantic(
         excluded_note_ids=excluded_note_ids,
     )
 
+    threshold = min_score
     seen_notes: set[uuid.UUID] = set()
     results: list[SearchResultItem] = []
     for pt in points:
+        pt_score = float(pt.get("score", 0.0))
+        if threshold is not None and pt_score < threshold:
+            continue
+
         payload = pt.get("payload", {})
         note_id_str = payload.get("note_id")
         chunk_id_str = payload.get("chunk_id")
@@ -142,11 +148,17 @@ def search_hybrid(
     query: str,
     limit: int = 10,
     include_archived: bool = False,
+    min_score: float | None = None,
 ) -> list[SearchResultItem]:
     """Hybrid search combining semantic and lexical via Reciprocal Rank Fusion (RRF)."""
     # Fetch top candidates from both modes
     semantic_results = search_semantic(
-        db, workspace_id, query, limit=limit * 2, include_archived=include_archived
+        db,
+        workspace_id,
+        query,
+        limit=limit * 2,
+        include_archived=include_archived,
+        min_score=min_score,
     )
     lexical_results = search_lexical(
         db, workspace_id, query, limit=limit * 2, include_archived=include_archived
