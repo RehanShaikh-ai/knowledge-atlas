@@ -27,6 +27,8 @@ export interface GraphContext {
   hops: number;
 }
 
+export type GraphRAGContext = GraphContext;
+
 export interface GraphRAGResponse {
   answer: string;
   citations: CitedSource[];

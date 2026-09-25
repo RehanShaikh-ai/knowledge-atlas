@@ -111,6 +111,19 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
     return () => observer.disconnect();
   }, [isFullscreen, isLoading]);
 
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        graphRef.current?.pauseAnimation?.();
+      } else {
+        graphRef.current?.resumeAnimation?.();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+
   const handleNodeClick = useCallback(
     (node: unknown) => {
       const typedNode = node as { id?: string };
@@ -427,9 +440,16 @@ export const ConstellationGraph: React.FC<ConstellationGraphProps> = ({
             return `${l.relationship_type} (${Math.round((l.confidence || 1) * 100)}%)`;
           }}
           onNodeClick={handleNodeClick}
-          cooldownTicks={120}
-          onEngineStop={() => graphRef.current?.zoomToFit(400, 40)}
+          cooldownTicks={80}
+          cooldownTime={2000}
+          onNodeDrag={() => graphRef.current?.resumeAnimation?.()}
+          onNodeDragEnd={() => graphRef.current?.pauseAnimation?.()}
+          onEngineStop={() => {
+            graphRef.current?.zoomToFit(400, 40);
+            graphRef.current?.pauseAnimation?.();
+          }}
           backgroundColor="rgba(3, 7, 18, 0)"
+
         />
       </div>
     </div>

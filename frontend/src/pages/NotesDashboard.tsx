@@ -35,7 +35,9 @@ import { ExtractionJobResponse } from '@/types/jobs';
 import { listClusters } from '@/api/clusters';
 import { getLinkSuggestions } from '@/api/link_suggestions';
 import { triggerExtraction, triggerReindex } from '@/api/graph_index';
+import { getJobStatus } from '@/api/jobs';
 import { listEntities } from '@/api/entities';
+
 
 interface NotesDashboardProps {
   workspaceId: string;
@@ -85,6 +87,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const [editingRelationship, setEditingRelationship] = useState<GraphRelationship | null>(null);
   const [relationshipSourceEntity, setRelationshipSourceEntity] = useState<GraphEntity | null>(null);
   const [activeJob, setActiveJob] = useState<ExtractionJobResponse | null>(null);
+  const [isTriggeringJob, setIsTriggeringJob] = useState<'extract' | 'reindex' | null>(null);
   const [showResultSummary, setShowResultSummary] = useState(false);
   const [graphRefreshKey, setGraphRefreshKey] = useState(0);
   const [clusterOptions, setClusterOptions] = useState<GraphClusterSummary[]>([]);
@@ -247,31 +250,102 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
     }
   }, [currentTab, workspaceId, graphRefreshKey]);
 
+  // Polling for active background job (Extract / Reindex / Clustering)
+  const activeJobId = activeJob?.job_id || activeJob?.id;
+  const activeJobStatus = activeJob?.status;
+  const isJobRunning = Boolean(
+    isTriggeringJob !== null ||
+    (activeJob && (activeJob.status === 'queued' || activeJob.status === 'running'))
+  );
+
+  useEffect(() => {
+    if (!activeJobId || activeJobId === 'pending') return;
+    const isOngoing = activeJobStatus === 'queued' || activeJobStatus === 'running';
+    if (!isOngoing) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await getJobStatus(activeJobId);
+        setActiveJob((prev) => (prev ? { ...prev, ...updated, job_id: updated.id } : null));
+        if (updated.status === 'completed' || updated.status === 'failed') {
+          clearInterval(interval);
+          if (updated.status === 'completed') {
+            setShowResultSummary(true);
+            setGraphRefreshKey((k) => k + 1);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to poll job status:', err);
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [activeJobId, activeJobStatus]);
+
   const handleExtractGraph = async () => {
+    if (isJobRunning) return;
+    setIsTriggeringJob('extract');
+    // Immediate active state before network call completes
+    setActiveJob({
+      job_id: 'pending',
+      status: 'running',
+      job_type: 'extract_entities',
+      progress: { stage: 'Starting extraction...' },
+    });
     try {
       const job = await triggerExtraction(workspaceId);
-      setActiveJob(job);
+      setActiveJob({ ...job, job_type: 'extract_entities' });
       if (job.status === 'completed') {
         setShowResultSummary(true);
         setGraphRefreshKey((k) => k + 1);
       }
     } catch (err) {
       console.error('Failed to trigger graph extraction:', err);
+      const apiErr = err as { error?: { message?: string } };
+      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Extraction request failed');
+      setActiveJob({
+        job_id: '',
+        status: 'failed',
+        job_type: 'extract_entities',
+        error_message: msg,
+      });
+    } finally {
+      setIsTriggeringJob(null);
     }
   };
 
   const handleReindexGraph = async () => {
+    if (isJobRunning) return;
+    setIsTriggeringJob('reindex');
+    // Immediate active state before network call completes
+    setActiveJob({
+      job_id: 'pending',
+      status: 'running',
+      job_type: 'reindex_graph',
+      progress: { stage: 'Starting full reindex...' },
+    });
     try {
       const job = await triggerReindex(workspaceId);
-      setActiveJob(job);
+      setActiveJob({ ...job, job_type: 'reindex_graph' });
       if (job.status === 'completed') {
         setShowResultSummary(true);
         setGraphRefreshKey((k) => k + 1);
       }
     } catch (err) {
       console.error('Failed to trigger graph reindex:', err);
+      const apiErr = err as { error?: { message?: string } };
+      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Reindex request failed');
+      setActiveJob({
+        job_id: '',
+        status: 'failed',
+        job_type: 'reindex_graph',
+        error_message: msg,
+      });
+    } finally {
+      setIsTriggeringJob(null);
     }
   };
+
 
   const handleSelectEntity = useCallback((entityId: string) => {
     setSelectedEntityId(entityId);
@@ -396,12 +470,13 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 </button>
                 <button
                   type="button"
+                  data-testid="graph-rag-trigger-btn"
                   onClick={() => setIsRagModalOpen(true)}
                   className="btn-ghost-dark flex items-center gap-2 text-blue-400 hover:text-blue-300"
-                  title="AI Assistant (Mod+J)"
+                  title="Knowledge Assistant (Mod+J)"
                 >
                   <Sparkles size={15} />
-                  <span className="hidden lg:inline">Assistant</span>
+                  <span className="hidden sm:inline">Assistant</span>
                 </button>
                 <button
                   type="button"
@@ -420,12 +495,12 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
               <button
                 type="button"
                 data-testid="graph-rag-trigger-btn"
-                onClick={() => setIsGraphRAGModalOpen(true)}
+                onClick={() => setIsRagModalOpen(true)}
                 className="btn-ghost-dark flex items-center gap-2 text-violet-400 hover:text-violet-300"
-                title="GraphRAG Assistant (Mod+J)"
+                title="Knowledge Assistant (Mod+J)"
               >
                 <Sparkles size={15} />
-                <span className="hidden sm:inline">GraphRAG</span>
+                <span className="hidden sm:inline">Assistant</span>
               </button>
             )}
 
@@ -584,11 +659,20 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
               {activeJob && (
                 <GraphJobIndicator
                   status={activeJob.status}
-                  jobId={activeJob.job_id}
-                  jobType="extraction"
-                  onRetry={() => handleExtractGraph()}
+                  jobId={activeJob.job_id || activeJob.id || ''}
+                  jobType={activeJob.job_type || 'extraction'}
+                  errorMessage={activeJob.error_message || undefined}
+                  progress={activeJob.progress}
+                  onRetry={() => {
+                    if (activeJob.job_type === 'reindex_graph') {
+                      handleReindexGraph();
+                    } else {
+                      handleExtractGraph();
+                    }
+                  }}
                 />
               )}
+
 
               {/* Toolbar */}
               <GraphEditToolbar
@@ -611,7 +695,8 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 pendingSuggestionCount={pendingSuggestionCount}
                 onExtractGraph={handleExtractGraph}
                 onReindexGraph={handleReindexGraph}
-                isJobInProgress={activeJob?.status === 'queued' || activeJob?.status === 'running'}
+                isJobInProgress={isJobRunning}
+                activeJobType={activeJob?.job_type || (isTriggeringJob === 'extract' ? 'extract_entities' : isTriggeringJob === 'reindex' ? 'reindex_graph' : null)}
               />
             </div>
 
@@ -871,7 +956,20 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
         >
           <ExtractionResultSummary
             status={activeJob.status}
+            entityCount={activeJob.progress?.extracted_entities}
+            relationshipCount={activeJob.progress?.extracted_relationships}
+            notesProcessedCount={activeJob.progress?.processed_notes}
+            message={activeJob.progress?.summary || activeJob.error_message}
             onDismiss={() => setShowResultSummary(false)}
+            onViewGraph={() => setShowResultSummary(false)}
+            onRetry={() => {
+              setShowResultSummary(false);
+              if (activeJob.job_type === 'reindex_graph') {
+                handleReindexGraph();
+              } else {
+                handleExtractGraph();
+              }
+            }}
           />
         </Modal>
       )}

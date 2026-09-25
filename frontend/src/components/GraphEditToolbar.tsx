@@ -7,6 +7,7 @@ import {
   Sparkles,
   Cpu,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ export interface GraphEditToolbarProps {
   onExtractGraph?: () => void;
   onReindexGraph?: () => void;
   isJobInProgress?: boolean;
+  activeJobType?: string | null;
   className?: string;
 }
 
@@ -41,8 +43,12 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
   onExtractGraph,
   onReindexGraph,
   isJobInProgress = false,
+  activeJobType = null,
   className,
 }) => {
+  const isExtracting = isJobInProgress && (activeJobType?.startsWith('extract') || activeJobType === 'pending_extract');
+  const isReindexing = isJobInProgress && (activeJobType === 'reindex_graph' || activeJobType === 'pending_reindex');
+
   return (
     <div
       data-testid="graph-edit-toolbar"
@@ -148,11 +154,24 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
               onClick={onExtractGraph}
               disabled={isJobInProgress}
               data-testid="toolbar-extract-btn"
-              className="px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              data-action="extract"
+              aria-busy={isExtracting}
+              className={cn(
+                'px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border',
+                isExtracting
+                  ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 shadow-sm cursor-not-allowed'
+                  : isJobInProgress
+                  ? 'border-transparent text-slate-600 opacity-50 cursor-not-allowed'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
+              )}
               title="Run entity & relationship extraction on notes"
             >
-              <Cpu size={13} />
-              <span>Extract</span>
+              {isExtracting ? (
+                <Loader2 size={13} className="animate-spin text-sky-400" />
+              ) : (
+                <Cpu size={13} />
+              )}
+              <span>{isExtracting ? 'Extracting...' : 'Extract'}</span>
             </button>
           )}
 
@@ -162,11 +181,23 @@ export const GraphEditToolbar: React.FC<GraphEditToolbarProps> = ({
               onClick={onReindexGraph}
               disabled={isJobInProgress}
               data-testid="toolbar-reindex-btn"
-              className="px-2 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] transition-colors flex items-center gap-1 disabled:opacity-50"
+              data-action="reindex"
+              aria-busy={isReindexing}
+              className={cn(
+                'px-2 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1 border',
+                isReindexing
+                  ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 shadow-sm cursor-not-allowed'
+                  : isJobInProgress
+                  ? 'border-transparent text-slate-600 opacity-50 cursor-not-allowed'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
+              )}
               title="Reindex full workspace knowledge graph"
             >
-              <RefreshCw size={13} className={isJobInProgress ? 'animate-spin text-sky-400' : ''} />
-              <span>Reindex</span>
+              <RefreshCw
+                size={13}
+                className={isReindexing ? 'animate-spin text-sky-400' : ''}
+              />
+              <span>{isReindexing ? 'Reindexing...' : 'Reindex'}</span>
             </button>
           )}
         </>
