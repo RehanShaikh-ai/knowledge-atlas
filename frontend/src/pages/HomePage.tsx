@@ -95,7 +95,7 @@ const AppSidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-ws-avatar" aria-hidden="true">{wsInitial}</div>
         <div className="sidebar-ws-info">
           <div className="sidebar-ws-name">{wsName}</div>
-          <div className="sidebar-ws-plan">Knowledge Atlas v0.2</div>
+          <div className="sidebar-ws-plan">Knowledge Atlas v0.3.2</div>
         </div>
         <ChevronDown size={14} className="sidebar-ws-chevron" aria-hidden="true" />
       </div>
@@ -300,7 +300,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
       <div className="workflow-panel">
         {isUsersPhase ? (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10">
-            <div className="xl:col-span-5 xl:border-r xl:border-slate-800/80 xl:pr-8">
+            <div className="xl:col-span-5 xl:border-r xl:border-white/[0.08] xl:pr-8">
               <UserCreateForm onUserCreated={onUserCreated} />
             </div>
             <div className="xl:col-span-7 xl:pl-2">
@@ -316,7 +316,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10">
-            <div className="xl:col-span-5 xl:border-r xl:border-slate-800/80 xl:pr-8">
+            <div className="xl:col-span-5 xl:border-r xl:border-white/[0.08] xl:pr-8">
               {selectedUser && (
                 <WorkspaceCreateForm
                   users={users}

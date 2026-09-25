@@ -10,12 +10,34 @@ import { TagFilter } from '@/components/TagFilter';
 import { FlowHoverButton } from '@/components/ui/flow-hover-button';
 import { Plus, Archive, ChevronLeft, AlertTriangle, UploadCloud, LayoutDashboard, Share2, FileText, Search, Sparkles } from 'lucide-react';
 import { DashboardView } from './DashboardView';
-import { GraphView } from '@/components/GraphView';
 import { ImportWizard } from '@/components/ImportWizard';
-import { NoteDetailPanel } from '@/components/NoteDetailPanel';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
+
+import { ConstellationGraph } from '@/components/ConstellationGraph';
+import { KnowledgeExplorer } from '@/components/KnowledgeExplorer';
+import { EntityEditor } from '@/components/EntityEditor';
+import { RelationshipEditor } from '@/components/RelationshipEditor';
+import { GraphEditToolbar } from '@/components/GraphEditToolbar';
+import { LinkSuggestionPanel } from '@/components/LinkSuggestionPanel';
+import { ClusterView } from '@/components/ClusterView';
+import { GraphSearchBar } from '@/components/GraphSearchBar';
+import { GraphFilterPanel } from '@/components/GraphFilterPanel';
+import { GraphJobIndicator } from '@/components/GraphJobIndicator';
+import { ExtractionResultSummary } from '@/components/ExtractionResultSummary';
+import { GraphRAGPanel } from '@/components/GraphRAGPanel';
+
+import { GraphEntity } from '@/types/graph_entity';
+import { GraphRelationship } from '@/types/graph_relationship';
+import { GraphQueryParams, GraphClusterSummary } from '@/types/graph';
+import { ExtractionJobResponse } from '@/types/jobs';
+import { listClusters } from '@/api/clusters';
+import { getLinkSuggestions } from '@/api/link_suggestions';
+import { triggerExtraction, triggerReindex } from '@/api/graph_index';
+import { getJobStatus } from '@/api/jobs';
+import { listEntities } from '@/api/entities';
+
 
 interface NotesDashboardProps {
   workspaceId: string;
@@ -51,7 +73,26 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isRagModalOpen, setIsRagModalOpen] = useState(false);
-  const [graphSelectedNoteId, setGraphSelectedNoteId] = useState<string | null>(null);
+
+  const [graphFilters, setGraphFilters] = useState<GraphQueryParams>({});
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
+  const [highlightEntityIds, setHighlightEntityIds] = useState<string[]>([]);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isClustersOpen, setIsClustersOpen] = useState(false);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const [isGraphRAGModalOpen, setIsGraphRAGModalOpen] = useState(false);
+  const [isEntityEditorOpen, setIsEntityEditorOpen] = useState(false);
+  const [editingEntity, setEditingEntity] = useState<GraphEntity | null>(null);
+  const [isRelationshipEditorOpen, setIsRelationshipEditorOpen] = useState(false);
+  const [editingRelationship, setEditingRelationship] = useState<GraphRelationship | null>(null);
+  const [relationshipSourceEntity, setRelationshipSourceEntity] = useState<GraphEntity | null>(null);
+  const [activeJob, setActiveJob] = useState<ExtractionJobResponse | null>(null);
+  const [isTriggeringJob, setIsTriggeringJob] = useState<'extract' | 'reindex' | null>(null);
+  const [showResultSummary, setShowResultSummary] = useState(false);
+  const [graphRefreshKey, setGraphRefreshKey] = useState(0);
+  const [clusterOptions, setClusterOptions] = useState<GraphClusterSummary[]>([]);
+  const [availableEntities, setAvailableEntities] = useState<Array<{ id: string; name: string }>>([]);
+  const [pendingSuggestionCount, setPendingSuggestionCount] = useState(0);
 
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
   const [recentNotes, setRecentNotes] = useState<Note[]>([]);
@@ -174,22 +215,184 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
   const isBackendPending =
     error && (error.message.includes('404') || error.message.toLowerCase().includes('not found'));
 
+  // Load cluster and entity options for graph view
+  useEffect(() => {
+    if (currentTab === 'graph') {
+      listClusters(workspaceId)
+        .then((res) => {
+          setClusterOptions(
+            res.map((c) => ({
+              id: c.id,
+              label: c.label,
+              member_count: c.member_count ?? 0,
+            }))
+          );
+        })
+        .catch(() => {
+          setClusterOptions([]);
+        });
+
+      listEntities(workspaceId)
+        .then((res) => {
+          setAvailableEntities(res.map((e) => ({ id: e.id, name: e.name })));
+        })
+        .catch(() => {
+          setAvailableEntities([]);
+        });
+
+      getLinkSuggestions(workspaceId, { status: 'pending' })
+        .then((res) => {
+          setPendingSuggestionCount(res.total);
+        })
+        .catch(() => {
+          setPendingSuggestionCount(0);
+        });
+    }
+  }, [currentTab, workspaceId, graphRefreshKey]);
+
+  // Polling for active background job (Extract / Reindex / Clustering)
+  const activeJobId = activeJob?.job_id || activeJob?.id;
+  const activeJobStatus = activeJob?.status;
+  const isJobRunning = Boolean(
+    isTriggeringJob !== null ||
+    (activeJob && (activeJob.status === 'queued' || activeJob.status === 'running'))
+  );
+
+  useEffect(() => {
+    if (!activeJobId || activeJobId === 'pending') return;
+    const isOngoing = activeJobStatus === 'queued' || activeJobStatus === 'running';
+    if (!isOngoing) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await getJobStatus(activeJobId);
+        setActiveJob((prev) => (prev ? { ...prev, ...updated, job_id: updated.id } : null));
+        if (updated.status === 'completed' || updated.status === 'failed') {
+          clearInterval(interval);
+          if (updated.status === 'completed') {
+            setShowResultSummary(true);
+            setGraphRefreshKey((k) => k + 1);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to poll job status:', err);
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [activeJobId, activeJobStatus]);
+
+  const handleExtractGraph = async () => {
+    if (isJobRunning) return;
+    setIsTriggeringJob('extract');
+    // Immediate active state before network call completes
+    setActiveJob({
+      job_id: 'pending',
+      status: 'running',
+      job_type: 'extract_entities',
+      progress: { stage: 'Starting extraction...' },
+    });
+    try {
+      const job = await triggerExtraction(workspaceId);
+      setActiveJob({ ...job, job_type: 'extract_entities' });
+      if (job.status === 'completed') {
+        setShowResultSummary(true);
+        setGraphRefreshKey((k) => k + 1);
+      }
+    } catch (err) {
+      console.error('Failed to trigger graph extraction:', err);
+      const apiErr = err as { error?: { message?: string } };
+      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Extraction request failed');
+      setActiveJob({
+        job_id: '',
+        status: 'failed',
+        job_type: 'extract_entities',
+        error_message: msg,
+      });
+    } finally {
+      setIsTriggeringJob(null);
+    }
+  };
+
+  const handleReindexGraph = async () => {
+    if (isJobRunning) return;
+    setIsTriggeringJob('reindex');
+    // Immediate active state before network call completes
+    setActiveJob({
+      job_id: 'pending',
+      status: 'running',
+      job_type: 'reindex_graph',
+      progress: { stage: 'Starting full reindex...' },
+    });
+    try {
+      const job = await triggerReindex(workspaceId);
+      setActiveJob({ ...job, job_type: 'reindex_graph' });
+      if (job.status === 'completed') {
+        setShowResultSummary(true);
+        setGraphRefreshKey((k) => k + 1);
+      }
+    } catch (err) {
+      console.error('Failed to trigger graph reindex:', err);
+      const apiErr = err as { error?: { message?: string } };
+      const msg = apiErr?.error?.message || (err instanceof Error ? err.message : 'Reindex request failed');
+      setActiveJob({
+        job_id: '',
+        status: 'failed',
+        job_type: 'reindex_graph',
+        error_message: msg,
+      });
+    } finally {
+      setIsTriggeringJob(null);
+    }
+  };
+
+
+  const handleSelectEntity = useCallback((entityId: string) => {
+    setSelectedEntityId(entityId);
+    setHighlightEntityIds([entityId]);
+  }, []);
+
+  const handleHighlightEntities = useCallback((entityIds: string[]) => {
+    setHighlightEntityIds(entityIds);
+  }, []);
+
+  const getActiveFilterCount = (params: GraphQueryParams): number => {
+    let count = 0;
+    if (params.entity_type) count++;
+    if (params.relationship_type) count++;
+    if (params.cluster_id) count++;
+    if (params.note_id) count++;
+    if (params.min_confidence && params.min_confidence > 0) count++;
+    return count;
+  };
+
   useKeyboardShortcuts([
     {
       key: 'space',
       modKey: true,
-      handler: () => setIsSearchModalOpen(prev => !prev),
+      handler: () => setIsSearchModalOpen((prev) => !prev),
     },
     {
       key: 'j',
       modKey: true,
-      handler: () => setIsRagModalOpen(prev => !prev),
+      handler: () => {
+        if (currentTab === 'graph') {
+          setIsGraphRAGModalOpen((prev) => !prev);
+        } else {
+          setIsRagModalOpen((prev) => !prev);
+        }
+      },
     },
     {
       key: 'n',
       modKey: true,
       handler: () => {
-        if (!isEditorOpen) handleNewNote();
+        if (currentTab === 'graph') {
+          setEditingEntity(null);
+          setIsEntityEditorOpen(true);
+        } else if (!isEditorOpen) {
+          handleNewNote();
+        }
       },
     },
     {
@@ -197,7 +400,14 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
       handler: () => {
         if (isSearchModalOpen) setIsSearchModalOpen(false);
         else if (isRagModalOpen) setIsRagModalOpen(false);
+        else if (isGraphRAGModalOpen) setIsGraphRAGModalOpen(false);
         else if (isImportModalOpen) setIsImportModalOpen(false);
+        else if (isEntityEditorOpen) setIsEntityEditorOpen(false);
+        else if (isRelationshipEditorOpen) setIsRelationshipEditorOpen(false);
+        else if (selectedEntityId) setSelectedEntityId(null);
+        else if (isFiltersOpen) setIsFiltersOpen(false);
+        else if (isClustersOpen) setIsClustersOpen(false);
+        else if (isSuggestionsOpen) setIsSuggestionsOpen(false);
         else if (isEditorOpen) closeEditor();
       },
     },
@@ -260,12 +470,13 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                 </button>
                 <button
                   type="button"
+                  data-testid="graph-rag-trigger-btn"
                   onClick={() => setIsRagModalOpen(true)}
                   className="btn-ghost-dark flex items-center gap-2 text-blue-400 hover:text-blue-300"
-                  title="AI Assistant (Mod+J)"
+                  title="Knowledge Assistant (Mod+J)"
                 >
                   <Sparkles size={15} />
-                  <span className="hidden lg:inline">Assistant</span>
+                  <span className="hidden sm:inline">Assistant</span>
                 </button>
                 <button
                   type="button"
@@ -278,6 +489,19 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
                   <span className="hidden xl:inline">Archived</span>
                 </button>
               </>
+            )}
+
+            {currentTab === 'graph' && (
+              <button
+                type="button"
+                data-testid="graph-rag-trigger-btn"
+                onClick={() => setIsRagModalOpen(true)}
+                className="btn-ghost-dark flex items-center gap-2 text-violet-400 hover:text-violet-300"
+                title="Knowledge Assistant (Mod+J)"
+              >
+                <Sparkles size={15} />
+                <span className="hidden sm:inline">Assistant</span>
+              </button>
             )}
 
             <button
@@ -417,25 +641,157 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
         )}
 
         {currentTab === 'graph' && (
-          <div className="flex-1 flex p-4 relative">
-            <GraphView 
-              workspaceId={workspaceId} 
-              onNodeClick={setGraphSelectedNoteId} 
-              className="flex-1"
-            />
-            {graphSelectedNoteId && (
-              <div className="absolute top-8 right-8 w-[380px] z-20">
-                <NoteDetailPanel 
-                  noteId={graphSelectedNoteId} 
-                  onClose={() => setGraphSelectedNoteId(null)}
-                  onEditNote={(note) => {
-                    handleNoteSelect(note);
-                    setCurrentTab('notes');
-                    setGraphSelectedNoteId(null);
+          <div className="flex-1 flex flex-col relative overflow-hidden p-3 sm:p-4 gap-3 min-h-0">
+            {/* Top Graph Controls Bar */}
+            <div className="flex items-center justify-between gap-3 z-10 flex-wrap">
+              <div className="w-full sm:w-72 md:w-96">
+                <GraphSearchBar
+                  workspaceId={workspaceId}
+                  onSelectEntity={handleSelectEntity}
+                  onHighlightEntities={handleHighlightEntities}
+                  onSelectNote={(noteId) => {
+                    handleNavigateToNote(noteId);
                   }}
                 />
               </div>
-            )}
+
+              {/* Active Job status indicator */}
+              {activeJob && (
+                <GraphJobIndicator
+                  status={activeJob.status}
+                  jobId={activeJob.job_id || activeJob.id || ''}
+                  jobType={activeJob.job_type || 'extraction'}
+                  errorMessage={activeJob.error_message || undefined}
+                  progress={activeJob.progress}
+                  onRetry={() => {
+                    if (activeJob.job_type === 'reindex_graph') {
+                      handleReindexGraph();
+                    } else {
+                      handleExtractGraph();
+                    }
+                  }}
+                />
+              )}
+
+
+              {/* Toolbar */}
+              <GraphEditToolbar
+                onAddEntity={() => {
+                  setEditingEntity(null);
+                  setIsEntityEditorOpen(true);
+                }}
+                onAddRelationship={() => {
+                  setEditingRelationship(null);
+                  setRelationshipSourceEntity(null);
+                  setIsRelationshipEditorOpen(true);
+                }}
+                onToggleFilters={() => setIsFiltersOpen((prev) => !prev)}
+                isFiltersOpen={isFiltersOpen}
+                activeFilterCount={getActiveFilterCount(graphFilters)}
+                onToggleClusters={() => setIsClustersOpen((prev) => !prev)}
+                isClustersOpen={isClustersOpen}
+                onToggleSuggestions={() => setIsSuggestionsOpen((prev) => !prev)}
+                isSuggestionsOpen={isSuggestionsOpen}
+                pendingSuggestionCount={pendingSuggestionCount}
+                onExtractGraph={handleExtractGraph}
+                onReindexGraph={handleReindexGraph}
+                isJobInProgress={isJobRunning}
+                activeJobType={activeJob?.job_type || (isTriggeringJob === 'extract' ? 'extract_entities' : isTriggeringJob === 'reindex' ? 'reindex_graph' : null)}
+              />
+            </div>
+
+            {/* Main Graph Canvas Area */}
+            <div className="flex-1 relative rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950/40 backdrop-blur-sm flex min-h-0">
+              {/* Left Drawer: Filter Panel */}
+              {isFiltersOpen && (
+                <div className="absolute top-3 left-3 z-20 w-80 max-h-[calc(100%-24px)] overflow-y-auto">
+                  <GraphFilterPanel
+                    filters={graphFilters}
+                    onChange={(newFilters) => setGraphFilters(newFilters)}
+                    onClose={() => setIsFiltersOpen(false)}
+                    clusters={clusterOptions}
+                  />
+                </div>
+              )}
+
+              {/* Left Drawer: Cluster View */}
+              {isClustersOpen && (
+                <div className="absolute top-3 left-3 z-20 w-96 max-h-[calc(100%-24px)] overflow-y-auto">
+                  <ClusterView
+                    workspaceId={workspaceId}
+                    isOpen={isClustersOpen}
+                    onClose={() => setIsClustersOpen(false)}
+                    onSelectCluster={(clusterId) => {
+                      setGraphFilters((prev) => ({ ...prev, cluster_id: clusterId }));
+                      setIsClustersOpen(false);
+                    }}
+                    onNavigateToNote={(noteId) => handleNavigateToNote(noteId)}
+                    className="shadow-2xl"
+                  />
+                </div>
+              )}
+
+              {/* Center Canvas: ConstellationGraph */}
+              <ConstellationGraph
+                key={`graph-${graphRefreshKey}`}
+                workspaceId={workspaceId}
+                filterParams={graphFilters}
+                selectedEntityId={selectedEntityId}
+                highlightEntityIds={highlightEntityIds}
+                onSelectEntity={handleSelectEntity}
+                className="flex-1 w-full h-full"
+              />
+
+              {/* Right Drawer: Knowledge Explorer */}
+              {selectedEntityId && (
+                <div className="absolute top-3 right-3 z-20 w-96 max-h-[calc(100%-24px)] overflow-y-auto">
+                  <KnowledgeExplorer
+                    entityId={selectedEntityId}
+                    onClose={() => {
+                      setSelectedEntityId(null);
+                      setHighlightEntityIds([]);
+                    }}
+                    onSelectEntity={(nextEntityId) => {
+                      setSelectedEntityId(nextEntityId);
+                      setHighlightEntityIds([nextEntityId]);
+                    }}
+                    onNavigateToNote={(noteId) => handleNavigateToNote(noteId)}
+                    onEditEntity={(entity) => {
+                      setEditingEntity(entity);
+                      setIsEntityEditorOpen(true);
+                    }}
+                    onAddRelationship={(entity) => {
+                      setRelationshipSourceEntity(entity);
+                      setEditingRelationship(null);
+                      setIsRelationshipEditorOpen(true);
+                    }}
+                    onEntityDeleted={() => {
+                      setSelectedEntityId(null);
+                      setHighlightEntityIds([]);
+                      setGraphRefreshKey((k) => k + 1);
+                    }}
+                    className="shadow-2xl"
+                  />
+                </div>
+              )}
+
+              {/* Right Drawer: Link Suggestions */}
+              {isSuggestionsOpen && !selectedEntityId && (
+                <div className="absolute top-3 right-3 z-20 w-96 max-h-[calc(100%-24px)] overflow-y-auto">
+                  <LinkSuggestionPanel
+                    workspaceId={workspaceId}
+                    isOpen={isSuggestionsOpen}
+                    onClose={() => setIsSuggestionsOpen(false)}
+                    onNavigateToNote={(noteId) => handleNavigateToNote(noteId)}
+                    onLinkCreated={() => {
+                      setPendingSuggestionCount((c) => Math.max(0, c - 1));
+                      setGraphRefreshKey((k) => k + 1);
+                    }}
+                    className="shadow-2xl"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -501,7 +857,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
         isOpen={isSearchModalOpen} 
         onClose={() => setIsSearchModalOpen(false)}
         width="md"
-        className="h-[70vh]"
+        className="h-[70vh] bg-transparent border-none shadow-none"
       >
         <SearchPanel
           workspaceId={workspaceId}
@@ -518,7 +874,7 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
         isOpen={isRagModalOpen} 
         onClose={() => setIsRagModalOpen(false)}
         width="lg"
-        className="h-[85vh]"
+        className="h-[85vh] bg-transparent border-none shadow-none"
       >
         <RAGPanel
           workspaceId={workspaceId}
@@ -529,6 +885,95 @@ export const NotesDashboard: React.FC<NotesDashboardProps> = ({
           onClose={() => setIsRagModalOpen(false)}
         />
       </Modal>
+
+      {/* ── Entity Editor Modal ───────────────────────── */}
+      <EntityEditor
+        workspaceId={workspaceId}
+        entity={editingEntity}
+        isOpen={isEntityEditorOpen}
+        onClose={() => {
+          setIsEntityEditorOpen(false);
+          setEditingEntity(null);
+        }}
+        onSave={(savedEntity) => {
+          setIsEntityEditorOpen(false);
+          setEditingEntity(null);
+          setSelectedEntityId(savedEntity.id);
+          setHighlightEntityIds([savedEntity.id]);
+          setGraphRefreshKey((k) => k + 1);
+        }}
+      />
+
+      {/* ── Relationship Editor Modal ─────────────────── */}
+      <RelationshipEditor
+        workspaceId={workspaceId}
+        relationship={editingRelationship}
+        sourceEntity={relationshipSourceEntity}
+        availableEntities={availableEntities}
+        isOpen={isRelationshipEditorOpen}
+        onClose={() => {
+          setIsRelationshipEditorOpen(false);
+          setEditingRelationship(null);
+          setRelationshipSourceEntity(null);
+        }}
+        onSave={() => {
+          setIsRelationshipEditorOpen(false);
+          setEditingRelationship(null);
+          setRelationshipSourceEntity(null);
+          setGraphRefreshKey((k) => k + 1);
+        }}
+      />
+
+      {/* ── GraphRAG Modal ────────────────────────────── */}
+      <Modal
+        isOpen={isGraphRAGModalOpen}
+        onClose={() => setIsGraphRAGModalOpen(false)}
+        width="lg"
+        className="h-[85vh] bg-transparent border-none shadow-none"
+      >
+        <GraphRAGPanel
+          workspaceId={workspaceId}
+          className="h-full overflow-y-auto"
+          onNavigateToNote={(noteId) => {
+            setIsGraphRAGModalOpen(false);
+            handleNavigateToNote(noteId);
+          }}
+          onSelectEntity={(entityId) => {
+            setIsGraphRAGModalOpen(false);
+            setSelectedEntityId(entityId);
+            setHighlightEntityIds([entityId]);
+          }}
+        />
+      </Modal>
+
+      {/* ── Extraction Result Summary Modal ───────────── */}
+      {showResultSummary && activeJob && (
+        <Modal
+          isOpen={showResultSummary}
+          onClose={() => setShowResultSummary(false)}
+          width="md"
+          className="bg-transparent border-none shadow-none"
+        >
+          <ExtractionResultSummary
+            status={activeJob.status}
+            entityCount={activeJob.progress?.extracted_entities}
+            relationshipCount={activeJob.progress?.extracted_relationships}
+            notesProcessedCount={activeJob.progress?.processed_notes}
+            message={activeJob.progress?.summary || activeJob.error_message}
+            onDismiss={() => setShowResultSummary(false)}
+            onViewGraph={() => setShowResultSummary(false)}
+            onRetry={() => {
+              setShowResultSummary(false);
+              if (activeJob.job_type === 'reindex_graph') {
+                handleReindexGraph();
+              } else {
+                handleExtractGraph();
+              }
+            }}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
+

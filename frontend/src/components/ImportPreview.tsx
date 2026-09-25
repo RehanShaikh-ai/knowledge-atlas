@@ -9,7 +9,7 @@ interface ImportPreviewProps {
 export const ImportPreview: React.FC<ImportPreviewProps> = ({ preview }) => {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 bg-sky-950/30 border border-sky-500/30 p-4 rounded-xl">
+      <div className="flex items-center gap-3 bg-sky-500/10 border border-sky-500/25 p-4 rounded-xl">
         <div className="bg-sky-500/20 p-2 rounded-lg text-sky-400">
           <FileText size={20} />
         </div>
@@ -22,13 +22,13 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({ preview }) => {
       {(preview.warnings.length > 0 || preview.errors.length > 0) && (
         <div className="space-y-3">
           {preview.errors.map((error, idx) => (
-            <div key={idx} className="flex items-start gap-2 bg-rose-950/40 border border-rose-800/50 p-3 rounded-lg text-rose-300 text-sm">
+            <div key={idx} className="flex items-start gap-2 bg-rose-500/10 border border-rose-500/30 p-3 rounded-lg text-rose-300 text-sm">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <p>{error}</p>
             </div>
           ))}
           {preview.warnings.map((warning, idx) => (
-            <div key={idx} className="flex items-start gap-2 bg-amber-950/40 border border-amber-800/50 p-3 rounded-lg text-amber-300 text-sm">
+            <div key={idx} className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg text-amber-300 text-sm">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <p>{warning}</p>
             </div>
@@ -37,7 +37,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({ preview }) => {
       )}
 
       {preview.unresolved_link_count > 0 && (
-        <div className="flex items-center gap-2 bg-slate-800/40 border border-slate-700/50 p-3 rounded-lg text-slate-300 text-sm">
+        <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] p-3 rounded-lg text-slate-300 text-sm">
           <LinkIcon size={16} className="text-slate-400" />
           <p>{preview.unresolved_link_count} unresolved links detected. These will automatically resolve if the target notes are imported later.</p>
         </div>

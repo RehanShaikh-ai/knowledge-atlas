@@ -69,7 +69,7 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
 
   return (
     <div className={cn("modal-panel overflow-hidden flex flex-col", className)}>
-      <header className="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-start">
+      <header className="p-4 border-b border-white/[0.08] bg-white/[0.02] flex justify-between items-start">
         <div className="pr-8">
           <h3 className="font-bold text-slate-100 text-lg leading-tight mb-1">{note.title}</h3>
           <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
@@ -81,7 +81,7 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
             <span className="flex items-center gap-1"><LinkIcon size={12} /> {edgesCount} connections</span>
           </div>
         </div>
-        <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-200 bg-slate-800/60 rounded-md transition-colors absolute top-4 right-4">
+        <button onClick={onClose} className="p-1 text-slate-400 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] rounded-lg transition-colors absolute top-4 right-4">
           <X size={16} />
         </button>
       </header>
@@ -92,7 +92,7 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
             <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tags</h4>
             <div className="flex flex-wrap gap-1.5">
               {note.tags.map(t => (
-                <span key={t.id} className="px-2 py-0.5 rounded bg-sky-950/40 border border-sky-500/20 text-sky-400 text-xs font-mono lowercase">
+                <span key={t.id} className="px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-mono lowercase">
                   {t.name}
                 </span>
               ))}
@@ -102,14 +102,14 @@ export const NoteDetailPanel: React.FC<NoteDetailPanelProps> = ({ noteId, onClos
 
         <div>
           <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Preview</h4>
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-3 text-sm text-slate-300 max-h-32 overflow-hidden relative">
+          <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-3 text-sm text-slate-300 max-h-32 overflow-hidden relative">
             <div className="line-clamp-4">{note.content || "Empty note"}</div>
-            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none"></div>
+            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/80 to-transparent pointer-events-none"></div>
           </div>
         </div>
       </main>
 
-      <footer className="p-3 border-t border-slate-800 bg-slate-900/50">
+      <footer className="p-3 border-t border-white/[0.08] bg-white/[0.02]">
         <button 
           onClick={() => onEditNote(note)}
           className="btn-base w-full"

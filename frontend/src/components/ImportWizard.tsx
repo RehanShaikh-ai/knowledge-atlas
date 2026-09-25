@@ -78,7 +78,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
 
   return (
     <div className="modal-panel overflow-hidden flex flex-col w-full max-w-2xl max-h-[85vh]">
-      <header className="p-5 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+      <header className="p-5 border-b border-white/[0.06] bg-white/[0.02] flex items-center justify-between">
         <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
           <UploadCloud className="text-sky-400" />
           Import Knowledge
@@ -94,15 +94,15 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
 
       <main className="flex-1 overflow-y-auto p-6">
         {error && (
-          <div className="mb-6 p-3 bg-rose-950/40 border border-rose-800/50 text-rose-300 rounded-lg text-sm">
+          <div className="mb-6 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-xl text-sm">
             {error}
           </div>
         )}
 
         {step === 1 && (
           <div className="space-y-6">
-            <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl p-8 text-center flex flex-col items-center justify-center border-dashed">
-              <div className="bg-slate-800/80 p-4 rounded-full mb-4">
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-8 text-center flex flex-col items-center justify-center">
+              <div className="bg-white/[0.05] border border-white/[0.08] p-4 rounded-full mb-4">
                 <FileType2 size={32} className="text-sky-400" />
               </div>
               <h3 className="text-lg font-semibold text-slate-200 mb-2">Select files or a vault</h3>
@@ -127,7 +127,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
               </button>
               
               {files && files.length > 0 && (
-                <div className="mt-6 w-full max-w-sm text-left bg-slate-800/40 border border-slate-700/50 p-3 rounded-lg">
+                <div className="mt-6 w-full max-w-sm text-left bg-white/[0.04] border border-white/[0.08] p-3 rounded-lg">
                   <p className="text-sm font-medium text-slate-300 truncate">
                     {files.length === 1 ? files[0].name : `${files.length} files selected`}
                   </p>
@@ -135,9 +135,9 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
               )}
             </div>
             
-            <div className="text-xs text-slate-500 space-y-1 bg-slate-900/30 p-4 rounded-lg">
-              <p className="font-semibold text-slate-400 mb-2">Supported Formats & Limits:</p>
-              <ul className="list-disc pl-5 space-y-1">
+            <div className="text-xs text-slate-400 space-y-1 bg-white/[0.02] border border-white/[0.06] p-4 rounded-xl">
+              <p className="font-semibold text-slate-300 mb-2">Supported Formats & Limits:</p>
+              <ul className="list-disc pl-5 space-y-1 text-slate-400">
                 <li>.md, .markdown, .txt, .pdf, .zip (Vault)</li>
                 <li>Max file size: 25 MB</li>
                 <li>Max batch size: 500 files</li>
@@ -155,7 +155,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ workspaceId, userId,
         )}
       </main>
 
-      <footer className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-end gap-3">
+      <footer className="p-4 border-t border-white/[0.06] bg-white/[0.02] flex justify-end gap-3">
         {step < 3 ? (
           <>
             <button 

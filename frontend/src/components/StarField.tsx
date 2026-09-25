@@ -73,10 +73,90 @@ export const StarField: React.FC = () => {
       };
     };
 
-    const draw = (now: number) => {
-      animFrame = requestAnimationFrame(draw);
+    // Offscreen canvas for caching curved fisheye grid
+    let gridCanvas: HTMLCanvasElement | null = document.createElement('canvas');
+    let gridCtx: CanvasRenderingContext2D | null = gridCanvas.getContext('2d');
+    let cachedFocalX = -9999;
+    let cachedFocalY = -9999;
 
+    const renderGridToCache = (fx: number, fy: number) => {
+      if (!gridCanvas || !gridCtx) return;
+      const w = canvas.width;
+      const h = canvas.height;
+      if (gridCanvas.width !== w || gridCanvas.height !== h) {
+        gridCanvas.width = w;
+        gridCanvas.height = h;
+      }
+      gridCtx.clearRect(0, 0, w, h);
+
+      const maxRadius = Math.hypot(w, h) * 0.65;
+      const gridSize = 120;
+      const step = 40;
+
+      const gridGradient = gridCtx.createRadialGradient(fx, fy, 40, fx, fy, maxRadius);
+      gridGradient.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+      gridGradient.addColorStop(0.4, 'rgba(148, 163, 184, 0.16)');
+      gridGradient.addColorStop(0.85, 'rgba(148, 163, 184, 0.08)');
+      gridGradient.addColorStop(1, 'rgba(148, 163, 184, 0.02)');
+
+      gridCtx.save();
+      gridCtx.strokeStyle = gridGradient;
+      gridCtx.lineWidth = 1.1;
+
+      // Vertical lines
+      const startX = Math.floor((fx % gridSize) - gridSize * 3);
+      const endX = w + gridSize * 3;
+      for (let gx = startX; gx <= endX; gx += gridSize) {
+        gridCtx.beginPath();
+        let first = true;
+        for (let gy = -gridSize * 2; gy <= h + gridSize * 2; gy += step) {
+          const pt = projectFisheye(gx, gy, fx, fy, maxRadius);
+          if (first) {
+            gridCtx.moveTo(pt.x, pt.y);
+            first = false;
+          } else {
+            gridCtx.lineTo(pt.x, pt.y);
+          }
+        }
+        gridCtx.stroke();
+      }
+
+      // Horizontal lines
+      const startY = Math.floor((fy % gridSize) - gridSize * 3);
+      const endY = h + gridSize * 3;
+      for (let gy = startY; gy <= endY; gy += gridSize) {
+        gridCtx.beginPath();
+        let first = true;
+        for (let gx = -gridSize * 2; gx <= w + gridSize * 2; gx += step) {
+          const pt = projectFisheye(gx, gy, fx, fy, maxRadius);
+          if (first) {
+            gridCtx.moveTo(pt.x, pt.y);
+            first = false;
+          } else {
+            gridCtx.lineTo(pt.x, pt.y);
+          }
+        }
+        gridCtx.stroke();
+      }
+
+      // Nodes
+      gridCtx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      for (let gx = startX; gx <= endX; gx += gridSize) {
+        for (let gy = startY; gy <= endY; gy += gridSize) {
+          const pt = projectFisheye(gx, gy, fx, fy, maxRadius);
+          if (pt.x >= -10 && pt.x <= w + 10 && pt.y >= -10 && pt.y <= h + 10) {
+            gridCtx.beginPath();
+            gridCtx.arc(pt.x, pt.y, 1.6, 0, Math.PI * 2);
+            gridCtx.fill();
+          }
+        }
+      }
+      gridCtx.restore();
+    };
+
+    const draw = (now: number) => {
       if (document.hidden) return;
+      animFrame = requestAnimationFrame(draw);
 
       const elapsed = now - lastDrawTime;
       if (elapsed < fpsInterval) return;
@@ -89,80 +169,20 @@ export const StarField: React.FC = () => {
       focalX += (targetFocalX - focalX) * 0.04;
       focalY += (targetFocalY - focalY) * 0.04;
 
+      // Re-render cached grid only when focal center shifts noticeably
+      if (Math.hypot(focalX - cachedFocalX, focalY - cachedFocalY) > 0.8) {
+        renderGridToCache(focalX, focalY);
+        cachedFocalX = focalX;
+        cachedFocalY = focalY;
+      }
+
+      // Fast single-pass blit of cached curved grid
+      if (gridCanvas) {
+        ctx.drawImage(gridCanvas, 0, 0);
+      }
+
       const w = canvas.width;
       const h = canvas.height;
-      const maxRadius = Math.hypot(w, h) * 0.65;
-
-      // ======================================================================
-      // 1. Large Fisheye Lens Grid
-      // ======================================================================
-      const gridSize = 120; // Optimized grid spacing
-      const step = 40;      // Step size along curve for smooth arcs with half calculation overhead
-
-      // Create radial lens gradient for subtle, high-end visibility
-      const gridGradient = ctx.createRadialGradient(focalX, focalY, 40, focalX, focalY, maxRadius);
-      gridGradient.addColorStop(0, 'rgba(56, 189, 248, 0.22)');     // Optical center cyan tint
-      gridGradient.addColorStop(0.4, 'rgba(148, 163, 184, 0.16)');  // Subtle, clearly visible body
-      gridGradient.addColorStop(0.85, 'rgba(148, 163, 184, 0.08)'); // Distant horizon fade
-      gridGradient.addColorStop(1, 'rgba(148, 163, 184, 0.02)');
-
-      ctx.save();
-      ctx.strokeStyle = gridGradient;
-      ctx.lineWidth = 1.1;
-
-      // Vertical Curved Lines
-      const startX = Math.floor((focalX % gridSize) - gridSize * 3);
-      const endX = w + gridSize * 3;
-      for (let gx = startX; gx <= endX; gx += gridSize) {
-        ctx.beginPath();
-        let first = true;
-        for (let gy = -gridSize * 2; gy <= h + gridSize * 2; gy += step) {
-          const pt = projectFisheye(gx, gy, focalX, focalY, maxRadius);
-          if (first) {
-            ctx.moveTo(pt.x, pt.y);
-            first = false;
-          } else {
-            ctx.lineTo(pt.x, pt.y);
-          }
-        }
-        ctx.stroke();
-      }
-
-      // Horizontal Curved Lines
-      const startY = Math.floor((focalY % gridSize) - gridSize * 3);
-      const endY = h + gridSize * 3;
-      for (let gy = startY; gy <= endY; gy += gridSize) {
-        ctx.beginPath();
-        let first = true;
-        for (let gx = -gridSize * 2; gx <= w + gridSize * 2; gx += step) {
-          const pt = projectFisheye(gx, gy, focalX, focalY, maxRadius);
-          if (first) {
-            ctx.moveTo(pt.x, pt.y);
-            first = false;
-          } else {
-            ctx.lineTo(pt.x, pt.y);
-          }
-        }
-        ctx.stroke();
-      }
-
-      // Fisheye Grid Intersection Nodes
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
-      for (let gx = startX; gx <= endX; gx += gridSize) {
-        for (let gy = startY; gy <= endY; gy += gridSize) {
-          const pt = projectFisheye(gx, gy, focalX, focalY, maxRadius);
-          if (pt.x >= -10 && pt.x <= w + 10 && pt.y >= -10 && pt.y <= h + 10) {
-            ctx.beginPath();
-            ctx.arc(pt.x, pt.y, 1.6, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      }
-      ctx.restore();
-
-      // ======================================================================
-      // 2. Constellation Stars & Twinkle
-      // ======================================================================
       const cx = w / 2;
       const cy = h / 2;
       const dx = (mouseX - cx) / cx;
@@ -199,26 +219,46 @@ export const StarField: React.FC = () => {
       }
     };
 
+    let mouseMoveTicking = false;
     const handleMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      // Gently bias focal center toward cursor for interactive optical depth
-      targetFocalX = canvas.width / 2 + (e.clientX - canvas.width / 2) * 0.25;
-      targetFocalY = canvas.height / 2 + (e.clientY - canvas.height / 2) * 0.25;
+      if (!mouseMoveTicking) {
+        requestAnimationFrame(() => {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+          targetFocalX = canvas.width / 2 + (mouseX - canvas.width / 2) * 0.25;
+          targetFocalY = canvas.height / 2 + (mouseY - canvas.height / 2) * 0.25;
+          mouseMoveTicking = false;
+        });
+        mouseMoveTicking = true;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animFrame);
+      } else {
+        lastDrawTime = performance.now();
+        animFrame = requestAnimationFrame(draw);
+      }
     };
 
     resize();
     animFrame = requestAnimationFrame(draw);
 
     window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       cancelAnimationFrame(animFrame);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      gridCanvas = null;
+      gridCtx = null;
     };
   }, []);
+
 
   return <canvas ref={canvasRef} className="starfield-canvas" aria-hidden="true" />;
 };

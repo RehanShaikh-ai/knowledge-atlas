@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CitedSource, RAGStatusResponse } from '@/types/rag';
+import { GraphRAGContext, TraversedEntity, TraversedRelationship } from '@/types/graph_rag';
 import { runRAGStream, getRAGStatus } from '@/api/rag';
 import { CitationCard } from './CitationCard';
 import {
@@ -13,6 +14,7 @@ import {
   RotateCcw,
   User,
   Cpu,
+  GitFork,
 } from 'lucide-react';
 import { renderMarkdown } from '@/lib/markdown';
 
@@ -27,6 +29,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   citations?: CitedSource[];
+  graphContext?: GraphRAGContext;
   metadata?: { provider?: string; model?: string; latency?: number };
   error?: string;
   aiUnavailable?: boolean;
@@ -44,7 +47,7 @@ export const RAGPanel: React.FC<RAGPanelProps> = ({ workspaceId, onNavigateToNot
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView?.({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -133,6 +136,7 @@ export const RAGPanel: React.FC<RAGPanelProps> = ({ workspaceId, onNavigateToNot
                 ? {
                     ...msg,
                     citations: event.citations || [],
+                    graphContext: event.graph_context,
                     metadata: {
                       provider: event.provider,
                       model: event.model,
@@ -153,6 +157,7 @@ export const RAGPanel: React.FC<RAGPanelProps> = ({ workspaceId, onNavigateToNot
                     aiUnavailable: true,
                     aiUnavailableMessage: event.message,
                     citations: event.citations || [],
+                    graphContext: event.graph_context,
                     isStreaming: false,
                   }
                 : msg
@@ -201,7 +206,11 @@ export const RAGPanel: React.FC<RAGPanelProps> = ({ workspaceId, onNavigateToNot
   };
 
   return (
-    <div className="workflow-panel flex flex-col h-full !p-0 overflow-hidden bg-base/95 backdrop-blur-3xl shadow-2xl border-blue-500/20">
+    <div
+      data-testid="graph-rag-panel"
+      className="workflow-panel flex flex-col h-full !p-0 overflow-hidden bg-base/95 backdrop-blur-md shadow-2xl border-blue-500/20"
+    >
+
       {/* Header */}
       <div className="flex flex-col gap-2 p-3.5 border-b border-card-border bg-gradient-to-r from-blue-900/20 to-purple-900/10">
         <div className="flex items-center justify-between">
@@ -365,6 +374,42 @@ export const RAGPanel: React.FC<RAGPanelProps> = ({ workspaceId, onNavigateToNot
                           <span className="inline-block w-1.5 h-3.5 ml-1 bg-blue-400 animate-pulse align-middle" />
                         )}
                       </div>
+
+                      {/* Graph Context Expansion */}
+                      {msg.graphContext &&
+                        (msg.graphContext.entities_traversed.length > 0 ||
+                          msg.graphContext.relationships_used.length > 0) &&
+                        !msg.isStreaming && (
+                          <div className="mt-4 pt-3 border-t border-surface2">
+                            <h4 className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-violet-400 mb-2">
+                              <GitFork size={12} className="shrink-0 inline-block" aria-hidden="true" focusable="false" />
+                              <span>
+                                Graph Context ({msg.graphContext.entities_traversed.length} concepts, {msg.graphContext.relationships_used.length} relationships)
+                              </span>
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {msg.graphContext.entities_traversed.map((ent: TraversedEntity) => (
+                                <span
+                                  key={ent.id}
+                                  className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-violet-500/10 border border-violet-500/20 text-violet-300"
+                                >
+                                  {ent.name} ({ent.entity_type})
+                                </span>
+                              ))}
+                            </div>
+                            {msg.graphContext.relationships_used.length > 0 && (
+                              <div className="mt-2 space-y-1 text-[11px] font-mono text-slate-400 bg-slate-900/40 border border-white/[0.06] p-2 rounded-lg">
+                                {msg.graphContext.relationships_used.slice(0, 5).map((rel: TraversedRelationship) => (
+                                  <div key={rel.id} className="flex items-center gap-1">
+                                    <span className="text-slate-300">{rel.source}</span>
+                                    <span className="text-violet-400 font-bold">→ [{rel.relationship_type}] →</span>
+                                    <span className="text-slate-300">{rel.target}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                       {/* Citations */}
                       {msg.citations && msg.citations.length > 0 && !msg.isStreaming && (

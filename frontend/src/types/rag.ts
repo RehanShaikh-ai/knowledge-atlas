@@ -1,3 +1,5 @@
+import { GraphRAGContext } from './graph_rag';
+
 export interface CitedSource {
   chunk_id: string;
   note_id: string;
@@ -11,6 +13,7 @@ export interface RAGRequest {
   search_mode?: 'semantic' | 'lexical' | 'hybrid';
   rerank?: boolean;
   context_limit?: number; // max 20
+  max_hops?: number;
   stream?: boolean;
   model?: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
@@ -19,6 +22,7 @@ export interface RAGRequest {
 export interface RAGResponse {
   answer: string;
   citations: CitedSource[];
+  graph_context?: GraphRAGContext;
   context_chunk_count: number;
   provider: string;
   model: string;
@@ -48,6 +52,6 @@ export interface RAGStatusResponse {
 
 export type RAGStreamEvent = 
   | { type: 'chunk'; content: string }
-  | { type: 'done'; citations: CitedSource[]; provider: string; model: string; latency_ms?: number }
-  | { type: 'ai_unavailable'; note_count: number; citations: CitedSource[]; message: string }
+  | { type: 'done'; citations: CitedSource[]; graph_context?: GraphRAGContext; provider: string; model: string; latency_ms?: number }
+  | { type: 'ai_unavailable'; note_count: number; citations: CitedSource[]; graph_context?: GraphRAGContext; message: string }
   | { type: 'error'; code: string; message: string };
