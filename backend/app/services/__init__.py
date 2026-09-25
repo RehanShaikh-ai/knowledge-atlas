@@ -1,20 +1,26 @@
 """Services package.
 
-Canonical module per contract §15.
+Canonical module per contract §15, CONTRACT v0.3.1 §5.3, and CONTRACT v0.3.2 §5.3.
 """
 
 from app.services import (
     activity_service,
     chunking_service,
+    cluster_service,
     dashboard_service,
     embedding_service,
+    entity_extraction_service,
     git_service,
+    graph_index_service,
+    graph_rag_service,
     graph_service,
     job_service,
+    link_suggestion_service,
     llm_service,
     note_service,
     obsidian_parser,
     rag_service,
+    relationship_extraction_service,
     reranking_service,
     retrieval_service,
     saved_search_service,
@@ -51,4 +57,11 @@ __all__ = [
     "saved_search_service",
     "vector_service",
     "version_service",
+    # v0.3.2 (CONTRACT §5.3)
+    "cluster_service",
+    "entity_extraction_service",
+    "graph_index_service",
+    "graph_rag_service",
+    "link_suggestion_service",
+    "relationship_extraction_service",
 ]

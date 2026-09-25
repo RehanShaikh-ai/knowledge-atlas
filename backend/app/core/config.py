@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     JOB_MAX_RETRIES: int = 3
     PROVIDER_TIMEOUT_SECONDS: int = 30
     CONTEXT_TOKEN_LIMIT: int = 4096
+    RAG_MIN_RELEVANCE_SCORE: float = 0.45
 
     @property
     def database_url(self) -> str:

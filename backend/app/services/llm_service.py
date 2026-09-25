@@ -20,6 +20,9 @@ logger = logging.getLogger("app.services.llm_service")
 class BaseLLMProvider:
     """Base class for all LLM providers per CONTRACT §11.1."""
 
+    supports_json_object: bool = True
+    supports_json_schema: bool = False
+
     def provider_name(self) -> str:
         raise NotImplementedError
 
@@ -36,6 +39,26 @@ class BaseLLMProvider:
         raise NotImplementedError
 
 
+def is_transient_error(exc: Exception) -> bool:
+    """Classify whether an exception is a transient error eligible for retry."""
+    from app.core.exceptions import LLMProviderUnavailableError, LLMTimeoutError
+
+    if isinstance(exc, LLMTimeoutError):
+        return True
+    if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError, httpx.ReadTimeout)):
+        return True
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (408, 429, 500, 502, 503, 504)
+    if isinstance(exc, LLMProviderUnavailableError):
+        msg = str(exc).lower()
+        if any(code in msg for code in ("500", "502", "503", "504", "429", "timed out", "timeout")):
+            return True
+    msg = str(exc).lower()
+    return any(
+        term in msg for term in ("timed out", "timeout", "connection reset", "502", "503", "504")
+    )
+
+
 class DeterministicTestProvider(BaseLLMProvider):
     """Deterministic test provider for CI and offline development per CONTRACT §17.4."""
 
@@ -49,7 +72,73 @@ class DeterministicTestProvider(BaseLLMProvider):
         return self._model
 
     def generate(self, messages: list[dict[str, Any]], **kwargs) -> str:
+        all_text = " ".join(m.get("content", "") for m in messages)
         last_msg = messages[-1]["content"] if messages else ""
+
+        # Check if this is entity extraction
+        if "entity extraction" in all_text.lower() or "extract entities" in all_text.lower():
+            # Find candidate capitalized phrases or keywords from text
+            text_to_extract = (
+                last_msg.split("Extract entities from this text:\n\n")[-1]
+                if "Extract entities from this text:\n\n" in last_msg
+                else last_msg
+            )
+            candidates = []
+            # Find capitalized word sequences
+            import re
+
+            caps = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b", text_to_extract)
+            for c in caps:
+                if (
+                    c.lower()
+                    not in {"extract", "entities", "text", "the", "this", "short", "only", "json"}
+                    and len(c) > 2
+                ):
+                    if c not in candidates:
+                        candidates.append(c)
+            if not candidates:
+                # Default concepts
+                words = [w.strip() for w in text_to_extract.split() if len(w) > 4][:3]
+                candidates = [w.capitalize() for w in words] or ["Concept"]
+
+            entities = [
+                {
+                    "name": name,
+                    "type": "concept",
+                    "description": f"Extracted concept of {name}",
+                }
+                for name in candidates[:5]
+            ]
+            return json.dumps({"entities": entities})
+
+        # Check if this is relationship extraction
+        if (
+            "relationship extraction" in all_text.lower()
+            or "extract relationships" in all_text.lower()
+        ):
+            import re
+
+            entities_match = re.search(r"Entities identified:\s*\[(.*?)\]", all_text)
+            entity_names = []
+            if entities_match:
+                entity_names = [
+                    e.strip(" '\"") for e in entities_match.group(1).split(",") if e.strip(" '\"")
+                ]
+
+            relationships = []
+            if len(entity_names) >= 2:
+                for i in range(len(entity_names) - 1):
+                    relationships.append(
+                        {
+                            "source": entity_names[i],
+                            "target": entity_names[i + 1],
+                            "type": "related_to",
+                            "description": f"{entity_names[i]} relates to {entity_names[i + 1]}",
+                            "confidence": 0.85,
+                        }
+                    )
+            return json.dumps({"relationships": relationships})
+
         preview = last_msg[:80]
         return f"Based on your knowledge base: Verified answer regarding: {preview}"
 
@@ -271,22 +360,28 @@ class FreeLLMAPILMProvider(BaseLLMProvider):
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+        payload: dict[str, Any] = {"model": self._model, "messages": messages}
+        if "response_format" in kwargs and kwargs["response_format"]:
+            payload["response_format"] = kwargs["response_format"]
         try:
             with httpx.Client(timeout=settings.PROVIDER_TIMEOUT_SECONDS) as client:
                 res = client.post(
                     self._endpoint("chat/completions"),
                     headers=headers,
-                    json={"model": self._model, "messages": messages},
+                    json=payload,
                 )
                 if res.status_code != 200:
+                    err_detail = res.text[:200]
                     raise LLMProviderUnavailableError(
-                        f"FreeLLMAPI request failed with status {res.status_code}."
+                        f"FreeLLMAPI request failed with status {res.status_code}: {err_detail}"
                     )
                 return res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
         except httpx.TimeoutException as e:
             raise LLMTimeoutError("FreeLLMAPI request timed out.") from e
         except Exception as e:
-            raise LLMProviderUnavailableError("FreeLLMAPI provider unreachable.") from e
+            if isinstance(e, (LLMTimeoutError, LLMProviderUnavailableError)):
+                raise
+            raise LLMProviderUnavailableError(f"FreeLLMAPI provider unreachable: {e}") from e
 
     def generate_stream(self, messages: list[dict[str, Any]], **kwargs) -> Iterator[str]:
         """Real token streaming directly from FreeLLMAPI via SSE."""

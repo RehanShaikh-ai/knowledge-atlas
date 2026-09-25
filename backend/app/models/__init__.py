@@ -1,16 +1,24 @@
 """Models package.
 
-Canonical module per contract §8.1 (v0.2.1) and CONTRACT v0.3.1 §5.1.
+Canonical module per contract §8.1 (v0.2.1), CONTRACT v0.3.1 §5.1, and CONTRACT v0.3.2 §5.1.
 Exports all domain models so they are registered on Base.metadata
 and Alembic can auto-generate accurate migration diffs.
 
 v0.2.x models: Note, NoteLink, NoteTag, Source, Tag, User, Workspace
 v0.3.1 models: IndexJob, NoteChunk, NoteVersion, SavedSearch
+v0.3.2 models: GraphEntity, GraphRelationship, EntityChunk,
+               NoteCluster, NoteClusterMember, LinkSuggestion
 """
 
+from app.models.entity_chunk import EntityChunk
+from app.models.graph_entity import GraphEntity
+from app.models.graph_relationship import GraphRelationship
 from app.models.index_job import IndexJob
+from app.models.link_suggestion import LinkSuggestion
 from app.models.note import Note
 from app.models.note_chunk import NoteChunk
+from app.models.note_cluster import NoteCluster
+from app.models.note_cluster_member import NoteClusterMember
 from app.models.note_link import NoteLink
 from app.models.note_tag import NoteTag
 from app.models.note_version import NoteVersion
@@ -34,4 +42,11 @@ __all__ = [
     "NoteChunk",
     "NoteVersion",
     "SavedSearch",
+    # v0.3.2
+    "EntityChunk",
+    "GraphEntity",
+    "GraphRelationship",
+    "LinkSuggestion",
+    "NoteCluster",
+    "NoteClusterMember",
 ]

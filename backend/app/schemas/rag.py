@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.graph_rag import GraphRAGContext
+
 
 class RAGRequest(BaseModel):
     """RAG request body per CONTRACT §10.2."""
@@ -16,6 +18,7 @@ class RAGRequest(BaseModel):
     search_mode: Literal["semantic", "lexical", "hybrid"] = "hybrid"
     rerank: bool = True
     context_limit: int = Field(default=5, ge=1, le=20)
+    max_hops: int = Field(default=2, ge=1, le=2)
     stream: bool = False
     model: str | None = None
     history: list[dict[str, str]] | None = None
@@ -38,6 +41,7 @@ class RAGResponse(BaseModel):
 
     answer: str
     citations: list[CitedSource]
+    graph_context: GraphRAGContext | None = None
     context_chunk_count: int
     provider: str
     model: str

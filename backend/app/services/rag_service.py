@@ -7,14 +7,28 @@ Provides run_rag, assemble_context, build_prompt.
 import logging
 import time
 import uuid
+from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.exceptions import RAGContextEmptyError
+from app.models.entity_chunk import EntityChunk
+from app.models.graph_entity import GraphEntity
+from app.schemas.graph_rag import (
+    GraphRAGContext,
+    GraphTraversedEntity,
+    GraphUsedRelationship,
+)
 from app.schemas.rag import CitedSource, RAGRequest, RAGResponse
 from app.schemas.search import SearchResultItem
-from app.services import llm_service, reranking_service, retrieval_service
+from app.services import (
+    graph_rag_service,
+    llm_service,
+    reranking_service,
+    retrieval_service,
+)
 
 logger = logging.getLogger("app.services.rag_service")
 
@@ -56,7 +70,11 @@ def assemble_context(
     return full_context, citations
 
 
-def ground_citations(answer: str, candidate_citations: list[CitedSource]) -> list[CitedSource]:
+def ground_citations(
+    answer: str,
+    candidate_citations: list[CitedSource],
+    min_score: float | None = None,
+) -> list[CitedSource]:
     """Map citations strictly to the evidence actually cited or used in the answer.
 
     Excludes retrieved candidate notes that were not referenced or used as evidence,
@@ -65,11 +83,17 @@ def ground_citations(answer: str, candidate_citations: list[CitedSource]) -> lis
     if not candidate_citations:
         return []
 
+    eligible_citations = candidate_citations
+    if min_score is not None:
+        eligible_citations = [c for c in candidate_citations if c.score >= min_score]
+    if not eligible_citations:
+        return []
+
     cited: list[tuple[int, CitedSource]] = []
     seen_notes: set[uuid.UUID] = set()
     lower_answer = answer.lower()
 
-    for item in candidate_citations:
+    for item in eligible_citations:
         if item.note_id in seen_notes:
             continue
         title_lower = item.title.strip().lower()
@@ -86,10 +110,11 @@ def ground_citations(answer: str, candidate_citations: list[CitedSource]) -> lis
         cited.sort(key=lambda x: x[0])
         return [c for _, c in cited]
 
-    # If the LLM did not explicitly name note titles, keep deduplicated candidates
+    # If the LLM did not explicitly name note titles,
+    # keep deduplicated candidates that passed threshold
     deduped: list[CitedSource] = []
     seen: set[uuid.UUID] = set()
-    for c in candidate_citations:
+    for c in eligible_citations:
         if c.note_id not in seen:
             deduped.append(c)
             seen.add(c.note_id)
@@ -140,6 +165,91 @@ def build_prompt(
     return messages
 
 
+def retrieve_graph_context(
+    db: Session,
+    workspace_id: uuid.UUID,
+    query: str,
+    candidate_chunk_ids: list[uuid.UUID],
+    max_hops: int = 2,
+) -> tuple[str, Any]:
+    """Perform multi-hop graph expansion for seed entities from retrieved chunks or query."""
+    seed_entity_ids: list[uuid.UUID] = []
+
+    # 1. Look up entities connected to the retrieved vector candidate chunks
+    if candidate_chunk_ids:
+        prov_rows = db.scalars(
+            select(EntityChunk.entity_id).where(
+                EntityChunk.workspace_id == workspace_id,
+                EntityChunk.chunk_id.in_(candidate_chunk_ids),
+            )
+        ).all()
+        seed_entity_ids.extend(list(set(prov_rows)))
+
+    # 2. Look up entities matching query terms directly
+    direct_entities = db.scalars(
+        select(GraphEntity).where(
+            GraphEntity.workspace_id == workspace_id,
+            GraphEntity.name.ilike(f"%{query.strip()}%"),
+        )
+    ).all()
+    for de in direct_entities:
+        if de.id not in seed_entity_ids:
+            seed_entity_ids.append(de.id)
+
+    if not seed_entity_ids:
+        return "", None
+
+    try:
+        traversed_entities, traversed_rels, hops = graph_rag_service.traverse_graph(
+            db=db,
+            workspace_id=workspace_id,
+            entity_ids=seed_entity_ids,
+            max_hops=max_hops,
+        )
+    except Exception as e:
+        logger.warning("Graph traversal failed during RAG context assembly: %s", e)
+        return "", None
+
+    if not traversed_entities and not traversed_rels:
+        return "", None
+
+    entity_map = {e.id: e.name for e in traversed_entities}
+    graph_lines: list[str] = ["=== KNOWLEDGE GRAPH EXPANSION CONTEXT ==="]
+    if traversed_entities:
+        graph_lines.append("Relevant Concepts & Entities:")
+        for e in traversed_entities[:15]:
+            desc = f": {e.description}" if e.description else ""
+            graph_lines.append(f"- {e.name} ({e.entity_type}){desc}")
+
+    if traversed_rels:
+        graph_lines.append("Concept Relationships:")
+        for r in traversed_rels[:20]:
+            src = entity_map.get(r.source_entity_id, "Unknown")
+            tgt = entity_map.get(r.target_entity_id, "Unknown")
+            graph_lines.append(f"- {src} --[{r.relationship_type}]--> {tgt}")
+
+    graph_context_text = "\n".join(graph_lines) + "\n\n"
+
+    graph_ctx = GraphRAGContext(
+        entities_traversed=[
+            GraphTraversedEntity(id=e.id, name=e.name, entity_type=e.entity_type)
+            for e in traversed_entities
+        ],
+        relationships_used=[
+            GraphUsedRelationship(
+                id=r.id,
+                relationship_type=r.relationship_type,
+                source=entity_map.get(r.source_entity_id, "Unknown"),
+                target=entity_map.get(r.target_entity_id, "Unknown"),
+            )
+            for r in traversed_rels
+        ],
+        hops=hops,
+    )
+
+    return graph_context_text, graph_ctx
+
+
 def stream_rag(
     db: Session,
     workspace_id: uuid.UUID,
@@ -171,6 +281,34 @@ def stream_rag(
         }
         return
 
+    # 2b. Filter out candidates failing minimum relevance score
+    if settings.RAG_MIN_RELEVANCE_SCORE is not None:
+        passed_candidates = [
+            c
+            for c in candidates
+            if not (
+                c.score_meaning == "cosine_similarity"
+                and c.score < settings.RAG_MIN_RELEVANCE_SCORE
+            )
+        ]
+        if not passed_candidates and candidates:
+            no_info_msg = (
+                "The knowledge base does not contain sufficiently relevant information "
+                f"to answer your question regarding '{request.query}'. "
+                "Please add notes covering this topic or try a different question."
+            )
+            yield {"type": "chunk", "content": no_info_msg}
+            yield {
+                "type": "done",
+                "citations": [],
+                "graph_context": None,
+                "provider": "assistant",
+                "model": "grounded_retrieval",
+                "latency_ms": int((time.perf_counter() - start_time) * 1000),
+            }
+            return
+        candidates = passed_candidates
+
     # 3. Optional reranking
     if request.rerank:
         try:
@@ -190,6 +328,14 @@ def stream_rag(
         }
         return
 
+    # 4b. Perform graph expansion when useful
+    candidate_chunk_ids = [c.chunk_id for c in candidates if c.chunk_id]
+    graph_text, graph_ctx = retrieve_graph_context(
+        db, workspace_id, request.query, candidate_chunk_ids, max_hops=request.max_hops
+    )
+    if graph_text:
+        context_text = graph_text + context_text
+
     note_count = len(candidate_citations)
     sfx = "s" if note_count != 1 else ""
     unavailable_msg = f"{note_count} relevant note{sfx} found · AI generation unavailable"
@@ -205,6 +351,7 @@ def stream_rag(
             "type": "ai_unavailable",
             "note_count": note_count,
             "citations": [c.model_dump(mode="json") for c in candidate_citations],
+            "graph_context": graph_ctx.model_dump(mode="json") if graph_ctx else None,
             "message": unavailable_msg,
         }
         return
@@ -225,6 +372,7 @@ def stream_rag(
                 "type": "ai_unavailable",
                 "note_count": note_count,
                 "citations": [c.model_dump(mode="json") for c in candidate_citations],
+                "graph_context": graph_ctx.model_dump(mode="json") if graph_ctx else None,
                 "message": unavailable_msg,
             }
             return
@@ -241,6 +389,7 @@ def stream_rag(
                 "type": "ai_unavailable",
                 "note_count": note_count,
                 "citations": [c.model_dump(mode="json") for c in candidate_citations],
+                "graph_context": graph_ctx.model_dump(mode="json") if graph_ctx else None,
                 "message": unavailable_msg,
             }
             return
@@ -258,6 +407,7 @@ def stream_rag(
     yield {
         "type": "done",
         "citations": [c.model_dump(mode="json") for c in grounded],
+        "graph_context": graph_ctx.model_dump(mode="json") if graph_ctx else None,
         "provider": provider.provider_name(),
         "model": provider.model_name(),
         "latency_ms": latency,
@@ -290,6 +440,36 @@ def run_rag(
     if not candidates:
         raise RAGContextEmptyError("No relevant context found in workspace.")
 
+    # 2b. Filter out candidates failing minimum relevance score
+    if settings.RAG_MIN_RELEVANCE_SCORE is not None:
+        passed_candidates = [
+            c
+            for c in candidates
+            if not (
+                c.score_meaning == "cosine_similarity"
+                and c.score < settings.RAG_MIN_RELEVANCE_SCORE
+            )
+        ]
+        if not passed_candidates and candidates:
+            no_info_msg = (
+                "The knowledge base does not contain sufficiently relevant information "
+                f"to answer your question regarding '{request.query}'. "
+                "Please add notes covering this topic or try a different question."
+            )
+            return RAGResponse(
+                answer=no_info_msg,
+                citations=[],
+                graph_context=None,
+                context_chunk_count=0,
+                provider="assistant",
+                model="grounded_retrieval",
+                latency_ms=int((time.perf_counter() - start_time) * 1000),
+                reranking_applied=False,
+                pending_ai_edit=None,
+                ai_unavailable=False,
+            )
+        candidates = passed_candidates
+
     # 3. Optional reranking
     reranked = False
     if request.rerank:
@@ -306,6 +486,14 @@ def run_rag(
     )
     if not candidate_citations:
         raise RAGContextEmptyError("No text content could be extracted for context.")
+
+    # 4b. Perform graph expansion when useful
+    candidate_chunk_ids = [c.chunk_id for c in candidates if c.chunk_id]
+    graph_text, graph_ctx = retrieve_graph_context(
+        db, workspace_id, request.query, candidate_chunk_ids, max_hops=request.max_hops
+    )
+    if graph_text:
+        context_text = graph_text + context_text
 
     # 5. Build prompt & LLM generation
     messages = build_prompt(request.query, context_text, request.history)
@@ -334,6 +522,7 @@ def run_rag(
     return RAGResponse(
         answer=answer,
         citations=grounded,
+        graph_context=graph_ctx,
         context_chunk_count=len(grounded),
         provider=provider_name,
         model=model_name,

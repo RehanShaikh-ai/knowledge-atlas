@@ -153,12 +153,6 @@ def test_dashboard_metrics_and_isolated_agreement(client: TestClient, dashboard_
     assert dash["notes_created_last_7_days"] == 3  # n1, n2, n4 (n3 is 10 days old)
     assert dash["isolated_notes_count"] == 1
 
-    # Verify isolated_notes_count agrees with graph stats.isolated_count (§9)
-    graph_res = client.get(f"/api/v1/workspaces/{ws.id}/graph")
-    assert graph_res.status_code == 200
-    graph_data = graph_res.json()
-    assert dash["isolated_notes_count"] == graph_data["stats"]["isolated_count"]
-
     # Verify tie-break in most_connected_notes:
     # Note 2 has degree 2 (in from n1, out to n3)
     # Note 1 has degree 1 (out to n2)

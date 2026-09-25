@@ -1,7 +1,7 @@
 """Qdrant vector store service.
 
-Canonical service per CONTRACT v0.3.1 §5.3, §7.1-§7.5.
-Provides collection_name, upsert_chunks, delete_note_vectors, search_vectors.
+Canonical service per CONTRACT v0.3.1 §5.3, §7.1-§7.5 and CONTRACT v0.3.2 §4, §7.
+Provides collection_name, upsert_chunks, delete_note_vectors, search_vectors, update_chunk_payloads.
 """
 
 import logging
@@ -94,6 +94,8 @@ def upsert_chunks(
                 "content_hash": chunk.content_hash,
                 "embedding_model": chunk.embedding_model,
                 "embedding_dimension": chunk.embedding_dimension,
+                "entity_ids": [],
+                "cluster_id": None,
             }
             # Remove existing point with same chunk_id if exists
             _in_memory_collections[c_name] = [
@@ -108,7 +110,7 @@ def upsert_chunks(
         _ensure_collection(client, c_name, expected_dim)
         points: list[qmodels.PointStruct] = []
         for chunk, emb in zip(chunks, embeddings, strict=True):
-            # Payload follows CONTRACT §7.2 strictly
+            # Payload follows CONTRACT §7.2 & v0.3.2 §7
             payload = {
                 "chunk_id": str(chunk.id),
                 "note_id": str(chunk.note_id),
@@ -118,6 +120,8 @@ def upsert_chunks(
                 "content_hash": chunk.content_hash,
                 "embedding_model": chunk.embedding_model,
                 "embedding_dimension": chunk.embedding_dimension,
+                "entity_ids": [],
+                "cluster_id": None,
             }
             points.append(
                 qmodels.PointStruct(
@@ -131,6 +135,38 @@ def upsert_chunks(
     except Exception as e:
         logger.error("Failed upserting vectors to %s: %s", c_name, e)
         raise VectorStoreUnavailableError(f"Vector store unavailable: {e}") from e
+
+
+def update_chunk_payloads(
+    workspace_id: uuid.UUID,
+    chunk_payload_updates: dict[uuid.UUID, dict[str, Any]],
+) -> None:
+    """Update payload fields (e.g. entity_ids, cluster_id) on existing chunks
+    per CONTRACT v0.3.2 §7.
+    """
+    if not chunk_payload_updates:
+        return
+
+    c_name = collection_name(workspace_id)
+    client = _get_qdrant_client()
+
+    if client is None:
+        if c_name in _in_memory_collections:
+            for item in _in_memory_collections[c_name]:
+                cid = uuid.UUID(item["id"]) if isinstance(item["id"], str) else item["id"]
+                if cid in chunk_payload_updates:
+                    item["payload"].update(chunk_payload_updates[cid])
+        return
+
+    try:
+        for chunk_id, updates in chunk_payload_updates.items():
+            client.set_payload(
+                collection_name=c_name,
+                payload=updates,
+                points=[str(chunk_id)],
+            )
+    except Exception as e:
+        logger.warning("Failed updating Qdrant payloads for workspace %s: %s", workspace_id, e)
 
 
 def delete_note_vectors(note_id: uuid.UUID, workspace_id: uuid.UUID) -> None:
@@ -192,11 +228,16 @@ def search_vectors(
             norm_q = sum(a * a for a in query_vector) ** 0.5 or 1.0
             norm_v = sum(b * b for b in vec) ** 0.5 or 1.0
             sim = dot / (norm_q * norm_v)
+
+            payload = item["payload"]
+            payload.setdefault("entity_ids", [])
+            payload.setdefault("cluster_id", None)
+
             results.append(
                 {
                     "id": item["id"],
                     "score": round(sim, 4),
-                    "payload": item["payload"],
+                    "payload": payload,
                 }
             )
         results.sort(key=lambda x: x["score"], reverse=True)
@@ -239,14 +280,19 @@ def search_vectors(
             )
             if res.status_code == 200:
                 raw_pts = res.json().get("result", [])
-                return [
-                    {
-                        "id": str(pt["id"]),
-                        "score": float(pt["score"]),
-                        "payload": pt.get("payload") or {},
-                    }
-                    for pt in raw_pts
-                ]
+                out = []
+                for pt in raw_pts:
+                    pl = pt.get("payload") or {}
+                    pl.setdefault("entity_ids", [])
+                    pl.setdefault("cluster_id", None)
+                    out.append(
+                        {
+                            "id": str(pt["id"]),
+                            "score": float(pt["score"]),
+                            "payload": pl,
+                        }
+                    )
+                return out
         except Exception as e:
             logger.warning("Direct Qdrant search HTTP request failed: %s", e)
 
@@ -257,14 +303,19 @@ def search_vectors(
             limit=limit,
         )
         points_list = query_res.points
-        return [
-            {
-                "id": str(r.id),
-                "score": float(r.score),
-                "payload": r.payload or {},
-            }
-            for r in points_list
-        ]
+        out = []
+        for r in points_list:
+            pl = r.payload or {}
+            pl.setdefault("entity_ids", [])
+            pl.setdefault("cluster_id", None)
+            out.append(
+                {
+                    "id": str(r.id),
+                    "score": float(r.score),
+                    "payload": pl,
+                }
+            )
+        return out
     except Exception as e:
         logger.error("Vector search failed on %s: %s", c_name, e)
         raise VectorStoreUnavailableError(f"Vector search failed: {e}") from e

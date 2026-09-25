@@ -169,3 +169,60 @@ class GitPathInvalidError(AppException):
 
     def __init__(self, message: str = "Invalid file path in Git repository.") -> None:
         super().__init__(status.HTTP_422_UNPROCESSABLE_CONTENT, "GIT_PATH_INVALID", message)
+
+
+# ── v0.3.2 Exceptions (CONTRACT §11) ──────────────────────────────────────────
+
+
+class EntityNotFoundError(AppException):
+    """Raised when an entity is not found (404, ENTITY_NOT_FOUND)."""
+
+    def __init__(self, message: str = "Entity not found.") -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, "ENTITY_NOT_FOUND", message)
+
+
+class RelationshipNotFoundError(AppException):
+    """Raised when a relationship is not found (404, RELATIONSHIP_NOT_FOUND)."""
+
+    def __init__(self, message: str = "Relationship not found.") -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, "RELATIONSHIP_NOT_FOUND", message)
+
+
+class ClusterNotFoundError(AppException):
+    """Raised when a cluster is not found (404, CLUSTER_NOT_FOUND)."""
+
+    def __init__(self, message: str = "Cluster not found.") -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, "CLUSTER_NOT_FOUND", message)
+
+
+class SuggestionNotFoundError(AppException):
+    """Raised when a link suggestion is not found (404, SUGGESTION_NOT_FOUND)."""
+
+    def __init__(self, message: str = "Link suggestion not found.") -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, "SUGGESTION_NOT_FOUND", message)
+
+
+class SuggestionAlreadyDecidedError(AppException):
+    """Raised when accept/reject is called on a non-pending suggestion.
+
+    HTTP 422, SUGGESTION_ALREADY_DECIDED.
+    """
+
+    def __init__(self, message: str = "Link suggestion has already been decided.") -> None:
+        super().__init__(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "SUGGESTION_ALREADY_DECIDED", message
+        )
+
+
+class ExtractionFailedError(AppException):
+    """Raised when LLM extraction job fails (500, EXTRACTION_FAILED)."""
+
+    def __init__(self, message: str = "Knowledge extraction failed.") -> None:
+        super().__init__(status.HTTP_500_INTERNAL_SERVER_ERROR, "EXTRACTION_FAILED", message)
+
+
+class GraphIndexError(AppException):
+    """Raised when graph indexing or vector payload update fails (500, GRAPH_INDEX_ERROR)."""
+
+    def __init__(self, message: str = "Graph indexing error.") -> None:
+        super().__init__(status.HTTP_500_INTERNAL_SERVER_ERROR, "GRAPH_INDEX_ERROR", message)
