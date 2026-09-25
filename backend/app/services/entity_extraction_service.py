@@ -40,6 +40,11 @@ Do not include any additional commentary or markdown formatting outside the JSON
 """
 
 
+MAX_TRANSIENT_RETRIES = 3
+MAX_SCHEMA_RETRIES = 2
+INITIAL_BACKOFF_SECONDS = 0.5
+
+
 def _clean_json_text(text: str) -> str:
     """Strip markdown code fence if present."""
     text = text.strip()
@@ -50,70 +55,129 @@ def _clean_json_text(text: str) -> str:
 
 
 def extract_entities(text: str, model: str | None = None) -> list[dict[str, Any]]:
-    """Call LLM to extract entities as structured JSON dictionaries per CONTRACT §8.2."""
+    """Call LLM to extract entities as structured JSON dictionaries per CONTRACT §8.2.
+
+    Implements:
+    - Structured output / JSON object generation based on provider capability
+    - Bounded retries with exponential backoff for transient LLM/provider failures
+    - Pydantic schema validation with bounded schema retry
+    """
+    import time
+
+    from pydantic import ValidationError as PydanticValidationError
+
+    from app.schemas.graph_entity import ExtractedEntitiesPayload
+
     if not text or not text.strip():
         return []
 
-    provider = llm_service.get_llm_provider()
-    messages = [
+    provider = llm_service.get_llm_provider(model=model)
+
+    # Determine generation options based on provider capabilities
+    gen_kwargs: dict[str, Any] = {}
+    if getattr(provider, "supports_json_schema", False):
+        schema_dict = ExtractedEntitiesPayload.model_json_schema()
+        gen_kwargs["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "entities_extraction",
+                "schema": schema_dict,
+                "strict": True,
+            },
+        }
+    elif getattr(provider, "supports_json_object", False):
+        gen_kwargs["response_format"] = {"type": "json_object"}
+
+    messages: list[dict[str, Any]] = [
         {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT},
         {"role": "user", "content": f"Extract entities from this text:\n\n{text}"},
     ]
 
-    try:
-        response_text = provider.generate(messages)
-    except Exception as e:
-        logger.warning("LLM generation failed for entity extraction: %s", e)
-        raise ExtractionFailedError(f"Entity extraction failed: {e}") from e
+    schema_attempts = 0
+    while schema_attempts <= MAX_SCHEMA_RETRIES:
+        # Transient retry loop for network/timeout/5xx errors
+        response_text: str | None = None
+        transient_attempts = 0
+        last_transient_exc: Exception | None = None
 
-    cleaned = _clean_json_text(response_text)
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        logger.warning("Malformed JSON returned by LLM during entity extraction: %s", e)
-        # Check if fallback deterministic parsing can extract entities from lines
-        entities_list: list[dict[str, Any]] = []
-        for line in response_text.splitlines():
-            line = line.strip(" -*#\t")
-            if ":" in line and len(line) < 100:
-                parts = line.split(":", 1)
-                name = parts[0].strip()
-                desc = parts[1].strip()
-                if name and len(name) <= 200:
-                    entities_list.append({"name": name, "type": "concept", "description": desc})
-        if entities_list:
-            data = {"entities": entities_list}
-        else:
-            raise ExtractionFailedError("LLM returned malformed JSON for entity extraction.") from e
+        while transient_attempts < MAX_TRANSIENT_RETRIES:
+            try:
+                response_text = provider.generate(messages, **gen_kwargs)
+                break
+            except Exception as exc:
+                if llm_service.is_transient_error(exc):
+                    transient_attempts += 1
+                    last_transient_exc = exc
+                    sleep_time = INITIAL_BACKOFF_SECONDS * (2 ** (transient_attempts - 1))
+                    logger.warning(
+                        "Transient error in entity extraction (attempt %d/%d): %s. Backoff %.1fs",
+                        transient_attempts,
+                        MAX_TRANSIENT_RETRIES,
+                        exc,
+                        sleep_time,
+                    )
+                    time.sleep(sleep_time)
+                else:
+                    logger.error("Non-transient LLM error in entity extraction: %s", exc)
+                    raise ExtractionFailedError(f"Entity extraction failed: {exc}") from exc
 
-    if (
-        not isinstance(data, dict)
-        or "entities" not in data
-        or not isinstance(data["entities"], list)
-    ):
-        return []
+        if response_text is None:
+            err_msg = (
+                f"Entity extraction exhausted {MAX_TRANSIENT_RETRIES} transient "
+                f"retries: {last_transient_exc}"
+            )
+            raise ExtractionFailedError(err_msg) from last_transient_exc
 
-    sanitized_entities = []
-    for item in data["entities"]:
-        if not isinstance(item, dict):
-            continue
-        name = str(item.get("name", "")).strip()
-        if not name or len(name) > 200:
-            continue
-        etype = str(item.get("type", "concept")).strip().lower()
-        if etype not in VALID_ENTITY_TYPES:
-            etype = "unknown"
-        desc = item.get("description")
-        desc_str = str(desc).strip() if desc else None
-        sanitized_entities.append(
-            {
-                "name": name,
-                "type": etype,
-                "description": desc_str,
-            }
-        )
+        cleaned = _clean_json_text(response_text)
+        try:
+            raw_data = json.loads(cleaned)
+            # Pydantic schema validation
+            validated_payload = ExtractedEntitiesPayload.model_validate(raw_data)
 
-    return sanitized_entities
+            # Convert validated items into sanitized dictionary list
+            sanitized_entities = []
+            for item in validated_payload.entities:
+                name = item.name.strip()
+                if not name or len(name) > 200:
+                    continue
+                etype = item.type.strip().lower()
+                if etype not in VALID_ENTITY_TYPES:
+                    etype = "unknown"
+                desc_str = item.description.strip() if item.description else None
+                sanitized_entities.append(
+                    {
+                        "name": name,
+                        "type": etype,
+                        "description": desc_str,
+                    }
+                )
+            return sanitized_entities
+
+        except (json.JSONDecodeError, PydanticValidationError) as val_err:
+            schema_attempts += 1
+            logger.warning(
+                "Schema validation failed during entity extraction (attempt %d/%d): %s",
+                schema_attempts,
+                MAX_SCHEMA_RETRIES,
+                val_err,
+            )
+            if schema_attempts <= MAX_SCHEMA_RETRIES:
+                # Add validation error context to prompt for retry
+                messages.append({"role": "assistant", "content": response_text})
+                prompt_retry = (
+                    f"Your previous response produced a validation error: {val_err}. "
+                    "Please fix it and return ONLY a valid JSON object matching the schema: "
+                    '{"entities": [{"name": "string", "type": "concept", "description": "string"}]}'
+                )
+                messages.append({"role": "user", "content": prompt_retry})
+            else:
+                err_msg = (
+                    f"Entity extraction failed Pydantic validation after "
+                    f"{MAX_SCHEMA_RETRIES} attempts: {val_err}"
+                )
+                raise ExtractionFailedError(err_msg) from val_err
+
+    return []
 
 
 def extract_entities_for_note(

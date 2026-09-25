@@ -9,7 +9,7 @@ import uuid
 from collections import defaultdict
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.exceptions import ClusterNotFoundError, WorkspaceNotFoundError
@@ -24,13 +24,39 @@ logger = logging.getLogger("app.services.cluster_service")
 
 
 def cluster_workspace(db: Session, workspace_id: uuid.UUID) -> list[NoteCluster]:
-    """Perform automatic clustering of workspace notes and entities per CONTRACT §8.1, §9.6."""
+    """Perform automatic clustering of workspace notes and entities per CONTRACT §8.1, §9.6.
+
+    Idempotently replaces previous clusters for this workspace.
+    """
     ws = db.get(Workspace, workspace_id)
     if not ws:
         raise WorkspaceNotFoundError("Workspace not found.")
 
-    notes = db.scalars(select(Note).where(Note.workspace_id == workspace_id)).all()
+    # 1. Clean up existing clusters for workspace to guarantee idempotency & no stale duplicates
+    existing_cluster_ids = list(
+        db.scalars(select(NoteCluster.id).where(NoteCluster.workspace_id == workspace_id)).all()
+    )
+    if existing_cluster_ids:
+        # Clear entity references
+        db.execute(
+            update(GraphEntity)
+            .where(GraphEntity.workspace_id == workspace_id)
+            .values(cluster_id=None)
+        )
+        # Delete cluster members
+        db.execute(
+            delete(NoteClusterMember).where(NoteClusterMember.cluster_id.in_(existing_cluster_ids))
+        )
+        # Delete clusters
+        db.execute(delete(NoteCluster).where(NoteCluster.id.in_(existing_cluster_ids)))
+        db.flush()
+        db.expire_all()
+
+    notes = db.scalars(
+        select(Note).where(Note.workspace_id == workspace_id, Note.is_archived.is_(False))
+    ).all()
     if not notes:
+        db.commit()
         return []
 
     # Get entities for notes
@@ -48,28 +74,36 @@ def cluster_workspace(db: Session, workspace_id: uuid.UUID) -> list[NoteCluster]
     ).all()
     entity_map = {e.id: e for e in all_entities}
 
-    # If notes have tags, also use tags for grouping
-    # Simple semantic grouping based on top entities or tags
+    # Entity frequency across notes
     entity_frequency: dict[uuid.UUID, int] = defaultdict(int)
     for eids in note_entities.values():
         for eid in eids:
             entity_frequency[eid] += 1
 
-    # Top entities by note co-occurrence become cluster centroids / themes
     sorted_top_entities = sorted(entity_frequency.items(), key=lambda x: x[1], reverse=True)
 
     created_clusters: list[NoteCluster] = []
+    clustered_note_ids: set[uuid.UUID] = set()
+    used_labels: set[str] = set()
 
     if sorted_top_entities:
-        # Take up to 5 top entities as cluster themes
-        top_k = min(5, len(sorted_top_entities))
-        for i in range(top_k):
-            centroid_eid = sorted_top_entities[i][0]
+        for centroid_eid, _freq in sorted_top_entities:
+            if len(created_clusters) >= 6:
+                break
             centroid_entity = entity_map.get(centroid_eid)
             if not centroid_entity:
                 continue
 
-            label = centroid_entity.name
+            label = centroid_entity.name.strip()
+            if label.lower() in used_labels:
+                continue
+
+            # Find notes containing this entity
+            member_notes = [n for n in notes if centroid_eid in note_entities.get(n.id, set())]
+            if not member_notes:
+                continue
+
+            used_labels.add(label.lower())
             desc = centroid_entity.description or f"Cluster centered around {label}"
 
             cluster = NoteCluster(
@@ -82,43 +116,51 @@ def cluster_workspace(db: Session, workspace_id: uuid.UUID) -> list[NoteCluster]
             db.add(cluster)
             db.flush()
 
-            # Assign member notes that have this entity or related entities
-            member_count = 0
-            for note in notes:
-                eids = note_entities.get(note.id, set())
-                if centroid_eid in eids or not eids:
-                    score = 1.0 if centroid_eid in eids else 0.5
-                    member = NoteClusterMember(
-                        cluster_id=cluster.id,
-                        note_id=note.id,
-                        score=score,
-                    )
-                    db.add(member)
-                    member_count += 1
+            # Assign member notes
+            for m_note in member_notes:
+                member = NoteClusterMember(
+                    cluster_id=cluster.id,
+                    note_id=m_note.id,
+                    score=1.0,
+                )
+                db.add(member)
+                clustered_note_ids.add(m_note.id)
 
-            # Assign cluster_id to this entity and related entities
+                # Assign cluster_id to entities in this member note
+                for eid in note_entities.get(m_note.id, set()):
+                    ent = entity_map.get(eid)
+                    if ent and ent.cluster_id is None:
+                        ent.cluster_id = cluster.id
+
             centroid_entity.cluster_id = cluster.id
             created_clusters.append(cluster)
-    else:
-        # Default cluster for general workspace notes
-        cluster = NoteCluster(
+
+    # If there are notes not assigned to any cluster, group into General Notes
+    unclustered_notes = [n for n in notes if n.id not in clustered_note_ids]
+    if unclustered_notes:
+        general_cluster = NoteCluster(
             workspace_id=workspace_id,
             label="General Notes",
             description="Default cluster for unclassified workspace notes",
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
-        db.add(cluster)
+        db.add(general_cluster)
         db.flush()
 
-        for note in notes:
+        for u_note in unclustered_notes:
             member = NoteClusterMember(
-                cluster_id=cluster.id,
-                note_id=note.id,
+                cluster_id=general_cluster.id,
+                note_id=u_note.id,
                 score=1.0,
             )
             db.add(member)
-        created_clusters.append(cluster)
+            for eid in note_entities.get(u_note.id, set()):
+                ent = entity_map.get(eid)
+                if ent and ent.cluster_id is None:
+                    ent.cluster_id = general_cluster.id
+
+        created_clusters.append(general_cluster)
 
     db.commit()
     for c in created_clusters:

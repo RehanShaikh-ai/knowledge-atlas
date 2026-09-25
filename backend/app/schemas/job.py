@@ -42,5 +42,6 @@ class JobStatusResponse(BaseModel):
     started_at: datetime | None = None
     completed_at: datetime | None = None
     error_message: str | None = None
+    progress: dict | None = None
 
     model_config = ConfigDict(from_attributes=True)

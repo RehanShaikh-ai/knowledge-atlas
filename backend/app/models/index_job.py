@@ -104,6 +104,11 @@ class IndexJob(Base):
         Text,
         nullable=True,
     )
+    progress: Mapped[dict | None] = mapped_column(
+        JSONB().with_variant(SQLITE_JSON(), "sqlite"),
+        nullable=True,
+        default=None,
+    )
 
     # Relationships
     workspace: Mapped["Workspace"] = relationship("Workspace")

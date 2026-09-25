@@ -47,6 +47,11 @@ Rules:
 """
 
 
+MAX_TRANSIENT_RETRIES = 3
+MAX_SCHEMA_RETRIES = 2
+INITIAL_BACKOFF_SECONDS = 0.5
+
+
 def _clean_json_text(text: str) -> str:
     """Strip markdown code fence if present."""
     text = text.strip()
@@ -61,11 +66,23 @@ def extract_relationships(
     entities: list[str],
     model: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Call LLM to extract relationships between identified entities per CONTRACT §8.2."""
+    """Call LLM to extract relationships between identified entities per CONTRACT §8.2.
+
+    Implements:
+    - Structured output / JSON object generation based on provider capability
+    - Bounded retries with exponential backoff for transient LLM/provider failures
+    - Pydantic schema validation with bounded schema retry
+    """
+    import time
+
+    from pydantic import ValidationError as PydanticValidationError
+
+    from app.schemas.graph_relationship import ExtractedRelationshipsPayload
+
     if not text or not entities or len(entities) < 2:
         return []
 
-    provider = llm_service.get_llm_provider()
+    provider = llm_service.get_llm_provider(model=model)
     entities_str = ", ".join(f"'{e}'" for e in entities)
     user_prompt = (
         f"Entities identified: [{entities_str}]\n\n"
@@ -73,87 +90,125 @@ def extract_relationships(
         f"Extract relationships between these entities."
     )
 
-    messages = [
+    # Determine generation options based on provider capabilities
+    gen_kwargs: dict[str, Any] = {}
+    if getattr(provider, "supports_json_schema", False):
+        schema_dict = ExtractedRelationshipsPayload.model_json_schema()
+        gen_kwargs["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "relationships_extraction",
+                "schema": schema_dict,
+                "strict": True,
+            },
+        }
+    elif getattr(provider, "supports_json_object", False):
+        gen_kwargs["response_format"] = {"type": "json_object"}
+
+    messages: list[dict[str, Any]] = [
         {"role": "system", "content": RELATIONSHIP_SYSTEM_PROMPT},
         {"role": "user", "content": user_prompt},
     ]
 
-    try:
-        response_text = provider.generate(messages)
-    except Exception as e:
-        logger.warning("LLM generation failed for relationship extraction: %s", e)
-        raise ExtractionFailedError(f"Relationship extraction failed: {e}") from e
+    schema_attempts = 0
+    while schema_attempts <= MAX_SCHEMA_RETRIES:
+        response_text: str | None = None
+        transient_attempts = 0
+        last_transient_exc: Exception | None = None
 
-    cleaned = _clean_json_text(response_text)
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        logger.warning("Malformed JSON returned during relationship extraction: %s", e)
-        # Attempt fallback parsing
-        rels: list[dict[str, Any]] = []
-        if len(entities) >= 2:
-            # Create a basic default connection between first pair if mentioned
-            rels.append(
-                {
-                    "source": entities[0],
-                    "target": entities[1],
-                    "type": "related_to",
-                    "description": f"Connection between {entities[0]} and {entities[1]}",
-                    "confidence": 0.8,
-                }
+        while transient_attempts < MAX_TRANSIENT_RETRIES:
+            try:
+                response_text = provider.generate(messages, **gen_kwargs)
+                break
+            except Exception as exc:
+                if llm_service.is_transient_error(exc):
+                    transient_attempts += 1
+                    last_transient_exc = exc
+                    sleep_time = INITIAL_BACKOFF_SECONDS * (2 ** (transient_attempts - 1))
+                    logger.warning(
+                        "Transient error in relationship extraction (attempt %d/%d): %s. "
+                        "Backoff %.1fs",
+                        transient_attempts,
+                        MAX_TRANSIENT_RETRIES,
+                        exc,
+                        sleep_time,
+                    )
+                    time.sleep(sleep_time)
+                else:
+                    logger.error("Non-transient LLM error in relationship extraction: %s", exc)
+                    raise ExtractionFailedError(f"Relationship extraction failed: {exc}") from exc
+
+        if response_text is None:
+            err_msg = (
+                f"Relationship extraction exhausted {MAX_TRANSIENT_RETRIES} transient "
+                f"retries: {last_transient_exc}"
             )
-        data = {"relationships": rels}
+            raise ExtractionFailedError(err_msg) from last_transient_exc
 
-    if (
-        not isinstance(data, dict)
-        or "relationships" not in data
-        or not isinstance(data["relationships"], list)
-    ):
-        return []
-
-    # Case-insensitive entity map
-    entity_map = {e.lower(): e for e in entities}
-
-    sanitized_relationships = []
-    for item in data["relationships"]:
-        if not isinstance(item, dict):
-            continue
-        source_raw = str(item.get("source", "")).strip()
-        target_raw = str(item.get("target", "")).strip()
-
-        # Both source and target must match an entity in the list (§8.2)
-        source_canon = entity_map.get(source_raw.lower())
-        target_canon = entity_map.get(target_raw.lower())
-
-        if not source_canon or not target_canon:
-            continue
-        if source_canon.lower() == target_canon.lower():
-            # Self-relationship forbidden (§6.2, §8.2)
-            continue
-
-        rel_type = str(item.get("type", "related_to")).strip().lower().replace(" ", "_")
-        if not rel_type or len(rel_type) > 100:
-            rel_type = "related_to"
-
-        desc = item.get("description")
-        desc_str = str(desc).strip() if desc else None
+        cleaned = _clean_json_text(response_text)
         try:
-            conf = float(item.get("confidence", 0.8))
-            conf = max(0.0, min(1.0, conf))
-        except (ValueError, TypeError):
-            conf = 0.8
+            raw_data = json.loads(cleaned)
+            # Pydantic schema validation
+            validated_payload = ExtractedRelationshipsPayload.model_validate(raw_data)
 
-        sanitized_relationships.append(
-            {
-                "source": source_canon,
-                "target": target_canon,
-                "type": rel_type,
-                "description": desc_str,
-                "confidence": conf,
-            }
-        )
+            entity_map = {e.lower(): e for e in entities}
+            sanitized_relationships = []
 
-    return sanitized_relationships
+            for item in validated_payload.relationships:
+                source_raw = item.source.strip()
+                target_raw = item.target.strip()
+                source_canon = entity_map.get(source_raw.lower())
+                target_canon = entity_map.get(target_raw.lower())
+
+                if not source_canon or not target_canon:
+                    continue
+                if source_canon.lower() == target_canon.lower():
+                    continue
+
+                rel_type = item.type.strip().lower().replace(" ", "_")
+                if not rel_type or len(rel_type) > 100:
+                    rel_type = "related_to"
+
+                desc_str = item.description.strip() if item.description else None
+                conf = max(0.0, min(1.0, float(item.confidence)))
+
+                sanitized_relationships.append(
+                    {
+                        "source": source_canon,
+                        "target": target_canon,
+                        "type": rel_type,
+                        "description": desc_str,
+                        "confidence": conf,
+                    }
+                )
+
+            return sanitized_relationships
+
+        except (json.JSONDecodeError, PydanticValidationError) as val_err:
+            schema_attempts += 1
+            logger.warning(
+                "Schema validation failed during relationship extraction (attempt %d/%d): %s",
+                schema_attempts,
+                MAX_SCHEMA_RETRIES,
+                val_err,
+            )
+            if schema_attempts <= MAX_SCHEMA_RETRIES:
+                messages.append({"role": "assistant", "content": response_text})
+                prompt_retry = (
+                    f"Your previous response produced a validation error: {val_err}. "
+                    "Please fix it and return ONLY a valid JSON object matching the schema: "
+                    '{"relationships": [{"source": "Entity A", "target": "Entity B", '
+                    '"type": "related_to", "description": "text", "confidence": 0.85}]}'
+                )
+                messages.append({"role": "user", "content": prompt_retry})
+            else:
+                err_msg = (
+                    f"Relationship extraction failed Pydantic validation after "
+                    f"{MAX_SCHEMA_RETRIES} attempts: {val_err}"
+                )
+                raise ExtractionFailedError(err_msg) from val_err
+
+    return []
 
 
 def extract_relationships_for_note(
@@ -199,6 +254,13 @@ def extract_relationships_for_note(
                 for r in rels:
                     r["_chunk_id"] = chunk.id
                 extracted_rels.extend(rels)
+
+        # Fallback to note-level relationship extraction if chunk-level yielded no relationships
+        if not extracted_rels and len(entity_names) >= 2:
+            rels = extract_relationships(
+                note.content or note.title, entity_names, model=extraction_model
+            )
+            extracted_rels.extend(rels)
     else:
         rels = extract_relationships(
             note.content or note.title, entity_names, model=extraction_model

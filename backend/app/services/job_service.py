@@ -221,7 +221,7 @@ def process_index_job(db: Session, job_id: uuid.UUID) -> None:
             return
 
         if job.job_type == "reindex_graph":
-            summary = graph_index_service.reindex_workspace_graph(db, job.workspace_id)
+            summary = graph_index_service.reindex_workspace_graph(db, job.workspace_id, job=job)
             job.status = "completed"
             job.completed_at = datetime.now(UTC)
             job.error_message = (
@@ -229,6 +229,21 @@ def process_index_job(db: Session, job_id: uuid.UUID) -> None:
                 f"{summary['extracted_relationships']} relationships from "
                 f"{summary['notes_processed']} notes"
             )
+            job.progress = {
+                "stage": "completed",
+                "processed_notes": summary["notes_processed"],
+                "total_notes": summary["total_notes"],
+                "current_note_title": None,
+                "extracted_entities": summary["extracted_entities"],
+                "extracted_relationships": summary["extracted_relationships"],
+                "failed_notes": summary["failed_notes"],
+                "summary": (
+                    f"Completed: {summary['extracted_entities']} entities, "
+                    f"{summary['extracted_relationships']} relationships across "
+                    f"{summary['notes_processed']}/{summary['total_notes']} notes "
+                    f"({len(summary['failed_notes'])} failures)"
+                ),
+            }
             db.commit()
             return
 
@@ -244,12 +259,51 @@ def process_index_job(db: Session, job_id: uuid.UUID) -> None:
                     ).all()
                 )
 
-            for nid in target_ids:
-                graph_index_service.index_note_graph(db, nid)
+            total_notes = len(target_ids)
+            total_entities = 0
+            total_relationships = 0
+            failed_notes: list[dict[str, str]] = []
+
+            for idx, nid in enumerate(target_ids, start=1):
+                note = db.get(Note, nid)
+                note_title = note.title if note else str(nid)
+                job.progress = {
+                    "stage": "extracting",
+                    "processed_notes": idx - 1,
+                    "total_notes": total_notes,
+                    "current_note_title": note_title,
+                    "extracted_entities": total_entities,
+                    "extracted_relationships": total_relationships,
+                    "failed_notes": failed_notes,
+                    "summary": f"{idx - 1} / {total_notes} notes processed",
+                }
+                db.commit()
+
+                try:
+                    res = graph_index_service.index_note_graph(db, nid)
+                    total_entities += res.get("entities_extracted", 0)
+                    total_relationships += res.get("relationships_extracted", 0)
+                except Exception as e:
+                    logger.warning("Extraction failed for note %s (%s): %s", nid, note_title, e)
+                    failed_notes.append({"note_id": str(nid), "title": note_title, "error": str(e)})
 
             job.status = "completed"
             job.completed_at = datetime.now(UTC)
             job.error_message = None
+            job.progress = {
+                "stage": "completed",
+                "processed_notes": total_notes - len(failed_notes),
+                "total_notes": total_notes,
+                "current_note_title": None,
+                "extracted_entities": total_entities,
+                "extracted_relationships": total_relationships,
+                "failed_notes": failed_notes,
+                "summary": (
+                    f"Completed: {total_entities} entities, {total_relationships} relationships "
+                    f"across {total_notes - len(failed_notes)}/{total_notes} notes "
+                    f"({len(failed_notes)} failures)"
+                ),
+            }
             db.commit()
             return
 

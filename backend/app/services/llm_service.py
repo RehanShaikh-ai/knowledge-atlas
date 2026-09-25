@@ -20,6 +20,9 @@ logger = logging.getLogger("app.services.llm_service")
 class BaseLLMProvider:
     """Base class for all LLM providers per CONTRACT §11.1."""
 
+    supports_json_object: bool = True
+    supports_json_schema: bool = False
+
     def provider_name(self) -> str:
         raise NotImplementedError
 
@@ -34,6 +37,26 @@ class BaseLLMProvider:
 
     def health_check(self) -> bool:
         raise NotImplementedError
+
+
+def is_transient_error(exc: Exception) -> bool:
+    """Classify whether an exception is a transient error eligible for retry."""
+    from app.core.exceptions import LLMProviderUnavailableError, LLMTimeoutError
+
+    if isinstance(exc, LLMTimeoutError):
+        return True
+    if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError, httpx.ReadTimeout)):
+        return True
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (408, 429, 500, 502, 503, 504)
+    if isinstance(exc, LLMProviderUnavailableError):
+        msg = str(exc).lower()
+        if any(code in msg for code in ("500", "502", "503", "504", "429", "timed out", "timeout")):
+            return True
+    msg = str(exc).lower()
+    return any(
+        term in msg for term in ("timed out", "timeout", "connection reset", "502", "503", "504")
+    )
 
 
 class DeterministicTestProvider(BaseLLMProvider):
@@ -337,22 +360,28 @@ class FreeLLMAPILMProvider(BaseLLMProvider):
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+        payload: dict[str, Any] = {"model": self._model, "messages": messages}
+        if "response_format" in kwargs and kwargs["response_format"]:
+            payload["response_format"] = kwargs["response_format"]
         try:
             with httpx.Client(timeout=settings.PROVIDER_TIMEOUT_SECONDS) as client:
                 res = client.post(
                     self._endpoint("chat/completions"),
                     headers=headers,
-                    json={"model": self._model, "messages": messages},
+                    json=payload,
                 )
                 if res.status_code != 200:
+                    err_detail = res.text[:200]
                     raise LLMProviderUnavailableError(
-                        f"FreeLLMAPI request failed with status {res.status_code}."
+                        f"FreeLLMAPI request failed with status {res.status_code}: {err_detail}"
                     )
                 return res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
         except httpx.TimeoutException as e:
             raise LLMTimeoutError("FreeLLMAPI request timed out.") from e
         except Exception as e:
-            raise LLMProviderUnavailableError("FreeLLMAPI provider unreachable.") from e
+            if isinstance(e, (LLMTimeoutError, LLMProviderUnavailableError)):
+                raise
+            raise LLMProviderUnavailableError(f"FreeLLMAPI provider unreachable: {e}") from e
 
     def generate_stream(self, messages: list[dict[str, Any]], **kwargs) -> Iterator[str]:
         """Real token streaming directly from FreeLLMAPI via SSE."""
