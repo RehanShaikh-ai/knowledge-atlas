@@ -31,9 +31,7 @@ class Conversation(Base):
     """
 
     __tablename__ = "conversations"
-    __table_args__ = (
-        Index("idx_conversations_workspace", "workspace_id", "updated_at"),
-    )
+    __table_args__ = (Index("idx_conversations_workspace", "workspace_id", "updated_at"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

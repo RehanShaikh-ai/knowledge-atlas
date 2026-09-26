@@ -36,9 +36,7 @@ class Message(Base):
     """
 
     __tablename__ = "messages"
-    __table_args__ = (
-        Index("idx_messages_conversation", "conversation_id", "created_at"),
-    )
+    __table_args__ = (Index("idx_messages_conversation", "conversation_id", "created_at"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

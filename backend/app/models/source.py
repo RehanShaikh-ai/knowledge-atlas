@@ -8,7 +8,17 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.dialects.sqlite import JSON as SQLITE_JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -39,7 +49,8 @@ class Source(Base):
         last_synced_at: DateTime(UTC), nullable
 
     v0.4.1 extensions (§6.1):
-        processing_stage: String(50), required (upload, extract, normalize, chunk, embed, index, complete)
+        processing_stage: String(50), required
+            (upload, extract, normalize, chunk, embed, index, complete)
         processing_status: String(20), required (PENDING, PROCESSING, READY, FAILED)
         file_size_bytes: BigInteger, nullable
         page_count: Integer, nullable

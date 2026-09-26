@@ -1,7 +1,7 @@
 """MessageCitation SQLAlchemy model.
 
 Canonical model per CONTRACT v0.4.1 §4.1, §6.5.
-Stores citations linked to assistant messages pointing to retrieved ContentChunks (notes or sources).
+Stores citations linked to assistant messages pointing to retrieved ContentChunks.
 """
 
 import uuid
@@ -35,9 +35,7 @@ class MessageCitation(Base):
     """
 
     __tablename__ = "message_citations"
-    __table_args__ = (
-        Index("idx_message_citations_message", "message_id"),
-    )
+    __table_args__ = (Index("idx_message_citations_message", "message_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
