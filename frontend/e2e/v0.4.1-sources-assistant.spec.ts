@@ -252,7 +252,7 @@ test.describe('v0.4.1 Sources and AI Assistant E2E Flows', () => {
   // ── Scenario 3: Conversation persistence ─────────────────────────────────────
   test('Scenario 3: Conversation persists across page reloads and accepts follow-ups', async ({ page }) => {
     const convId = 'conv-persisted-1';
-    let messageList = [
+    const messageList = [
       {
         id: 'msg-prev-1',
         conversation_id: convId,
