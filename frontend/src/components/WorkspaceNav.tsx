@@ -30,7 +30,7 @@ interface NavItemConfig {
   testId: string;
 }
 
-export const WORKSPACE_NAV_ITEMS: NavItemConfig[] = [
+const WORKSPACE_NAV_ITEMS: NavItemConfig[] = [
   { id: 'notes', label: 'Notes', icon: FileText, testId: 'nav-notes' },
   { id: 'sources', label: 'Sources', icon: Layers, testId: 'nav-sources' },
   { id: 'search', label: 'Search', icon: Search, testId: 'nav-search' },

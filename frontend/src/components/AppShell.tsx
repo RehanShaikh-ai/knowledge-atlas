@@ -137,7 +137,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                   'w-2 h-2 rounded-full animate-pulse',
                   healthStatus === 'connected' && 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]',
                   healthStatus === 'loading' && 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]',
-                  healthStatus === 'disconnected' && 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
+                  healthStatus === 'error' && 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
                 )}
                 aria-hidden="true"
               />

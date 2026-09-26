@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -17,7 +16,7 @@ describe('WorkspaceNav', () => {
       <WorkspaceNav
         activeSection="sources"
         onSelectSection={onSelectSection}
-        selectedWorkspace={{ id: 'ws-1', name: 'Test Workspace', owner_id: 'u-1', created_at: '', updated_at: '' }}
+        selectedWorkspace={{ id: 'ws-1', name: 'Test Workspace', description: null, owner_id: 'u-1', created_at: '', updated_at: '' }}
       />
     );
 

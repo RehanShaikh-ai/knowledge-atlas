@@ -370,8 +370,7 @@ export const SourceList: React.FC<SourceListProps> = ({
         <Modal
           isOpen={isUploadOpen}
           onClose={() => setIsUploadOpen(false)}
-          title="Upload Source Document"
-          size="lg"
+          width="lg"
         >
           <SourceUploadPanel
             workspaceId={workspaceId}
