@@ -160,6 +160,19 @@ services:
     depends_on:
       - backend
 
+  # Playwright E2E testing service — Contract v0.4.1 §16.1
+  # Runs only when the e2e profile is explicitly enabled: docker compose --profile e2e up playwright
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.44.0-jammy
+    depends_on:
+      - frontend
+      - backend
+    volumes:
+      - ./tests/e2e:/tests/e2e
+    command: npx playwright test
+    profiles:
+      - e2e
+
 volumes:
   postgres_data:
     name: knowledge_atlas_postgres_data
