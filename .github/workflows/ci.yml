@@ -154,6 +154,34 @@ jobs:
           print('OK: backend depends_on migrate')
           "
 
+      - name: Validate Compose with e2e profile
+        run: docker compose --profile e2e config --quiet
+
+      - name: Verify playwright service is defined under e2e profile
+        run: |
+          python3 -c "
+          import yaml, sys
+          with open('docker-compose.yml') as f:
+              cfg = yaml.safe_load(f)
+          playwright = cfg.get('services', {}).get('playwright', {})
+          if not playwright:
+              print('ERROR: playwright service missing from docker-compose.yml')
+              sys.exit(1)
+          profiles = playwright.get('profiles', [])
+          if 'e2e' not in profiles:
+              print('ERROR: playwright service must have profile e2e')
+              sys.exit(1)
+          deps = playwright.get('depends_on', [])
+          if isinstance(deps, dict):
+              deps_list = list(deps.keys())
+          else:
+              deps_list = deps
+          if 'frontend' not in deps_list or 'backend' not in deps_list:
+              print('ERROR: playwright must depend on frontend and backend')
+              sys.exit(1)
+          print('OK: playwright service verified under e2e profile')
+          "
+
   # ─────────────────────────────────────────────────────────────────
   # Frontend: lint + test + build
   # ─────────────────────────────────────────────────────────────────
@@ -216,3 +244,44 @@ jobs:
             echo "Checking pattern rule: $pattern"
           done
           echo "All .gitignore patterns checked."
+
+  # ─────────────────────────────────────────────────────────────────
+  # E2E: Playwright End-to-End tests (Contract v0.4.1 §16.2)
+  # ─────────────────────────────────────────────────────────────────
+  playwright-e2e-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    needs: [docker-compose-validate, frontend-lint-test-build, backend-lint-and-test]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          if [ -f "package-lock.json" ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Install Playwright browsers
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: |
+          cd frontend
+          if [ -d "e2e" ] || [ -f "playwright.config.ts" ]; then
+            npx playwright test
+          else
+            echo "No Playwright tests found. Skipping."
+          fi
+
