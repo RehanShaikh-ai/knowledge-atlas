@@ -247,32 +247,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache-dependency-path: frontend/package-lock.json
+      - name: Validate Playwright service config
+        run: docker compose --profile e2e config --quiet
 
-      - name: Install frontend dependencies
+      - name: Run Playwright E2E tests via Compose
         run: |
-          cd frontend
-          if [ -f "package-lock.json" ]; then
-            npm ci
+          if ls tests/e2e/*.spec.ts 1> /dev/null 2>&1 || ls tests/e2e/*.test.ts 1> /dev/null 2>&1; then
+            echo "Running Playwright E2E tests via Docker Compose e2e profile..."
+            docker compose --profile e2e run --rm playwright
           else
-            npm install
-          fi
-
-      - name: Install Playwright browsers
-        run: |
-          cd frontend
-          npx playwright install --with-deps chromium
-
-      - name: Run Playwright tests
-        run: |
-          cd frontend
-          if [ -d "e2e" ] || [ -f "playwright.config.ts" ]; then
-            npx playwright test
-          else
-            echo "No Playwright tests found. Skipping."
+            echo "No E2E test suites found in tests/e2e yet. Skipping execution until Workstream A adds E2E tests."
           fi
 
