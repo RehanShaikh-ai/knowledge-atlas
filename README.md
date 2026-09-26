@@ -58,24 +58,25 @@ The goal isn't to replace thinking. It's to make thinking more reliable.
 
 Knowledge Atlas is in active development under strict engineering contracts.
 
-**What exists now (v0.3.1 Semantic Retrieval & AI Foundation):**
+**What exists now (v0.3.2 Knowledge Graph & GraphRAG):**
 
 - ✅ **Users and Workspaces** — Isolated knowledge contexts with ownership tracking
 - ✅ **Structured Notes** — Markdown editor, note linking (`NoteLink`), workspace tags, and full-text search (`tsvector`)
-- ✅ **Source Ingestion & Graph** — Provenance tracking for imports (Markdown, text, PDF), interactive knowledge graph, and dashboard overview
+- ✅ **Source Ingestion & Provenance** — Imports (Markdown, text, PDF) with fine-grained chunk provenance
 - ✅ **Semantic, Lexical & Hybrid Search** — Vector similarity (Qdrant), Reciprocal Rank Fusion (RRF), exact match highlighting, and saved searches
-- ✅ **Grounded RAG Pipeline** — AI assistant with token-by-token streaming responses and cited source cards linked to note chunks
+- ✅ **Grounded RAG & GraphRAG Pipeline** — Multi-hop graph traversal combined with vector retrieval, token streaming, and cited source cards
+- ✅ **Interactive Constellation Graph** — Force-directed entity graph visualization with degree-proportional sizing, cluster coloring, and search highlighting
+- ✅ **Knowledge Explorer & Manual Graph Editing** — Entity inspection, typed relationships (`is_manual` protection), and AI link suggestions
 - ✅ **Git-Based Note Versioning** — Git-backed note history, side-by-side/unified visual diff viewer, and safe rollback restore flow
 - ✅ **Background Indexing Queue** — Non-blocking indexing via ARQ + Redis, with real-time job status tracking and retry support
 - ✅ **Activity Timeline & Keyboard Shortcuts** — Workspace event feed and global shortcuts (`Mod+Space`, `Mod+J`, `Mod+N`, `Escape`)
 
-**What's coming (v0.3.2+):**
+**What's coming in v0.4.1:**
 
-- GraphRAG and graph-native retrieval
-- Automatic entity and relationship extraction
-- Typed graph relationships
-- Study tools, quizzes, and learning progress tracking
-- Multi-user collaboration and shared workspaces
+- **Source System** — First-class file ingestion pipeline (PDF, Markdown, text) feeding unified `ContentChunk` retrieval
+- **Persistent AI Assistant** — Multi-turn conversation persistence, message history, and citation tracking across page reloads
+- **Graph Renderer Modernization** — Benchmarked renderer evaluation with LOD label culling and zero idle-frame rendering
+- **Playwright E2E Testing** — Automated browser end-to-end testing integrated via Docker Compose (`--profile e2e`) and CI
 
 ### Keyboard Shortcuts
 
