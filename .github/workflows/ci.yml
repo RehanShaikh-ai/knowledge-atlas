@@ -164,21 +164,12 @@ jobs:
           with open('docker-compose.yml') as f:
               cfg = yaml.safe_load(f)
           playwright = cfg.get('services', {}).get('playwright', {})
-          if not playwright:
-              print('ERROR: playwright service missing from docker-compose.yml')
-              sys.exit(1)
-          profiles = playwright.get('profiles', [])
-          if 'e2e' not in profiles:
-              print('ERROR: playwright service must have profile e2e')
-              sys.exit(1)
+          if not playwright or 'e2e' not in playwright.get('profiles', []):
+              sys.exit('ERROR: playwright service missing or e2e profile not set')
           deps = playwright.get('depends_on', [])
-          if isinstance(deps, dict):
-              deps_list = list(deps.keys())
-          else:
-              deps_list = deps
+          deps_list = list(deps.keys()) if isinstance(deps, dict) else deps
           if 'frontend' not in deps_list or 'backend' not in deps_list:
-              print('ERROR: playwright must depend on frontend and backend')
-              sys.exit(1)
+              sys.exit('ERROR: playwright must depend on frontend and backend')
           print('OK: playwright service verified under e2e profile')
           "
 

@@ -160,8 +160,7 @@ services:
     depends_on:
       - backend
 
-  # Playwright E2E testing service — Contract v0.4.1 §16.1
-  # Runs only when the e2e profile is explicitly enabled: docker compose --profile e2e up playwright
+  # Playwright E2E testing service (profile: e2e)
   playwright:
     image: mcr.microsoft.com/playwright:v1.44.0-jammy
     depends_on:
