@@ -45,13 +45,13 @@ def verify_alembic_heads() -> None:
         print(f"ERROR: Multiple heads detected! {heads}")
         sys.exit(1)
 
-    expected_head = "0005"
+    expected_head = "0006"
     if heads[0] != expected_head:
         print(f"ERROR: Current head {heads[0]} does not match expected {expected_head}")
         sys.exit(1)
 
     print(
-        f"SUCCESS: Migration head verified at {expected_head} (v0.3.2 Knowledge Graph & GraphRAG)"
+        f"SUCCESS: Migration head verified at {expected_head} (v0.3.2 Index Job Progress)"
     )
 
     # Also verify the full chain is intact
